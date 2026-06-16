@@ -191,7 +191,7 @@ export default function Home() {
           position: 'absolute', top: '50%', left: '50%', minWidth: '100%', minHeight: '100%',
           transform: 'translate(-50%, -50%)', zIndex: 0, objectFit: 'cover'
         }}>
-          <source src="/videos/WhatsApp%20Video%202026-06-03%20at%209.14.19%20AM.mp4" type="video/mp4" />
+          <source src="/videos/hero-video.mp4" type="video/mp4" />
         </video>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.4)', zIndex: 1 }}></div>
       </section>
