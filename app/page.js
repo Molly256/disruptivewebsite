@@ -229,7 +229,7 @@ export default function Home() {
             After thousands of audits, we’ve found that 76% of marketing spend goes to waste. We’ll show you where yours is leaking—and how to fix it fast.
           </p>
 
-          {/* RED CTA BAR - CHANGED */}
+          {/* RED CTA BAR */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <button 
               onClick={() => scrollTo('contact-us')}
@@ -252,7 +252,7 @@ export default function Home() {
               GET YOUR FREE MARKETING AUDIT
             </button>
 
-            {/* AWARD LOGO - ADDED */}
+            {/* AWARD LOGO */}
             <img 
               src="/award.png" 
               alt="Award Logo"
@@ -509,44 +509,16 @@ We are super happy."
                   </p>
                 </div>
 
-                {/* 90+ Clients - Handshake */}
+                {/* 90+ Clients */}
                 <div style={{ marginBottom: '60px' }}>
-                  <svg 
-                    style={{ width: '56px', height: '56px', color: '#fff', margin: '0 auto 8px' }} 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor" 
-                    strokeWidth="1.5"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      d="M14 10h4.757a2 2 0 011.414.586l1.243 1.243a2 2 0 010 2.828l-1.243 1.243a2 2 0 01-1.414.586H14M4 14h4.757a2 2 0 001.414-.586l1.243-1.243a2 2 0 000-2.828L10.172 10.586A2 2 0 008.757 10H4m10 4v4a2 2 0 01-2 2h-1.5a2 2 0 01-2-2v-4m3.5-4a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" 
-                    />
-                  </svg>
-                  
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>90+</h3>
                   <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
                     Clients with us for 4<br />years or more
                   </p>
                 </div>
 
-                {/* 160+ Employees - People */}
+                {/* 160+ Employees */}
                 <div>
-                  <svg 
-                    style={{ width: '56px', height: '56px', color: '#fff', margin: '0 auto 8px' }} 
-                    fill="none" 
-                    viewBox="0 0 24 24" 
-                    stroke="currentColor" 
-                    strokeWidth="1.5"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" 
-                    />
-                  </svg>
-                  
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>160+</h3>
                   <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
                     Employees aligned with<br />our mission
