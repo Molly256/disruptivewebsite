@@ -524,10 +524,10 @@ We are super happy."
             justifyContent: 'center',
             alignItems: 'center'
           }}>
-            <img src="/SVG 1.png" alt="SVG 1" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
-            <img src="/SVG 2.png" alt="SVG 2" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
-            <img src="/SVG 3 PNG" alt="SVG 3" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
-            <img src="/SVG 4.png" alt="SVG 4" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
+            <img src="/svg1.png" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
+            <img src="/svg2.png" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
+            <img src="/svg3.png" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
+            <img src="/svg4.png" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
           </div>
 
         </div>
