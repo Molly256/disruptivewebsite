@@ -509,7 +509,7 @@ We are super happy."
                   </p>
                 </div>
 
-                {/* 160+ Employees - moved to where 90+ was */}
+                {/* 160+ Employees */}
                 <div>
                   <img 
                     src="/svg2.png" 
