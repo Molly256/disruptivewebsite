@@ -512,15 +512,13 @@ We are super happy."
                 {/* 90+ Clients */}
                 <div style={{ marginBottom: '60px' }}>
                   <img 
-                    src="/authen.png" 
+                    src="/svg1.png" 
                     alt="Handshake icon"
                     style={{ 
                       width: '48px', 
                       height: '48px', 
                       margin: '0 auto 20px auto',
-                      objectFit: 'contain',
-                      filter: 'invert(1) brightness(2)',
-                      background: 'transparent'
+                      objectFit: 'contain'
                     }} 
                   />
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>90+</h3>
@@ -538,9 +536,7 @@ We are super happy."
                       width: '48px', 
                       height: '48px', 
                       margin: '0 auto 20px auto',
-                      objectFit: 'contain',
-                      filter: 'invert(1) brightness(2)',
-                      background: 'transparent'
+                      objectFit: 'contain'
                     }} 
                   />
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>160+</h3>
