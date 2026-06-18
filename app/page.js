@@ -435,7 +435,7 @@ export default function Home() {
               marginTop: '30px', 
               textAlign: 'center', 
               maxWidth: '700px', 
-              margin: '30px auto 80px' 
+              margin: '30px auto 0' 
             }}>
               
               {/* 5 STARS */}
@@ -472,46 +472,50 @@ We are super happy."
                 KAILI SPEAR, MARKETING MANAGER,
                 GROW.COM
               </p>
-
-              {/* RED BAR */}
-              <div style={{ 
-                width: '100%', 
-                height: '6px', 
-                background: 'linear-gradient(90deg, #d40000 0%, #b30000 100%)',
-                marginTop: '40px'
-              }}></div>                                                                                                                         
             </div>
 
-            {/* STATS SECTION - BLACK BACKGROUND FROM HERE DOWN */}
-            <section style={{ 
-              background: '#000', 
-              padding: '80px 20px',
-              marginTop: '40px',
-              textAlign: 'center',
-              color: '#fff'
-            }}>
-              <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-                
-                {/* 4.8 Rating */}
-                <div>
-                  {/* Stars */}
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px' }}>
-                    <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
-                    <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
-                    <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
-                    <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
-                    <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
-                  </div>
-                  
-                  <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>4.8</h3>
-                  <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
-                    Average rating from<br />350+ reviews on Clutch
-                  </p>
-                </div>
-
-              </div>
-            </section>
           </div>
+        </div>
+      </section>
+
+      {/* RED BAR - FULL WIDTH */}
+      <div style={{ 
+        width: '100vw', 
+        height: '6px', 
+        background: 'linear-gradient(90deg, #d40000 0%, #b30000 100%)',
+        marginLeft: 'calc(-50vw + 50%)',
+        marginTop: '80px'
+      }}></div>
+
+      {/* STATS SECTION - DARK GREY FULL WIDTH */}
+      <section style={{ 
+        background: '#1a1a1a', 
+        padding: '80px 20px',
+        width: '100vw',
+        marginLeft: 'calc(-50vw + 50%)',
+        marginTop: '0',
+        textAlign: 'center',
+        color: '#fff'
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          
+          {/* 4.8 Rating */}
+          <div>
+            {/* Stars */}
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px' }}>
+              <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
+              <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
+              <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
+              <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
+              <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
+            </div>
+            
+            <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>4.8</h3>
+            <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
+              Average rating from<br />350+ reviews on Clutch
+            </p>
+          </div>
+
         </div>
       </section>
 
