@@ -490,14 +490,14 @@ We are super happy."
       {/* STATS SECTION - FLAT LIKE 4.8 RATING */}
       <section style={{ 
         background: '#141414', 
-        padding: '80px 0',
+        padding: '0',
         width: '100vw',
         marginLeft: 'calc(-50vw + 50%)',
         marginTop: '0',
         textAlign: 'center',
         color: '#fff'
       }}>
-        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1800px', margin: '0 auto' }}>
           
           {/* 4.8 Rating */}
           <div style={{ marginBottom: '60px' }}>
