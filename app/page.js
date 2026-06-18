@@ -229,27 +229,41 @@ export default function Home() {
             After thousands of audits, we’ve found that 76% of marketing spend goes to waste. We’ll show you where yours is leaking—and how to fix it fast.
           </p>
 
-          {/* RED CTA BAR */}
-          <button 
-            onClick={() => scrollTo('contact-us')}
-            style={{ 
-              width: '100%',
-              maxWidth: '600px',
-              padding: '18px 40px',
-              background: 'linear-gradient(180deg, #e60000 0%, #b30000 100%)',
-              color: '#fff', 
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '16px', 
-              fontWeight: '700', 
-              letterSpacing: '2px', 
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              marginBottom: '60px'
-            }}
-          >
-            GET YOUR FREE MARKETING AUDIT
-          </button>
+          {/* RED CTA BAR - CHANGED */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <button 
+              onClick={() => scrollTo('contact-us')}
+              style={{ 
+                width: 'fit-content',
+                padding: '18px 32px',
+                background: 'linear-gradient(180deg, #e60000 0%, #b30000 100%)',
+                color: '#fff', 
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '16px', 
+                fontWeight: '700', 
+                letterSpacing: '2px', 
+                cursor: 'pointer',
+                textTransform: 'uppercase',
+                whiteSpace: 'nowrap',
+                marginBottom: '30px'
+              }}
+            >
+              GET YOUR FREE MARKETING AUDIT
+            </button>
+
+            {/* AWARD LOGO - ADDED */}
+            <img 
+              src="/award.png" 
+              alt="Award Logo"
+              style={{ 
+                width: '120px', 
+                height: '120px',
+                objectFit: 'contain',
+                marginBottom: '30px'
+              }} 
+            />
+          </div>
 
           {/* TESTIMONIAL HEADER SECTION */}
           <div style={{ marginTop: '0', textAlign: 'center' }}>
