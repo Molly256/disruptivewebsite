@@ -515,11 +515,11 @@ We are super happy."
                     src="/authen.png" 
                     alt="Handshake icon"
                     style={{ 
-                      width: '60px', 
-                      height: '60px', 
+                      width: '48px', 
+                      height: '48px', 
                       margin: '0 auto 20px auto',
                       objectFit: 'contain',
-                      filter: 'invert(1) brightness(2)'
+                      filter: 'invert(1) brightness(2)',
                       background: 'transparent'
                     }} 
                   />
@@ -535,11 +535,11 @@ We are super happy."
                     src="/svg2.png" 
                     alt="People icon"
                     style={{ 
-                      width: '60px', 
-                      height: '60px', 
+                      width: '48px', 
+                      height: '48px', 
                       margin: '0 auto 20px auto',
                       objectFit: 'contain',
-                      filter: 'invert(1) brightness(2)'
+                      filter: 'invert(1) brightness(2)',
                       background: 'transparent'
                     }} 
                   />
