@@ -511,6 +511,16 @@ We are super happy."
 
                 {/* 90+ Clients */}
                 <div style={{ marginBottom: '60px' }}>
+                  <img 
+                    src="/authen.png" 
+                    alt="Handshake icon"
+                    style={{ 
+                      width: '48px', 
+                      height: '48px', 
+                      margin: '0 auto 20px auto',
+                      objectFit: 'contain'
+                    }} 
+                  />
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>90+</h3>
                   <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
                     Clients with us for 4<br />years or more
@@ -519,6 +529,16 @@ We are super happy."
 
                 {/* 160+ Employees */}
                 <div>
+                  <img 
+                    src="/svg2.png" 
+                    alt="People icon"
+                    style={{ 
+                      width: '48px', 
+                      height: '48px', 
+                      margin: '0 auto 20px auto',
+                      objectFit: 'contain'
+                    }} 
+                  />
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>160+</h3>
                   <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
                     Employees aligned with<br />our mission
