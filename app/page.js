@@ -482,9 +482,9 @@ We are super happy."
               }}></div>                                                                                                                         
             </div>
 
-            {/* STATS SECTION */}
+            {/* STATS SECTION - BLACK BACKGROUND FROM HERE DOWN */}
             <section style={{ 
-              background: '#1a1a1a', 
+              background: '#000', 
               padding: '80px 20px',
               marginTop: '40px',
               textAlign: 'center',
@@ -509,25 +509,7 @@ We are super happy."
                   </p>
                 </div>
 
-                {/* 90+ Clients */}
-                <div style={{ marginBottom: '60px' }}>
-                  <img 
-                    src="/svg1.png" 
-                    alt="Handshake icon"
-                    style={{ 
-                      width: '400px', 
-                      height: '400px', 
-                      margin: '0 auto 20px auto',
-                      objectFit: 'contain'
-                    }} 
-                  />
-                  <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>90+</h3>
-                  <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
-                    Clients with us for 4<br />years or more
-                  </p>
-                </div>
-
-                {/* 160+ Employees */}
+                {/* 160+ Employees - moved to where 90+ was */}
                 <div>
                   <img 
                     src="/svg2.png" 
@@ -535,7 +517,7 @@ We are super happy."
                     style={{ 
                       width: '400px', 
                       height: '400px', 
-                      margin: '0 auto 20px auto',
+                      margin: '0 auto 30px auto',
                       objectFit: 'contain'
                     }} 
                   />
