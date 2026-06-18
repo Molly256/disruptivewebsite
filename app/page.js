@@ -497,10 +497,10 @@ We are super happy."
         textAlign: 'center',
         color: '#fff'
       }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
           {/* 4.8 Rating */}
-          <div>
+          <div style={{ marginBottom: '80px' }}>
             {/* Stars */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px' }}>
               <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
@@ -514,6 +514,20 @@ We are super happy."
             <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
               Average rating from<br />350+ reviews on Clutch
             </p>
+          </div>
+
+          {/* 4 IMAGES ROW */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '60px',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <img src="/SVG 1.png" alt="SVG 1" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
+            <img src="/SVG 2.png" alt="SVG 2" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
+            <img src="/SVG 3 PNG" alt="SVG 3" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
+            <img src="/SVG 4.png" alt="SVG 4" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
           </div>
 
         </div>
