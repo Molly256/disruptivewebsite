@@ -515,10 +515,11 @@ We are super happy."
                     src="/authen.png" 
                     alt="Handshake icon"
                     style={{ 
-                      width: '48px', 
-                      height: '48px', 
+                      width: '56px', 
+                      height: '56px', 
                       margin: '0 auto 20px auto',
-                      objectFit: 'contain'
+                      objectFit: 'contain',
+                      filter: 'invert(1) brightness(2)'
                     }} 
                   />
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>90+</h3>
@@ -533,10 +534,11 @@ We are super happy."
                     src="/svg2.png" 
                     alt="People icon"
                     style={{ 
-                      width: '48px', 
-                      height: '48px', 
+                      width: '56px', 
+                      height: '56px', 
                       margin: '0 auto 20px auto',
-                      objectFit: 'contain'
+                      objectFit: 'contain',
+                      filter: 'invert(1) brightness(2)'
                     }} 
                   />
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>160+</h3>
