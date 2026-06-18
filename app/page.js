@@ -257,8 +257,8 @@ export default function Home() {
               src="/award.png" 
               alt="Award Logo"
               style={{ 
-                width: '120px', 
-                height: '120px',
+                width: '200px', 
+                height: '200px',
                 objectFit: 'contain',
                 marginBottom: '30px'
               }} 
