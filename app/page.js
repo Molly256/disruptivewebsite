@@ -487,17 +487,17 @@ We are super happy."
         marginTop: '80px'
       }}></div>
 
-      {/* STATS SECTION - MATCHES SVG BACKGROUND */}
+      {/* STATS SECTION - FLAT LIKE 4.8 RATING */}
       <section style={{ 
         background: '#141414', 
-        padding: '60px 20px',
+        padding: '80px 0',
         width: '100vw',
         marginLeft: 'calc(-50vw + 50%)',
         marginTop: '0',
         textAlign: 'center',
         color: '#fff'
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1600px', margin: '0 auto' }}>
           
           {/* 4.8 Rating */}
           <div style={{ marginBottom: '60px' }}>
@@ -516,18 +516,18 @@ We are super happy."
             </p>
           </div>
 
-          {/* 4 IMAGES ROW - TIGHT SPACING */}
+          {/* 4 IMAGES ROW - NO BORDERS, FLAT */}
           <div style={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '20px',
+            gap: '0',
             justifyContent: 'center',
-            alignItems: 'center'
+            alignItems: 'stretch'
           }}>
-            <img src="/svg1.png" style={{ width: '400px', height: 'auto', objectFit: 'contain' }} />
-            <img src="/svg2.png" style={{ width: '400px', height: 'auto', objectFit: 'contain' }} />
-            <img src="/svg3.png" style={{ width: '400px', height: 'auto', objectFit: 'contain' }} />
-            <img src="/svg4.png" style={{ width: '400px', height: 'auto', objectFit: 'contain' }} />
+            <img src="/svg1.png" style={{ width: '400px', height: '400px', objectFit: 'contain', display: 'block', margin: 0, padding: 0 }} />
+            <img src="/svg2.png" style={{ width: '400px', height: '400px', objectFit: 'contain', display: 'block', margin: 0, padding: 0 }} />
+            <img src="/svg3.png" style={{ width: '400px', height: '400px', objectFit: 'contain', display: 'block', margin: 0, padding: 0 }} />
+            <img src="/svg4.png" style={{ width: '400px', height: '400px', objectFit: 'contain', display: 'block', margin: 0, padding: 0 }} />
           </div>
 
         </div>
