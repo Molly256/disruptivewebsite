@@ -487,10 +487,10 @@ We are super happy."
         marginTop: '80px'
       }}></div>
 
-      {/* STATS SECTION - DARK GREY FULL WIDTH */}
+      {/* STATS SECTION - MATCHES SVG BACKGROUND */}
       <section style={{ 
-        background: '#1a1a1a', 
-        padding: '80px 20px',
+        background: '#141414', 
+        padding: '60px 20px',
         width: '100vw',
         marginLeft: 'calc(-50vw + 50%)',
         marginTop: '0',
@@ -500,7 +500,7 @@ We are super happy."
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
           {/* 4.8 Rating */}
-          <div style={{ marginBottom: '80px' }}>
+          <div style={{ marginBottom: '60px' }}>
             {/* Stars */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px' }}>
               <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
@@ -516,18 +516,18 @@ We are super happy."
             </p>
           </div>
 
-          {/* 4 IMAGES ROW */}
+          {/* 4 IMAGES ROW - TIGHT SPACING */}
           <div style={{
             display: 'flex',
             flexWrap: 'wrap',
-            gap: '60px',
+            gap: '20px',
             justifyContent: 'center',
             alignItems: 'center'
           }}>
-            <img src="/svg1.png" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
-            <img src="/svg2.png" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
-            <img src="/svg3.png" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
-            <img src="/svg4.png" style={{ width: '400px', height: '400px', objectFit: 'contain' }} />
+            <img src="/svg1.png" style={{ width: '400px', height: 'auto', objectFit: 'contain' }} />
+            <img src="/svg2.png" style={{ width: '400px', height: 'auto', objectFit: 'contain' }} />
+            <img src="/svg3.png" style={{ width: '400px', height: 'auto', objectFit: 'contain' }} />
+            <img src="/svg4.png" style={{ width: '400px', height: 'auto', objectFit: 'contain' }} />
           </div>
 
         </div>
