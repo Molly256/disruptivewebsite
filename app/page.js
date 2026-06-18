@@ -515,8 +515,8 @@ We are super happy."
                     src="/svg1.png" 
                     alt="Handshake icon"
                     style={{ 
-                      width: '120px', 
-                      height: '120px', 
+                      width: '400px', 
+                      height: '400px', 
                       margin: '0 auto 20px auto',
                       objectFit: 'contain'
                     }} 
@@ -533,8 +533,8 @@ We are super happy."
                     src="/svg2.png" 
                     alt="People icon"
                     style={{ 
-                      width: '120px', 
-                      height: '120px', 
+                      width: '400px', 
+                      height: '400px', 
                       margin: '0 auto 20px auto',
                       objectFit: 'contain'
                     }} 
