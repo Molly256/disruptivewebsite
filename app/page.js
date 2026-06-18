@@ -493,7 +493,7 @@ We are super happy."
               <div style={{ maxWidth: '900px', margin: '0 auto' }}>
                 
                 {/* 4.8 Rating */}
-                <div style={{ marginBottom: '60px' }}>
+                <div>
                   {/* Stars */}
                   <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px' }}>
                     <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
@@ -506,24 +506,6 @@ We are super happy."
                   <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>4.8</h3>
                   <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
                     Average rating from<br />350+ reviews on Clutch
-                  </p>
-                </div>
-
-                {/* 160+ Employees */}
-                <div>
-                  <img 
-                    src="/svg2.png" 
-                    alt="People icon"
-                    style={{ 
-                      width: '400px', 
-                      height: '400px', 
-                      margin: '0 auto 30px auto',
-                      objectFit: 'contain'
-                    }} 
-                  />
-                  <h3 style={{ fontSize: '48px', fontWeight: '900', margin: '0 0 10px 0' }}>160+</h3>
-                  <p style={{ fontSize: '18px', fontWeight: '400', margin: '0', lineHeight: '1.5' }}>
-                    Employees aligned with<br />our mission
                   </p>
                 </div>
 
