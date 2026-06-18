@@ -500,7 +500,7 @@ We are super happy."
         <div style={{ maxWidth: '1800px', margin: '0 auto' }}>
           
           {/* 4.8 Rating */}
-          <div style={{ marginBottom: '60px' }}>
+          <div style={{ padding: '80px 0 60px 0' }}>
             {/* Stars */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '15px' }}>
               <span style={{ color: '#fff', fontSize: '28px' }}>☆</span>
@@ -516,18 +516,24 @@ We are super happy."
             </p>
           </div>
 
-          {/* 4 IMAGES ROW - NO BORDERS, FLAT */}
+          {/* SINGLE IMAGE - SVG8 */}
           <div style={{
             display: 'flex',
-            flexWrap: 'wrap',
-            gap: '0',
             justifyContent: 'center',
-            alignItems: 'stretch'
+            alignItems: 'stretch',
+            fontSize: 0
           }}>
-            <img src="/svg1.png" style={{ width: '400px', height: '400px', objectFit: 'contain', display: 'block', margin: 0, padding: 0 }} />
-            <img src="/svg2.png" style={{ width: '400px', height: '400px', objectFit: 'contain', display: 'block', margin: 0, padding: 0 }} />
-            <img src="/svg3.png" style={{ width: '400px', height: '400px', objectFit: 'contain', display: 'block', margin: 0, padding: 0 }} />
-            <img src="/svg4.png" style={{ width: '400px', height: '400px', objectFit: 'contain', display: 'block', margin: 0, padding: 0 }} />
+            <img 
+              src="/svg8.png" 
+              style={{ 
+                width: '1600px', 
+                maxWidth: '100%',
+                height: 'auto', 
+                display: 'block', 
+                margin: 0, 
+                padding: 0 
+              }} 
+            />
           </div>
 
         </div>
