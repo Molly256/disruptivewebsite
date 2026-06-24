@@ -263,6 +263,30 @@ body {
   max-width: 800px;
 }
 
+/* DESKTOP HORIZONTAL LAYOUT - 1024px+ */
+@media (min-width: 1024px) {
+  .hero-overlay {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: 0 80px;
+    gap: 60px;
+  }
+  
+  .hero-overlay h1 {
+    margin-bottom: 0;
+    flex: 1;
+    max-width: 55%;
+  }
+  
+  .hero-overlay p {
+    flex: 1;
+    max-width: 40%;
+    margin: 0;
+  }
+}
+
 /* DESKTOP LARGE - 1440px+ */
 @media (min-width: 1440px) {
   .topbar {
@@ -294,6 +318,11 @@ body {
   
   .menu-title {
     font-size: 20px;
+  }
+  
+  .hero-overlay {
+    padding: 0 120px;
+    gap: 80px;
   }
 }
 
