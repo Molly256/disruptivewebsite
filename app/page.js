@@ -219,13 +219,17 @@ export default function Home() {
           </h3>
 
           <h2 style={{ 
-            color: '#d40000', 
+            color: '#000', 
             fontSize: '42px', 
             fontWeight: '900', 
             lineHeight: '1.2',
             marginBottom: '25px'
           }}>
-            Most Marketing Budgets Are Wasted—Let’s Fix That
+            Most Marketing Budgets Are Wasted—Let’s Fix <span style={{ 
+              borderBottom: '4px solid #d40000',
+              paddingBottom: '4px',
+              display: 'inline-block'
+            }}>That</span>
           </h2>
 
           <p style={{ 
