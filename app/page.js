@@ -185,7 +185,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* HERO VIDEO */}
+      {/* HERO VIDEO UP */}
       <section style={{ position: 'relative', height: 'calc(100vh - 80px)', width: '100%', overflow: 'hidden' }}>
         <video autoPlay muted loop playsInline preload="auto" style={{
           position: 'absolute', top: '50%', left: '50%', minWidth: '100%', minHeight: '100%',
@@ -193,7 +193,16 @@ export default function Home() {
         }}>
           <source src="/videos/hero-video.mp4" type="video/mp4" />
         </video>
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(255,255,255,0.4)', zIndex: 1 }}></div>
+      </section>
+
+      {/* DOWN VIDEO DIRECTLY BELOW */}
+      <section style={{ position: 'relative', height: 'calc(100vh - 80px)', width: '100%', overflow: 'hidden' }}>
+        <video autoPlay muted loop playsInline preload="auto" style={{
+          position: 'absolute', top: '50%', left: '50%', minWidth: '100%', minHeight: '100%',
+          transform: 'translate(-50%, -50%)', zIndex: 0, objectFit: 'cover'
+        }}>
+          <source src="/videos/down-video.mp4" type="video/mp4" />
+        </video>
       </section>
 
       {/* TEXT SECTION BELOW VIDEO */}
