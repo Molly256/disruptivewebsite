@@ -205,45 +205,44 @@ export default function Home() {
         </video>
       </section>
 
-      {/* TEXT SECTION BELOW VIDEO */}
-      <section style={{ padding: '100px 20px', background: '#fff', textAlign: 'center' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          <h3 style={{ 
-            color: '#d40000', 
-            fontSize: '20px', 
-            fontWeight: '700', 
-            letterSpacing: '1px',
-            marginBottom: '20px'
-          }}>
-            TOP REVIEWED AGENCY IN THE USA | NO STRINGS ATTACHED AUDIT
-          </h3>
+      {/* TEXT SECTION BELOW VIDEO - HORIZONTAL ON DESKTOP */}
+      <section className="content-section" id="what-we-do">
+        <div className="content-wrapper">
+          <div className="content-text">
+            <h3 style={{ 
+              color: '#d40000', 
+              fontSize: '20px', 
+              fontWeight: '700', 
+              letterSpacing: '1px',
+              marginBottom: '20px'
+            }}>
+              TOP REVIEWED AGENCY IN THE USA | NO STRINGS ATTACHED AUDIT
+            </h3>
 
-          <h2 style={{ 
-            color: '#000', 
-            fontSize: '42px', 
-            fontWeight: '900', 
-            lineHeight: '1.2',
-            marginBottom: '25px'
-          }}>
-            Most Marketing Budgets Are Wasted—Let’s Fix <span style={{ 
-              borderBottom: '4px solid #d40000',
-              paddingBottom: '4px',
-              display: 'inline-block'
-            }}>That</span>
-          </h2>
+            <h2 style={{ 
+              color: '#000', 
+              fontSize: '42px', 
+              fontWeight: '900', 
+              lineHeight: '1.2',
+              marginBottom: '25px'
+            }}>
+              Most Marketing Budgets Are Wasted—Let’s Fix <span style={{ 
+                borderBottom: '4px solid #d40000',
+                paddingBottom: '4px',
+                display: 'inline-block'
+              }}>That</span>
+            </h2>
 
-          <p style={{ 
-            color: '#333', 
-            fontSize: '18px', 
-            fontWeight: '300', 
-            lineHeight: '1.8',
-            marginBottom: '40px'
-          }}>
-            After thousands of audits, we’ve found that 76% of marketing spend goes to waste. We’ll show you where yours is leaking—and how to fix it fast.
-          </p>
+            <p style={{ 
+              color: '#333', 
+              fontSize: '18px', 
+              fontWeight: '300', 
+              lineHeight: '1.8',
+              marginBottom: '40px'
+            }}>
+              After thousands of audits, we’ve found that 76% of marketing spend goes to waste. We’ll show you where yours is leaking—and how to fix it fast.
+            </p>
 
-          {/* RED CTA BAR */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <button 
               onClick={() => scrollTo('contact-us')}
               style={{ 
@@ -264,229 +263,211 @@ export default function Home() {
             >
               GET YOUR FREE MARKETING AUDIT
             </button>
+          </div>
 
-            {/* AWARD LOGO */}
+          <div className="content-image">
             <img 
               src="/award.png" 
               alt="Award Logo"
               style={{ 
-                width: '200px', 
-                height: '200px',
-                objectFit: 'contain',
-                marginBottom: '30px'
+                width: '100%', 
+                height: 'auto',
+                objectFit: 'contain'
               }} 
             />
           </div>
+        </div>
+      </section>
 
-          {/* TESTIMONIAL HEADER SECTION */}
-          <div style={{ marginTop: '0', textAlign: 'center' }}>
-            
-            {/* 5 STARS */}
-            <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', marginBottom: '15px' }}>
-              <span style={{ color: '#000', fontSize: '24px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '24px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '24px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '24px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '24px' }}>★</span>
+      {/* TESTIMONIAL HEADER SECTION */}
+      <section className="content-section" id="who-we-help">
+        <div style={{ maxWidth: '900px', margin: '0 auto', textAlign: 'center' }}>
+          
+          {/* 5 STARS */}
+          <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', marginBottom: '15px' }}>
+            <span style={{ color: '#000', fontSize: '24px' }}>★</span>
+            <span style={{ color: '#000', fontSize: '24px' }}>★</span>
+            <span style={{ color: '#000', fontSize: '24px' }}>★</span>
+            <span style={{ color: '#000', fontSize: '24px' }}>★</span>
+            <span style={{ color: '#000', fontSize: '24px' }}>★</span>
+          </div>
+
+          {/* SUBTEXT */}
+          <p style={{ 
+            fontSize: '18px', 
+            color: '#000', 
+            fontWeight: '400',
+            marginBottom: '25px'
+          }}>
+            Loved by Business Owners & Marketers
+          </p>
+
+          {/* HEADER */}
+          <h2 style={{ 
+            fontSize: '42px', 
+            fontWeight: '900', 
+            color: '#000',
+            lineHeight: '1.2',
+            marginBottom: '40px'
+          }}>
+            WHAT <span style={{ 
+              borderBottom: '3px solid #d40000',
+              paddingBottom: '2px',
+              display: 'inline-block'
+            }}>MARKETERS SAY</span><br />
+            ABOUT DISRUPTIVE
+          </h2>
+        </div>
+
+        {/* TESTIMONIAL 1 - DIDER - HORIZONTAL ON DESKTOP */}
+        <div className="content-wrapper reverse" style={{ marginTop: '60px', marginBottom: '80px' }}>
+          <div className="content-text">
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start', marginBottom: '25px' }}>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
             </div>
 
-            {/* SUBTEXT */}
             <p style={{ 
               fontSize: '18px', 
               color: '#000', 
               fontWeight: '400',
+              lineHeight: '1.7',
               marginBottom: '25px'
             }}>
-              Loved by Business Owners & Marketers
+              "We are a unique company with unique solutions, so having a flexible, receptive, & knowledgeable partner is crucial to us achieving our goals."
             </p>
 
-            {/* HEADER */}
-            <h2 style={{ 
-              fontSize: '42px', 
-              fontWeight: '900', 
-              color: '#000',
-              lineHeight: '1.2',
-              marginBottom: '40px'
+            <p style={{ 
+              fontSize: '16px', 
+              color: '#000', 
+              fontWeight: '700',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              marginBottom: '0'
             }}>
-              WHAT <span style={{ 
-                borderBottom: '3px solid #d40000',
-                paddingBottom: '2px',
-                display: 'inline-block'
-              }}>MARKETERS SAY</span><br />
-              ABOUT DISRUPTIVE
-            </h2>
+              DIDER BIZIMUNGU, MATTERPORT, PAID<br />
+              MEDIA DIRECTOR
+            </p>
+          </div>
 
-            {/* CUSTOMER IMAGE - MAN */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
-              <img 
-                src="/customer1.jpg" 
-                alt="Customer Photo"
-                style={{ 
-                  width: '160px', 
-                  height: '160px',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }} 
-              />
+          <div className="content-image">
+            <img 
+              src="/customer1.jpg" 
+              alt="Customer Photo"
+              style={{ 
+                width: '100%', 
+                height: 'auto',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                maxWidth: '300px',
+                margin: '0 auto',
+                display: 'block'
+              }} 
+            />
+          </div>
+        </div>
+
+        {/* TESTIMONIAL 2 - MAGGIE LI */}
+        <div className="content-wrapper" style={{ marginBottom: '80px' }}>
+          <div className="content-text">
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start', marginBottom: '25px' }}>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
             </div>
 
-            {/* TESTIMONIAL CONTENT - DIDER */}
-            <div style={{ 
-              marginTop: '30px', 
-              textAlign: 'center', 
-              maxWidth: '700px', 
-              margin: '30px auto 80px' 
+            <p style={{ 
+              fontSize: '18px', 
+              color: '#000', 
+              fontWeight: '400',
+              lineHeight: '1.7',
+              marginBottom: '25px'
             }}>
-              
-              {/* 5 STARS */}
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '25px' }}>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              </div>
+              "The workflow between our teams is seamless and based on mutual trust and communication. The team at DA is really knowledgeable."
+            </p>
 
-              {/* QUOTE */}
-              <p style={{ 
-                fontSize: '18px', 
-                color: '#000', 
-                fontWeight: '400',
-                lineHeight: '1.7',
-                marginBottom: '25px'
-              }}>
-                "We are a unique company with unique solutions, so having a flexible, receptive, & knowledgeable partner is crucial to us achieving our goals."
-              </p>
-
-              {/* NAME & TITLE */}
-              <p style={{ 
-                fontSize: '16px', 
-                color: '#000', 
-                fontWeight: '700',
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-                marginBottom: '0'
-              }}>
-                DIDER BIZIMUNGU, MATTERPORT, PAID<br />
-                MEDIA DIRECTOR
-              </p>
-            </div>
-
-            {/* CUSTOMER IMAGE - LADY */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
-              <img 
-                src="/customer2.jpg" 
-                alt="Customer Photo"
-                style={{ 
-                  width: '160px', 
-                  height: '160px',
-                  borderRadius: '50%',
-                  objectFit: 'cover'
-                }} 
-              />
-            </div>
-
-            {/* TESTIMONIAL CONTENT - MAGGIE LI */}
-            <div style={{ 
-              marginTop: '30px', 
-              textAlign: 'center', 
-              maxWidth: '700px', 
-              margin: '30px auto 80px' 
+            <p style={{ 
+              fontSize: '16px', 
+              color: '#000', 
+              fontWeight: '700',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              marginBottom: '0'
             }}>
-              
-              {/* 5 STARS */}
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '25px' }}>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              </div>
+              MAGGIE LI, GROWTH MARKETING<br />
+              MANAGER, MYHEALTHTEAMS
+            </p>
+          </div>
 
-              {/* QUOTE */}
-              <p style={{ 
-                fontSize: '18px', 
-                color: '#000', 
-                fontWeight: '400',
-                lineHeight: '1.7',
-                marginBottom: '25px'
-              }}>
-                "The workflow between our teams is seamless and based on mutual trust and communication. The team at DA is really knowledgeable."
-              </p>
+          <div className="content-image">
+            <img 
+              src="/customer2.jpg" 
+              alt="Customer Photo"
+              style={{ 
+                width: '100%', 
+                height: 'auto',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                maxWidth: '300px',
+                margin: '0 auto',
+                display: 'block'
+              }} 
+            />
+          </div>
+        </div>
 
-              {/* NAME & TITLE */}
-              <p style={{ 
-                fontSize: '16px', 
-                color: '#000', 
-                fontWeight: '700',
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-                marginBottom: '0'
-              }}>
-                MAGGIE LI, GROWTH MARKETING<br />
-                MANAGER, MYHEALTHTEAMS
-              </p>
-
+        {/* TESTIMONIAL 3 - KAILI SPEAR */}
+        <div className="content-wrapper reverse" style={{ marginBottom: '0' }}>
+          <div className="content-text">
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start', marginBottom: '25px' }}>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
             </div>
 
-            {/* CUSTOMER IMAGE - KAILI SPEAR */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
-              <img 
-                src="/customer3.jpg" 
-                alt="Customer Photo"
-                style={{ 
-                  width: '200px', 
-                  height: '200px',
-                  borderRadius: '60%',
-                  objectFit: 'cover'
-                }} 
-              />
-            </div>
-
-            {/* TESTIMONIAL CONTENT - KAILI SPEAR */}
-            <div style={{ 
-              marginTop: '30px', 
-              textAlign: 'center', 
-              maxWidth: '700px', 
-              margin: '30px auto 0' 
+            <p style={{ 
+              fontSize: '18px', 
+              color: '#000', 
+              fontWeight: '400',
+              lineHeight: '1.7',
+              marginBottom: '25px'
             }}>
-              
-              {/* 5 STARS */}
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '25px' }}>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-                <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              </div>
+              "They started getting results quickly and the leads are already moving through the funnel. We are super happy."
+            </p>
 
-              {/* QUOTE */}
-              <p style={{ 
-                fontSize: '18px', 
-                color: '#000', 
-                fontWeight: '400',
-                lineHeight: '1.7',
-                marginBottom: '25px'
-              }}>
-                "They started getting results quickly and the
-leads are already moving through the funnel.
-We are super happy."
-              </p>
+            <p style={{ 
+              fontSize: '16px', 
+              color: '#000', 
+              fontWeight: '700',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+              marginBottom: '0'
+            }}>
+              KAILI SPEAR, MARKETING MANAGER, GROW.COM
+            </p>
+          </div>
 
-              {/* NAME & TITLE */}
-              <p style={{ 
-                fontSize: '16px', 
-                color: '#000', 
-                fontWeight: '700',
-                letterSpacing: '1px',
-                textTransform: 'uppercase',
-                marginBottom: '0'
-              }}>
-                KAILI SPEAR, MARKETING MANAGER,
-                GROW.COM
-              </p>
-            </div>
-
+          <div className="content-image">
+            <img 
+              src="/customer3.jpg" 
+              alt="Customer Photo"
+              style={{ 
+                width: '100%', 
+                height: 'auto',
+                borderRadius: '60%',
+                objectFit: 'cover',
+                maxWidth: '300px',
+                margin: '0 auto',
+                display: 'block'
+              }} 
+            />
           </div>
         </div>
       </section>
@@ -529,24 +510,21 @@ We are super happy."
             </p>
           </div>
 
-          {/* SINGLE IMAGE - SVG8 */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'stretch',
-            fontSize: 0
-          }}>
-            <img 
-              src="/svg8.png" 
-              style={{ 
-                width: '1600px', 
-                maxWidth: '100%',
-                height: 'auto', 
-                display: 'block', 
-                margin: 0, 
-                padding: 0 
-              }} 
-            />
+          {/* SINGLE IMAGE - SVG8 - HORIZONTAL CONTAINER */}
+          <div className="content-wrapper" style={{ padding: '0 20px 80px' }}>
+            <div className="content-image" style={{ maxWidth: '100%' }}>
+              <img 
+                src="/svg8.png" 
+                style={{ 
+                  width: '100%', 
+                  maxWidth: '1600px',
+                  height: 'auto', 
+                  display: 'block', 
+                  margin: '0 auto', 
+                  padding: 0 
+                }} 
+              />
+            </div>
           </div>
 
         </div>

@@ -263,6 +263,49 @@ body {
   max-width: 800px;
 }
 
+/* CONTENT SECTIONS - HORIZONTAL ON DESKTOP */
+.content-section {
+  padding: 100px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: center;
+}
+
+.content-text {
+  flex: 1;
+  text-align: center;
+}
+
+.content-text h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+.content-text p {
+  font-size: 18px;
+  color: #ccc;
+  line-height: 1.6;
+}
+
+.content-image {
+  flex: 1;
+  width: 100%;
+}
+
+.content-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+}
+
 /* DESKTOP HORIZONTAL LAYOUT - 1024px+ */
 @media (min-width: 1024px) {
   .hero-overlay {
@@ -284,6 +327,24 @@ body {
     flex: 1;
     max-width: 40%;
     margin: 0;
+  }
+  
+  .content-wrapper {
+    flex-direction: row;
+    gap: 60px;
+    align-items: center;
+  }
+  
+  .content-wrapper.reverse {
+    flex-direction: row-reverse;
+  }
+  
+  .content-text {
+    text-align: left;
+  }
+  
+  .content-image {
+    max-width: 50%;
   }
 }
 
@@ -323,6 +384,18 @@ body {
   .hero-overlay {
     padding: 0 120px;
     gap: 80px;
+  }
+  
+  .content-section {
+    padding: 120px 60px;
+  }
+  
+  .content-wrapper {
+    gap: 80px;
+  }
+  
+  .content-text h2 {
+    font-size: 42px;
   }
 }
 
@@ -373,6 +446,10 @@ body {
   .logo {
     font-size: 26px;
   }
+  
+  .content-section {
+    padding: 80px 30px;
+  }
 }
 
 /* MOBILE - TABLET SMALL 480px to 767px */
@@ -406,6 +483,18 @@ body {
   
   .menu-btn {
     font-size: 28px;
+  }
+  
+  .content-section {
+    padding: 60px 20px;
+  }
+  
+  .content-text h2 {
+    font-size: 28px;
+  }
+  
+  .content-text p {
+    font-size: 16px;
   }
 }
 
@@ -453,5 +542,13 @@ body {
   .btn-whatsapp {
     padding: 12px;
     font-size: 16px;
+  }
+  
+  .content-section {
+    padding: 50px 15px;
+  }
+  
+  .content-text h2 {
+    font-size: 24px;
   }
 }
