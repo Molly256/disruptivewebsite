@@ -185,7 +185,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* HERO VIDEO UP */}
+      {/* HERO VIDEO UP - FULL SCREEN */}
       <section style={{ position: 'relative', height: 'calc(100vh - 80px)', width: '100%', overflow: 'hidden' }}>
         <video autoPlay muted loop playsInline preload="auto" style={{
           position: 'absolute', top: '50%', left: '50%', minWidth: '100%', minHeight: '100%',
@@ -195,8 +195,8 @@ export default function Home() {
         </video>
       </section>
 
-      {/* DOWN VIDEO DIRECTLY BELOW */}
-      <section style={{ position: 'relative', height: 'calc(100vh - 80px)', width: '100%', overflow: 'hidden' }}>
+      {/* DOWN VIDEO DIRECTLY BELOW - SMALLER HEIGHT LIKE BANNER */}
+      <section style={{ position: 'relative', height: '40vh', width: '100%', overflow: 'hidden' }}>
         <video autoPlay muted loop playsInline preload="auto" style={{
           position: 'absolute', top: '50%', left: '50%', minWidth: '100%', minHeight: '100%',
           transform: 'translate(-50%, -50%)', zIndex: 0, objectFit: 'cover'
