@@ -514,14 +514,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Risk-Free Guarantee Section - TIGHT BAR + TINY GAP */}
-      <section style={{ background: '#fff', padding: '80px 24px 4px 24px' }}>
-        <div style={{ maxWidth: '768px', margin: '0 auto' }}>
+      {/* Risk-Free Guarantee Section - PIXEL PERFECT MATCH */}
+      <section style={{ background: '#fff', padding: '48px 0 4px 0', width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}>
+        <div style={{ maxWidth: '768px', margin: '0 auto', padding: '0 16px' }}>
           
-          {/* Header: RISK-FREE red bold, GUARANTEE black normal */}
+          {/* Header: RISK-FREE bold red, GUARANTEE lighter red thin */}
           <p style={{ fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px' }}>
             <span style={{ color: '#d40000', fontWeight: '700' }}>RISK-FREE</span>
-            <span style={{ color: '#000', fontWeight: '400' }}> GUARANTEE</span>
+            <span style={{ color: '#d40000', fontWeight: '400' }}> GUARANTEE</span>
           </p>
           
           {/* Main heading: 2 lines with em dash */}
@@ -544,42 +544,41 @@ export default function Home() {
             Whether you hire us or not, you’ll walk away with a clear roadmap to grow faster and smarter.
           </p>
           
-          {/* Underlined text */}
-          <p style={{ color: '#333', marginBottom: '32px', lineHeight: '1.6' }}>
+          {/* Underlined text - mb-6 = 24px before button */}
+          <p style={{ color: '#333', marginBottom: '24px', lineHeight: '1.6' }}>
             <span style={{ textDecoration: 'underline' }}>For qualifying brands</span>, we guarantee measurable growth within 90 days—or your money back. 
             No fluff. No long-term contracts. Just real results.
           </p>
           
-          {/* Gradient button - TIGHT py-2.5 height */}
+          {/* Gradient button - py-2.5, rounded-none, full width, text-base */}
           <button 
             onClick={() => scrollTo('contact-us')}
             style={{ 
-              background: 'linear-gradient(180deg, #e60000 0%, #b30000 100%)', 
+              width: '100%',
+              background: 'linear-gradient(180deg, #dc2626 0%, #b91c1c 100%)', 
               color: '#fff', 
               fontWeight: '700', 
-              padding: '10px 32px', 
-              borderRadius: '4px', 
+              padding: '10px 0', 
+              borderRadius: '0', 
               border: 'none',
-              fontSize: '14px', 
-              letterSpacing: '2px', 
+              fontSize: '16px', 
+              letterSpacing: '0.05em', 
               cursor: 'pointer',
               textTransform: 'uppercase',
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: '4px'
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '6px'
             }}
           >
-            <span>GET YOUR FREE MARKETING AUDIT</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
+            <span>GET YOUR FREE MARKETING AUDIT &gt;</span>
           </button>
           
         </div>
       </section>
 
-      {/* Rating Bar + HUNDREDS OF CLUTCH REVIEWS - Starts immediately, mt-0 */}
+      {/* Rating Bar + HUNDREDS OF CLUTCH REVIEWS - mt-0, touches white section */}
       <section style={{ 
         background: '#000',
         width: '100vw',
