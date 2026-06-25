@@ -515,7 +515,7 @@ export default function Home() {
       </section>
 
       {/* Risk-Free Guarantee Section - Image 1 style: gradient button, 2-line heading, RISK-FREE red bold + GUARANTEE black normal */}
-      <section style={{ background: '#fff', padding: '80px 24px' }}>
+      <section style={{ background: '#fff', padding: '80px 24px 8px 24px' }}>
         <div style={{ maxWidth: '768px', margin: '0 auto' }}>
           
           {/* Header: RISK-FREE red bold, GUARANTEE black normal */}
@@ -590,7 +590,7 @@ export default function Home() {
         color: '#fff',
         position: 'relative',
         overflow: 'hidden',
-        marginTop: '80px'
+        marginTop: '0'
       }}>
         {/* Subtle curved white line graphic */}
         <div style={{
