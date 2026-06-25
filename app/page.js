@@ -263,6 +263,63 @@ export default function Home() {
             >
               GET YOUR FREE MARKETING AUDIT
             </button>
+
+            {/* Rating Bar + HUNDREDS OF CLUTCH REVIEWS - 0px gap, starts immediately under button */}
+            <section style={{ 
+              background: '#000',
+              width: '100vw',
+              marginLeft: 'calc(-50vw + 50%)',
+              padding: '80px 20px',
+              textAlign: 'center',
+              color: '#fff',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Subtle curved white line graphic */}
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '100%',
+                height: '200px',
+                background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }}></div>
+
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                {/* 5 white stars centered */}
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '20px' }}>
+                  <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
+                  <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
+                  <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
+                  <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
+                  <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
+                </div>
+
+                {/* Text: AVG. RATING OF 4.8/ 5.0 STARS ON CLUTCH! */}
+                <p style={{ 
+                  fontSize: '18px', 
+                  fontWeight: '700', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '1px',
+                  marginBottom: '60px'
+                }}>
+                  AVG. RATING OF 4.8/ 5.0 STARS ON CLUTCH!
+                </p>
+
+                {/* Main heading: HUNDREDS OF CLUTCH REVIEWS */}
+                <h2 style={{ 
+                  fontSize: '48px', 
+                  fontWeight: '900', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '2px',
+                  margin: 0
+                }}>
+                  HUNDREDS OF CLUTCH REVIEWS
+                </h2>
+              </div>
+            </section>
           </div>
 
           <div className="content-image">
@@ -511,63 +568,6 @@ export default function Home() {
             </div>
           </div>
 
-        </div>
-      </section>
-
-      {/* NEW SECTION: Rating Bar + HUNDREDS OF CLUTCH REVIEWS - Below last red bar */}
-      <section style={{ 
-        background: '#000',
-        width: '100vw',
-        marginLeft: 'calc(-50vw + 50%)',
-        padding: '80px 20px',
-        textAlign: 'center',
-        color: '#fff',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Subtle curved white line graphic */}
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '100%',
-          height: '200px',
-          background: 'radial-gradient(ellipse at center, rgba(255,255,255,0.08) 0%, transparent 70%)',
-          pointerEvents: 'none'
-        }}></div>
-
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          {/* 5 white stars centered */}
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginBottom: '20px' }}>
-            <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
-            <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
-            <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
-            <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
-            <span style={{ color: '#fff', fontSize: '32px' }}>★</span>
-          </div>
-
-          {/* Text: AVG. RATING OF 4.8/ 5.0 STARS ON CLUTCH! */}
-          <p style={{ 
-            fontSize: '18px', 
-            fontWeight: '700', 
-            textTransform: 'uppercase', 
-            letterSpacing: '1px',
-            marginBottom: '60px'
-          }}>
-            AVG. RATING OF 4.8/ 5.0 STARS ON CLUTCH!
-          </p>
-
-          {/* Main heading: HUNDREDS OF CLUTCH REVIEWS */}
-          <h2 style={{ 
-            fontSize: '48px', 
-            fontWeight: '900', 
-            textTransform: 'uppercase', 
-            letterSpacing: '2px',
-            margin: 0
-          }}>
-            HUNDREDS OF CLUTCH REVIEWS
-          </h2>
         </div>
       </section>
 
