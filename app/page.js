@@ -319,155 +319,139 @@ export default function Home() {
           </h2>
         </div>
 
-        {/* TESTIMONIAL 1 - DIDER - HORIZONTAL ON DESKTOP */}
-        <div className="content-wrapper reverse" style={{ marginTop: '60px', marginBottom: '80px' }}>
-          <div className="content-text">
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start', marginBottom: '25px' }}>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+        {/* TESTIMONIALS - 3 COLUMNS HORIZONTAL LINE DESKTOP */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '60px',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          marginTop: '60px'
+        }}>
+          
+          {/* DIDER COLUMN */}
+          <div style={{ flex: '1 1 280px', maxWidth: '320px', textAlign: 'center' }}>
+            <img 
+              src="/customer1.jpg" 
+              alt="Dider"
+              style={{ 
+                width: '200px', 
+                height: '200px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                display: 'block',
+                margin: '0 auto 25px auto'
+              }} 
+            />
+            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '15px' }}>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
             </div>
-
             <p style={{ 
-              fontSize: '18px', 
+              fontSize: '16px', 
               color: '#000', 
               fontWeight: '400',
-              lineHeight: '1.7',
-              marginBottom: '25px'
+              lineHeight: '1.6',
+              marginBottom: '15px'
             }}>
               "We are a unique company with unique solutions, so having a flexible, receptive, & knowledgeable partner is crucial to us achieving our goals."
             </p>
-
             <p style={{ 
-              fontSize: '16px', 
+              fontSize: '13px', 
               color: '#000', 
               fontWeight: '700',
               letterSpacing: '1px',
               textTransform: 'uppercase',
               marginBottom: '0'
             }}>
-              DIDER BIZIMUNGU, MATTERPORT, PAID<br />
-              MEDIA DIRECTOR
+              DIDER BIZIMUNGU<br />MATTERPORT, PAID MEDIA DIRECTOR
             </p>
           </div>
 
-          <div className="content-image">
+          {/* MAGGIE COLUMN */}
+          <div style={{ flex: '1 1 280px', maxWidth: '320px', textAlign: 'center' }}>
             <img 
-              src="/customer1.jpg" 
-              alt="Customer Photo"
+              src="/customer2.jpg" 
+              alt="Maggie"
               style={{ 
-                width: '100%', 
-                height: 'auto',
+                width: '200px', 
+                height: '200px',
                 borderRadius: '50%',
                 objectFit: 'cover',
-                maxWidth: '300px',
-                margin: '0 auto',
-                display: 'block'
+                display: 'block',
+                margin: '0 auto 25px auto'
               }} 
             />
-          </div>
-        </div>
-
-        {/* TESTIMONIAL 2 - MAGGIE LI */}
-        <div className="content-wrapper" style={{ marginBottom: '80px' }}>
-          <div className="content-text">
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start', marginBottom: '25px' }}>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '15px' }}>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
             </div>
-
             <p style={{ 
-              fontSize: '18px', 
+              fontSize: '16px', 
               color: '#000', 
               fontWeight: '400',
-              lineHeight: '1.7',
-              marginBottom: '25px'
+              lineHeight: '1.6',
+              marginBottom: '15px'
             }}>
               "The workflow between our teams is seamless and based on mutual trust and communication. The team at DA is really knowledgeable."
             </p>
-
             <p style={{ 
-              fontSize: '16px', 
+              fontSize: '13px', 
               color: '#000', 
               fontWeight: '700',
               letterSpacing: '1px',
               textTransform: 'uppercase',
               marginBottom: '0'
             }}>
-              MAGGIE LI, GROWTH MARKETING<br />
-              MANAGER, MYHEALTHTEAMS
+              MAGGIE LI<br />GROWTH MARKETING MANAGER, MYHEALTHTEAMS
             </p>
           </div>
 
-          <div className="content-image">
+          {/* KAILI COLUMN */}
+          <div style={{ flex: '1 1 280px', maxWidth: '320px', textAlign: 'center' }}>
             <img 
-              src="/customer2.jpg" 
-              alt="Customer Photo"
+              src="/customer3.jpg" 
+              alt="Kaili"
               style={{ 
-                width: '100%', 
-                height: 'auto',
+                width: '200px', 
+                height: '200px',
                 borderRadius: '50%',
                 objectFit: 'cover',
-                maxWidth: '300px',
-                margin: '0 auto',
-                display: 'block'
+                display: 'block',
+                margin: '0 auto 25px auto'
               }} 
             />
-          </div>
-        </div>
-
-        {/* TESTIMONIAL 3 - KAILI SPEAR */}
-        <div className="content-wrapper reverse" style={{ marginBottom: '0' }}>
-          <div className="content-text">
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start', marginBottom: '25px' }}>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
-              <span style={{ color: '#000', fontSize: '22px' }}>★</span>
+            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '15px' }}>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
+              <span style={{ color: '#000', fontSize: '20px' }}>★</span>
             </div>
-
             <p style={{ 
-              fontSize: '18px', 
+              fontSize: '16px', 
               color: '#000', 
               fontWeight: '400',
-              lineHeight: '1.7',
-              marginBottom: '25px'
+              lineHeight: '1.6',
+              marginBottom: '15px'
             }}>
               "They started getting results quickly and the leads are already moving through the funnel. We are super happy."
             </p>
-
             <p style={{ 
-              fontSize: '16px', 
+              fontSize: '13px', 
               color: '#000', 
               fontWeight: '700',
               letterSpacing: '1px',
               textTransform: 'uppercase',
               marginBottom: '0'
             }}>
-              KAILI SPEAR, MARKETING MANAGER, GROW.COM
+              KAILI SPEAR<br />MARKETING MANAGER, GROW.COM
             </p>
-          </div>
-
-          <div className="content-image">
-            <img 
-              src="/customer3.jpg" 
-              alt="Customer Photo"
-              style={{ 
-                width: '100%', 
-                height: 'auto',
-                borderRadius: '60%',
-                objectFit: 'cover',
-                maxWidth: '300px',
-                margin: '0 auto',
-                display: 'block'
-              }} 
-            />
           </div>
         </div>
       </section>
