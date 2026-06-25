@@ -1,12 +1,19 @@
 'use client'
 import { useState } from 'react'
 
-export default function Sidebar({ isOpen, onClose }) {
+export default function Sidebar() {
+  const [menuOpen, setMenuOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
   const [contactOpen, setContactOpen] = useState(false)
 
   const toggleMenu = (menu) => {
     setActiveMenu(activeMenu === menu? null : menu)
+  }
+
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+    setMenuOpen(false)
+    setContactOpen(false)
   }
 
   const menuData = {
@@ -17,107 +24,76 @@ export default function Sidebar({ isOpen, onClose }) {
     'RESOURCES': ['General','Blog','Partners','Webinars/Trainings','Reviews','Contact Us']
   }
 
-  if (!isOpen) return null
-
   return (
-    <div style={{
-      position: 'fixed',
-      top: 80,
-      left: 0,
-      width: '100%',
-      height: 'calc(100vh - 80px)',
-      background: '#fff',
-      zIndex: 99,
-      padding: '60px 40px',
-      overflowY: 'auto'
-    }}>
-      <nav style={{ maxWidth: '600px', margin: '0 auto' }}>
+    <>
+      {/* TOP BAR - DESKTOP TABS + MOBILE 3 DASHES */}
+      <header className="topbar">
+        <div className="topbar-left">
+          {/* 3 DASHES - MOBILE ONLY, CSS hides on desktop */}
+          <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
+          <div className="logo">DISRUPTIVE</div>
+        </div>
 
-        {Object.keys(menuData).map((title) => (
-          <div key={title} style={{ marginBottom: '45px' }}>
-            {/* MENU TITLE - BOLD BLACK + RED ARROW */}
-            <div
-              onClick={() => menuData[title].length > 0? toggleMenu(title) : onClose()}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              <span style={{ fontSize: '28px', fontWeight: '700', color: '#000', letterSpacing: '1px' }}>{title}</span>
+        {/* DESKTOP NAV - CSS hides on mobile */}
+        <nav className="desktop-nav">
+          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')}>WHAT WE DO</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')}>WHO WE HELP</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('results')}>RESULTS</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')}>WHO WE ARE</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('resources')}>RESOURCES</div>
+          <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')}>LET'S TALK</button>
+        </nav>
+      </header>
 
-              {menuData[title].length > 0 && (
-                <span style={{
-                  fontSize: '24px',
-                  color: '#d40000',
-                  fontWeight: '300',
-                  transform: activeMenu === title? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: '0.3s'
-                }}>⌄</span>
+      {/* OVERLAY - MOBILE ONLY */}
+      {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)}></div>}
+
+      {/* SIDEBAR - SLIDES FROM LEFT - MOBILE ONLY */}
+      <div className={`sidebar ${menuOpen? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="sidebar-logo">DISRUPTIVE</div>
+        </div>
+
+        <div className="menu-list">
+          {Object.keys(menuData).map((title) => (
+            <div key={title} className="menu-item">
+              <div
+                className="menu-header"
+                onClick={() => menuData[title].length > 0? toggleMenu(title) : scrollTo(title.toLowerCase().replace(' ', '-'))}
+              >
+                <span className="menu-title">{title}</span>
+                {menuData[title].length > 0 && (
+                  <span className={`arrow ${activeMenu === title? 'active' : ''}`}>⌄</span>
+                )}
+              </div>
+
+              {activeMenu === title && menuData[title].length > 0 && (
+                <div className="submenu">
+                  {menuData[title].map((sub) => (
+                    <a key={sub} onClick={() => scrollTo(title.toLowerCase().replace(' ', '-'))}>
+                      {sub}
+                    </a>
+                  ))}
+                </div>
               )}
             </div>
+          ))}
+        </div>
 
-            {/* DROPDOWN */}
-            {activeMenu === title && menuData[title].length > 0 && (
-              <div style={{ marginTop: '25px' }}>
-                {menuData[title].map((sub) => (
-                  <div
-                    key={sub}
-                    onClick={onClose}
-                    style={{
-                      fontSize: '20px',
-                      color: '#333',
-                      fontWeight: '300',
-                      cursor: 'pointer',
-                      margin: '18px 0',
-                      paddingLeft: '10px'
-                    }}
-                  >
-                    {sub}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+        <div className="contact-buttons">
+          {!contactOpen && (
+            <button className="btn-talk-main" onClick={() => setContactOpen(true)}>LET'S TALK</button>
+          )}
 
-        {/* LET'S TALK BUTTON - RED GRADIENT */}
-        {!contactOpen && (
-          <button onClick={() => setContactOpen(true)} style={{
-            marginTop: '40px',
-            padding: '18px 40px',
-            background: 'linear-gradient(180deg, #e60000 0%, #b30000 100%)',
-            color: '#fff',
-            border: 'none',
-            fontSize: '16px',
-            fontWeight: '700',
-            letterSpacing: '2px',
-            cursor: 'pointer'
-          }}>
-            LET'S TALK
-          </button>
-        )}
-
-        {contactOpen && (
-          <div style={{ marginTop: '40px' }}>
-            <a href="https://t.me/Disruptive01" target="_blank" style={{
-              display: 'block', padding: '16px', marginBottom: '12px',
-              background: '#0088cc', color: '#fff', textAlign: 'center', textDecoration: 'none',
-              fontSize: '16px', fontWeight: '700'
-            }}>TELEGRAM</a>
-            <a href="https://wa.me/13475439616" target="_blank" style={{
-              display: 'block', padding: '16px', marginBottom: '12px',
-              background: '#25D366', color: '#fff', textAlign: 'center', textDecoration: 'none',
-              fontSize: '16px', fontWeight: '700'
-            }}>WHATSAPP</a>
-            <button onClick={() => setContactOpen(false)} style={{
-              width: '100%', padding: '16px', background: '#f0f0f0', color: '#000',
-              border: 'none', fontSize: '16px', fontWeight: '600', cursor: 'pointer'
-            }}>← BACK</button>
-          </div>
-        )}
-      </nav>
-    </div>
+          {contactOpen && (
+            <>
+              <a href="https://t.me/Disruptive01" target="_blank" className="btn-telegram">TELEGRAM</a>
+              <a href="https://wa.me/13475439616" target="_blank" className="btn-whatsapp">WHATSAPP</a>
+              <button className="btn-back" onClick={() => setContactOpen(false)}>← BACK</button>
+            </>
+          )}
+        </div>
+      </div>
+    </>
   )
 }

@@ -9,9 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, padding: 0, background: '#000', color: '#fff' }}>
+      <body>
         <Sidebar />
-        <main style={{ paddingTop: '70px' }}>
+        <main className="main-content">
           {children}
         </main>
       </body>

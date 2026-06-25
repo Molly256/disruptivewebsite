@@ -11,7 +11,7 @@ body {
   overflow-x: hidden;
 }
 
-/* TOP BAR - FIXED FOREVER - 3 DASHES ON LEFT */
+/* TOP BAR - FIXED FOREVER */
 .topbar {
   position: fixed;
   top: 0;
@@ -20,10 +20,16 @@ body {
   height: 70px;
   background: #cc0000;
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
   padding: 0 30px;
   z-index: 1000;
+  gap: 20px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
   gap: 20px;
 }
 
@@ -41,9 +47,50 @@ body {
   font-size: 32px;
   cursor: pointer;
   padding: 5px 10px;
+  display: block;
 }
 
-/* SIDEBAR - SLIDES FROM LEFT NOW */
+/* DESKTOP NAV - HIDDEN ON MOBILE */
+.desktop-nav {
+  display: none;
+  gap: 35px;
+  align-items: center;
+}
+
+.desktop-nav-item {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.desktop-nav-item:hover {
+  opacity: 0.8;
+}
+
+.desktop-talk-btn {
+  background: #000;
+  color: #fff;
+  border: 2px solid #fff;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.desktop-talk-btn:hover {
+  background: #fff;
+  color: #cc0000;
+}
+
+/* SIDEBAR - SLIDES FROM LEFT NOW - MOBILE ONLY */
 .sidebar {
   position: fixed;
   top: 0;
@@ -346,6 +393,20 @@ body {
   .content-image {
     max-width: 50%;
   }
+
+  /* DESKTOP TOPBAR CHANGES */
+  .topbar {
+    height: 75px;
+    padding: 0 50px;
+  }
+
+  .menu-btn {
+    display: none;
+  }
+
+  .desktop-nav {
+    display: flex;
+  }
 }
 
 /* DESKTOP LARGE - 1440px+ */
@@ -359,8 +420,17 @@ body {
     font-size: 32px;
   }
   
-  .menu-btn {
-    font-size: 36px;
+  .desktop-nav {
+    gap: 40px;
+  }
+  
+  .desktop-nav-item {
+    font-size: 17px;
+  }
+  
+  .desktop-talk-btn {
+    padding: 14px 28px;
+    font-size: 15px;
   }
   
   .hero-overlay h1 {
@@ -401,13 +471,12 @@ body {
 
 /* DESKTOP - 1024px to 1439px */
 @media (min-width: 1024px) and (max-width: 1439px) {
-  .topbar {
-    height: 75px;
-    padding: 0 50px;
-  }
-  
   .logo {
     font-size: 30px;
+  }
+  
+  .desktop-nav {
+    gap: 30px;
   }
   
   .hero-overlay h1 {
