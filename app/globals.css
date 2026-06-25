@@ -622,22 +622,24 @@ body {
   }
 }
 
-/* Dropdown Chevron Arrow */
+/* Dropdown Chevron Arrow - rounded soft V, medium red */
 .dropdown-arrow {
   display: inline-block;
-  margin-left: 6px;
-  width: 10px;
+  margin-left: 4px;
+  width: 6px;              
   height: 6px;
-  background-color: #d12c2c;
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  border-right: 2px solid #e63c3c;
+  border-bottom: 2px solid #e63c3c;
+  border-radius: 2px;
+  transform: rotate(45deg) scaleX(0.8);
+  margin-top: -1px;
   transition: transform 0.2s ease-in-out;
 }
 
-/* Hover Action: Rotates arrow up when active */
 .menu-item:hover .dropdown-arrow {
-  transform: rotate(180deg);
+  transform: rotate(225deg) scaleX(0.8);
 }
 
 .dropdown-arrow.active {
-  transform: rotate(180deg);
+  transform: rotate(225deg) scaleX(0.8);
 }
