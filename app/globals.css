@@ -621,3 +621,23 @@ body {
     font-size: 24px;
   }
 }
+
+/* Dropdown Chevron Arrow */
+.dropdown-arrow {
+  display: inline-block;
+  margin-left: 6px;
+  width: 10px;
+  height: 6px;
+  background-color: #d12c2c;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Hover Action: Rotates arrow up when active */
+.menu-item:hover .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-arrow.active {
+  transform: rotate(180deg);
+}

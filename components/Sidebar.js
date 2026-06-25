@@ -33,11 +33,11 @@ export default function Sidebar() {
 
         {/* DESKTOP NAV - CENTER/RIGHT ON DESKTOP, CSS hides on mobile */}
         <nav className="desktop-nav">
-          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHAT WE DO<span style={{ color: '#cc0000', fontWeight: 300, fontSize: '12px' }}>⌄</span></div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE HELP<span style={{ color: '#cc0000', fontWeight: 300, fontSize: '12px' }}>⌄</span></div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHAT WE DO<span className="dropdown-arrow" /></div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE HELP<span className="dropdown-arrow" /></div>
           <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span style={{ color: '#cc0000', fontWeight: 300, fontSize: '12px' }}>⌄</span></div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span style={{ color: '#cc0000', fontWeight: 300, fontSize: '12px' }}>⌄</span></div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span className="dropdown-arrow" /></div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span className="dropdown-arrow" /></div>
           <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>LET'S TALK</button>
         </nav>
 
@@ -63,7 +63,7 @@ export default function Sidebar() {
               >
                 <span className="menu-title" style={{ color: '#000' }}>{title}</span>
                 {menuData[title].length > 0 && (
-                  <span className={`arrow ${activeMenu === title? 'active' : ''}`} style={{ color: '#cc0000', fontWeight: 300, fontSize: '14px' }}>⌄</span>
+                  <span className={`dropdown-arrow ${activeMenu === title? 'active' : ''}`} />
                 )}
               </div>
 
