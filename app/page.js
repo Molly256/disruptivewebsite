@@ -514,16 +514,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Risk-Free Guarantee Section - White background */}
+      {/* Risk-Free Guarantee Section - Image 1 style: gradient button, 2-line heading, RISK-FREE red bold + GUARANTEE black normal */}
       <section style={{ background: '#fff', padding: '80px 24px' }}>
         <div style={{ maxWidth: '768px', margin: '0 auto' }}>
           
-          {/* Red header */}
-          <p style={{ color: '#d40000', fontWeight: '600', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px' }}>
-            RISK-FREE GUARANTEE
+          {/* Header: RISK-FREE red bold, GUARANTEE black normal */}
+          <p style={{ fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px' }}>
+            <span style={{ color: '#d40000', fontWeight: '700' }}>RISK-FREE</span>
+            <span style={{ color: '#000', fontWeight: '400' }}> GUARANTEE</span>
           </p>
           
-          {/* Main heading */}
+          {/* Main heading: 2 lines with em dash */}
           <h2 style={{ fontSize: '36px', fontWeight: '900', color: '#000', lineHeight: '1.2', marginBottom: '16px' }}>
             Get Results in 90 Days—<br />
             Or You Don’t Pay
@@ -549,7 +550,7 @@ export default function Home() {
             No fluff. No long-term contracts. Just real results.
           </p>
           
-          {/* Red button with white text */}
+          {/* Gradient button - arrow below text, left aligned */}
           <button 
             onClick={() => scrollTo('contact-us')}
             style={{ 
@@ -558,17 +559,18 @@ export default function Home() {
               fontWeight: '700', 
               padding: '18px 32px', 
               borderRadius: '4px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px',
               border: 'none',
               fontSize: '16px',
               letterSpacing: '2px',
               cursor: 'pointer',
-              textTransform: 'uppercase'
+              textTransform: 'uppercase',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '6px'
             }}
           >
-            GET YOUR FREE MARKETING AUDIT
+            <span>GET YOUR FREE MARKETING AUDIT</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 18l6-6-6-6" />
             </svg>
