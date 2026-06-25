@@ -514,8 +514,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Risk-Free Guarantee Section - Image 1 style: gradient button, 2-line heading, RISK-FREE red bold + GUARANTEE black normal */}
-      <section style={{ background: '#fff', padding: '80px 24px 8px 24px' }}>
+      {/* Risk-Free Guarantee Section - TIGHT BAR + TINY GAP */}
+      <section style={{ background: '#fff', padding: '80px 24px 4px 24px' }}>
         <div style={{ maxWidth: '768px', margin: '0 auto' }}>
           
           {/* Header: RISK-FREE red bold, GUARANTEE black normal */}
@@ -550,28 +550,28 @@ export default function Home() {
             No fluff. No long-term contracts. Just real results.
           </p>
           
-          {/* Gradient button - arrow below text, left aligned */}
+          {/* Gradient button - TIGHT py-2.5 height */}
           <button 
             onClick={() => scrollTo('contact-us')}
             style={{ 
               background: 'linear-gradient(180deg, #e60000 0%, #b30000 100%)', 
               color: '#fff', 
               fontWeight: '700', 
-              padding: '18px 32px', 
+              padding: '10px 32px', 
               borderRadius: '4px', 
               border: 'none',
-              fontSize: '16px',
-              letterSpacing: '2px',
+              fontSize: '14px', 
+              letterSpacing: '2px', 
               cursor: 'pointer',
               textTransform: 'uppercase',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
-              gap: '6px'
+              gap: '4px'
             }}
           >
             <span>GET YOUR FREE MARKETING AUDIT</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
@@ -579,7 +579,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Rating Bar + HUNDREDS OF CLUTCH REVIEWS - Below last white section with GET YOUR FREE MARKETING AUDIT button */}
+      {/* Rating Bar + HUNDREDS OF CLUTCH REVIEWS - Starts immediately, mt-0 */}
       <section style={{ 
         background: '#000',
         width: '100vw',
