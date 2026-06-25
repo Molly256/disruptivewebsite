@@ -27,14 +27,11 @@ export default function Sidebar() {
   return (
     <>
       {/* TOP BAR - DESKTOP TABS + MOBILE 3 DASHES */}
-      <header className="topbar" style={{ background: '#fff' }}>
-        <div className="topbar-left">
-          {/* 3 DASHES - MOBILE ONLY, CSS hides on desktop */}
-          <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000' }}>☰</button>
-          <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: '40px' }} />
-        </div>
+      <header className="topbar" style={{ background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px' }}>
+        {/* LOGO LEFT */}
+        <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: '40px' }} />
 
-        {/* DESKTOP NAV - CSS hides on mobile */}
+        {/* DESKTOP NAV - CENTER/RIGHT ON DESKTOP, CSS hides on mobile */}
         <nav className="desktop-nav">
           <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000' }}>WHAT WE DO</div>
           <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000' }}>WHO WE HELP</div>
@@ -43,6 +40,9 @@ export default function Sidebar() {
           <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000' }}>RESOURCES</div>
           <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>LET'S TALK</button>
         </nav>
+
+        {/* 3 DASHES RIGHT - MOBILE ONLY, CSS hides on desktop */}
+        <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '28px', background: 'none', border: 'none', cursor: 'pointer' }}>☰</button>
       </header>
 
       {/* OVERLAY - MOBILE ONLY */}
