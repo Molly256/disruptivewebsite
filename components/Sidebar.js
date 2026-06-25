@@ -33,11 +33,11 @@ export default function Sidebar() {
 
         {/* DESKTOP NAV - CENTER/RIGHT ON DESKTOP, CSS hides on mobile */}
         <nav className="desktop-nav">
-          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000' }}>WHAT WE DO</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000' }}>WHO WE HELP</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHAT WE DO<span style={{ color: '#cc0000', fontWeight: 300, fontSize: '12px' }}>⌄</span></div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE HELP<span style={{ color: '#cc0000', fontWeight: 300, fontSize: '12px' }}>⌄</span></div>
           <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000' }}>WHO WE ARE</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000' }}>RESOURCES</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span style={{ color: '#cc0000', fontWeight: 300, fontSize: '12px' }}>⌄</span></div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span style={{ color: '#cc0000', fontWeight: 300, fontSize: '12px' }}>⌄</span></div>
           <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>LET'S TALK</button>
         </nav>
 
