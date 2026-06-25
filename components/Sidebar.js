@@ -27,21 +27,21 @@ export default function Sidebar() {
   return (
     <>
       {/* TOP BAR - DESKTOP TABS + MOBILE 3 DASHES */}
-      <header className="topbar">
+      <header className="topbar" style={{ background: '#fff' }}>
         <div className="topbar-left">
           {/* 3 DASHES - MOBILE ONLY, CSS hides on desktop */}
-          <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
-          <div className="logo">DISRUPTIVE</div>
+          <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000' }}>☰</button>
+          <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: '40px' }} />
         </div>
 
         {/* DESKTOP NAV - CSS hides on mobile */}
         <nav className="desktop-nav">
-          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')}>WHAT WE DO</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')}>WHO WE HELP</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('results')}>RESULTS</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')}>WHO WE ARE</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('resources')}>RESOURCES</div>
-          <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')}>LET'S TALK</button>
+          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000' }}>WHAT WE DO</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000' }}>WHO WE HELP</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000' }}>WHO WE ARE</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000' }}>RESOURCES</div>
+          <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>LET'S TALK</button>
         </nav>
       </header>
 
@@ -49,9 +49,9 @@ export default function Sidebar() {
       {menuOpen && <div className="overlay" onClick={() => setMenuOpen(false)}></div>}
 
       {/* SIDEBAR - SLIDES FROM LEFT - MOBILE ONLY */}
-      <div className={`sidebar ${menuOpen? 'open' : ''}`}>
+      <div className={`sidebar ${menuOpen? 'open' : ''}`} style={{ background: '#fff' }}>
         <div className="sidebar-header">
-          <div className="sidebar-logo">DISRUPTIVE</div>
+          <img src="/logo.png" alt="Disruptive" className="sidebar-logo-img" style={{ height: '32px' }} />
         </div>
 
         <div className="menu-list">
@@ -61,16 +61,16 @@ export default function Sidebar() {
                 className="menu-header"
                 onClick={() => menuData[title].length > 0? toggleMenu(title) : scrollTo(title.toLowerCase().replace(' ', '-'))}
               >
-                <span className="menu-title">{title}</span>
+                <span className="menu-title" style={{ color: '#000' }}>{title}</span>
                 {menuData[title].length > 0 && (
-                  <span className={`arrow ${activeMenu === title? 'active' : ''}`}>⌄</span>
+                  <span className={`arrow ${activeMenu === title? 'active' : ''}`} style={{ color: '#cc0000', fontWeight: 300, fontSize: '14px' }}>⌄</span>
                 )}
               </div>
 
               {activeMenu === title && menuData[title].length > 0 && (
                 <div className="submenu">
                   {menuData[title].map((sub) => (
-                    <a key={sub} onClick={() => scrollTo(title.toLowerCase().replace(' ', '-'))}>
+                    <a key={sub} onClick={() => scrollTo(title.toLowerCase().replace(' ', '-'))} style={{ color: '#333' }}>
                       {sub}
                     </a>
                   ))}
@@ -82,7 +82,7 @@ export default function Sidebar() {
 
         <div className="contact-buttons">
           {!contactOpen && (
-            <button className="btn-talk-main" onClick={() => setContactOpen(true)}>LET'S TALK</button>
+            <button className="btn-talk-main" onClick={() => setContactOpen(true)} style={{ background: '#cc0000', color: '#fff' }}>LET'S TALK</button>
           )}
 
           {contactOpen && (
