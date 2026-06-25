@@ -622,17 +622,17 @@ body {
   }
 }
 
-/* Dropdown Chevron Arrow - rounded soft V, medium red */
+/* Dropdown Chevron Arrow - rounded soft V, medium red, bigger size */
 .dropdown-arrow {
   display: inline-block;
-  margin-left: 4px;
-  width: 6px;              
-  height: 6px;
+  margin-left: 5px;
+  width: 9px;              
+  height: 9px;
   border-right: 2px solid #e63c3c;
   border-bottom: 2px solid #e63c3c;
   border-radius: 2px;
   transform: rotate(45deg) scaleX(0.8);
-  margin-top: -1px;
+  margin-top: -2px;
   transition: transform 0.2s ease-in-out;
 }
 
