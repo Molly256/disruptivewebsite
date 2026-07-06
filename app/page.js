@@ -180,6 +180,13 @@ return (
 </p>
 </div>
 </section>
+<section style={{background: '#fff',width: '100vw',marginLeft: 'calc(-50vw + 50%)',padding: '60px 20px'}}>
+<div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+<img src="/authentic.png" alt="Authenticity" style={{width: '120px',height: 'auto',margin: '0 auto 40px'}} />
+<h3 style={{fontSize: '24px',fontWeight: '700',color: '#000',marginBottom: '24px'}}>Authenticity</h3>
+<p style={{fontSize: '16px',fontWeight: '400',color: '#000',lineHeight: '1.7',maxWidth: '800px',margin: '0 auto'}}>We work exclusively with brands and people we believe in, ensuring our hearts and minds are fully committed to your success. Authenticity is at the core of everything we do, creating a win-win-win mindset that fosters value, growth, and sustainability.</p>
+</div>
+</section>
 </main>
 )
 }
