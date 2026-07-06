@@ -630,10 +630,22 @@ export default function Home() {
             fontWeight: '900', 
             textTransform: 'uppercase', 
             letterSpacing: '2px',
-            margin: 0
+            margin: '0 0 50px 0'
           }}>
             HUNDREDS OF CLUTCH REVIEWS
           </h2>
+
+          <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+            <img 
+              src="/holistic.png" 
+              alt="Holistic Reviews" 
+              style={{ 
+                width: '100%', 
+                height: 'auto', 
+                display: 'block' 
+              }} 
+            />
+          </div>
         </div>
       </section>
 
