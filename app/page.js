@@ -180,14 +180,14 @@ return (
 </p>
 </div>
 </section>
-<section style={{background: '#fff',width: '100vw',marginLeft: 'calc(-50vw + 50%)',padding: '40px 20px 80px'}}>
+<section style={{background: '#fff',width: '100vw',marginLeft: 'calc(-50vw + 50%)',padding: '40px 20px 16px'}}>
 <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
 <img src="/authentic.png" alt="Authenticity" style={{width: '400px',height: 'auto',margin: '0 auto 32px'}} />
 <h3 style={{fontSize: '28px',fontWeight: '700',color: '#000',marginBottom: '20px'}}>Authenticity</h3>
 <p style={{fontSize: '16px',fontWeight: '400',color: '#000',lineHeight: '1.7',maxWidth: '800px',margin: '0 auto'}}>We work exclusively with brands and people we believe in, ensuring our hearts and minds are fully committed to your success. Authenticity is at the core of everything we do, creating a win-win-win mindset that fosters value, growth, and sustainability.</p>
 </div>
 </section>
-<section style={{background: '#fff',width: '100vw',marginLeft: 'calc(-50vw + 50%)',padding: '50px 20px 80px'}}>
+<section style={{background: '#fff',width: '100vw',marginLeft: 'calc(-50vw + 50%)',padding: '16px 20px 80px'}}>
 <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
 <img src="/toptalent.png" alt="Top Talent" style={{width: '400px',height: 'auto',margin: '0 auto 36px'}} />
 <h3 style={{fontSize: '28px',fontWeight: '700',color: '#000',marginBottom: '20px'}}>Top Talent</h3>
