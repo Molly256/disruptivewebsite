@@ -11,39 +11,36 @@ body {
   overflow-x: hidden;
 }
 
-/* TOP BAR - 200PX WHITE, NO BORDER */
+/* TOP BAR - HEIGHT SET BY JS TO MATCH LOGO */
 .topbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  height: 200px;
   background: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 30px;
-  z-index: 1000;
-  gap: 20px;
+  padding: 0 20px;
+  z-index: 1002;
   border-bottom: none;
+  box-shadow: none;
 }
 
 .logo-img {
-  max-height: 180px;
-  max-width: 200px;
-  width: auto;
-  height: auto;
-  object-fit: contain;
+  display: block;
 }
 
 .menu-btn {
   background: none;
   border: none;
   color: #000;
-  font-size: 32px;
+  font-size: 36px;
+  font-weight: 900;
   cursor: pointer;
   padding: 5px 10px;
   display: block;
+  line-height: 1;
 }
 
 /* DESKTOP NAV - HIDDEN ON MOBILE */
@@ -88,184 +85,39 @@ body {
   background: #b30000;
 }
 
-/* SIDEBAR - SLIDES FROM LEFT NOW - MOBILE ONLY */
-.sidebar {
-  position: fixed;
-  top: 0;
-  left: -320px;
-  width: 320px;
-  height: 100vh;
-  background: #fff;
-  border-right: 3px solid #cc0000;
-  transition: left 0.3s ease;
-  z-index: 1001;
-  display: flex;
-  flex-direction: column;
+/* REMOVE OLD SIDEBAR STYLES - WE USE FULL SCREEN NOW */
+
+/* Dropdown Chevron Arrow */
+.dropdown-arrow {
+  display: inline-block;
+  margin-left: 5px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid #e63c3c;
+  border-bottom: 2px solid #e63c3c;
+  border-radius: 2px;
+  transform: rotate(45deg) scaleX(0.8);
+  margin-top: -2px;
+  transition: transform 0.2s ease-in-out;
 }
 
-.sidebar.open {
-  left: 0;
+.menu-item:hover .dropdown-arrow {
+  transform: rotate(225deg) scaleX(0.8);
 }
 
-.sidebar-header {
-  padding: 25px 20px;
-  border-bottom: 1px solid #eee;
+.dropdown-arrow.active {
+  transform: rotate(225deg) scaleX(0.8);
 }
 
-.sidebar-logo-img {
-  height: 32px;
-  width: auto;
-}
-
-/* MENU LIST */
-.menu-list {
-  padding: 20px;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.menu-item {
-  margin-bottom: 5px;
-}
-
-.menu-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 0;
-  cursor: pointer;
-  border-bottom: 1px solid #eee;
-  transition: color 0.2s;
-}
-
-.menu-title {
-  font-size: 18px;
-  font-weight: bold;
-  color: #000;
-}
-
-.menu-header:hover .menu-title {
-  color: #cc0000;
-}
-
-.menu-header.active .menu-title {
-  color: #cc0000;
-}
-
-.submenu {
-  padding: 10px 0 10px 25px;
-  background: #f8f8f8;
-}
-
-.submenu a {
-  display: block;
-  padding: 12px 0;
-  color: #333;
-  text-decoration: none;
-  cursor: pointer;
-  font-size: 15px;
-  border-bottom: 1px solid #eee;
-}
-
-.submenu a:hover {
-  color: #cc0000;
-}
-
-/* CONTACT BUTTONS */
-.contact-buttons {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  border-top: 1px solid #eee;
-}
-
-.btn-talk-main {
-  width: 100%;
-  background: linear-gradient(180deg, #cc0000 0%, #990000 100%);
-  color: #fff;
-  border: none;
-  padding: 15px;
-  font-weight: bold;
-  border-radius: 6px;
-  letter-spacing: 1px;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.btn-talk-main:hover {
-  background: #cc0000;
-}
-
-.btn-telegram {
-  display: block;
-  text-align: center;
-  padding: 15px;
-  font-weight: bold;
-  text-decoration: none;
-  border-radius: 6px;
-  letter-spacing: 1px;
-  color: #fff;
-  background: #0088cc;
-}
-
-.btn-telegram:hover {
-  background: #0077b5;
-}
-
-.btn-whatsapp {
-  display: block;
-  text-align: center;
-  padding: 15px;
-  font-weight: bold;
-  text-decoration: none;
-  border-radius: 6px;
-  letter-spacing: 1px;
-  color: #fff;
-  background: #25D366;
-}
-
-.btn-whatsapp:hover {
-  background: #20BA5A;
-}
-
-.btn-back {
-  width: 100%;
-  background: #333;
-  color: #fff;
-  border: none;
-  padding: 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 8px;
-  font-size: 16px;
-}
-
-.btn-back:hover {
-  background: #444;
-}
-
-/* OVERLAY */
-.overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 999;
-}
-
-/* MAIN CONTENT - OFFSET FOR 200PX HEADER */
+/* MAIN CONTENT - OFFSET SET BY JS */
 .main-content {
-  margin-top: 200px;
+  background: #fff;
 }
 
 /* HERO SECTION */
 .hero {
   position: relative;
   width: 100%;
-  height: calc(100vh - 200px);
   overflow: hidden;
 }
 
@@ -311,13 +163,13 @@ body {
   display: block;
 }
 
-/* DESKTOP HORIZONTAL LAYOUT - 1024px+ */
-@media (min-width: 1024px) {
-  .topbar {
-    height: 200px;
-    padding: 0 50px;
-  }
+/* HIDE ORIGINAL SITE HEADER/HR */
+header:not(.topbar), hr {
+  display: none!important;
+}
 
+/* DESKTOP - 1024px+ */
+@media (min-width: 1024px) {
   .menu-btn {
     display: none;
   }
@@ -325,17 +177,17 @@ body {
   .desktop-nav {
     display: flex;
   }
-  
+
   .content-wrapper {
     flex-direction: row;
     gap: 60px;
     align-items: center;
   }
-  
+
   .content-text {
     text-align: left;
   }
-  
+
   .content-image {
     max-width: 50%;
   }
@@ -343,11 +195,6 @@ body {
 
 /* TABLET - 768px to 1023px */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .topbar {
-    height: 200px;
-    padding: 0 30px;
-  }
-  
   .content-section {
     padding: 80px 30px;
   }
@@ -355,34 +202,7 @@ body {
 
 /* MOBILE - 767px and below */
 @media (max-width: 767px) {
-  .topbar {
-    height: 200px;
-    padding: 0 20px;
-  }
-  
   .content-section {
     padding: 60px 20px;
   }
-}
-
-/* Dropdown Chevron Arrow */
-.dropdown-arrow {
-  display: inline-block;
-  margin-left: 5px;
-  width: 9px;              
-  height: 9px;
-  border-right: 2px solid #e63c3c;
-  border-bottom: 2px solid #e63c3c;
-  border-radius: 2px;
-  transform: rotate(45deg) scaleX(0.8);
-  margin-top: -2px;
-  transition: transform 0.2s ease-in-out;
-}
-
-.menu-item:hover .dropdown-arrow {
-  transform: rotate(225deg) scaleX(0.8);
-}
-
-.dropdown-arrow.active {
-  transform: rotate(225deg) scaleX(0.8);
 }
