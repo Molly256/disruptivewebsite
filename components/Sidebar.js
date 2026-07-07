@@ -26,10 +26,10 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* TOP BAR - DESKTOP TABS + MOBILE 3 DASHES */}
-      <header className="topbar" style={{ background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', height: '250px' }}>
-        {/* LOGO LEFT - 250PX, FILLS BAR */}
-        <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ maxHeight: '220px', height: 'auto', width: 'auto', maxWidth: '250px', objectFit: 'contain' }} />
+      {/* TOP BAR - 200PX, NO BORDER */}
+      <header className="topbar" style={{ background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', height: '200px', borderBottom: 'none', boxShadow: 'none' }}>
+        {/* LOGO LEFT - 200PX, FILLS BAR */}
+        <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ maxHeight: '180px', height: 'auto', width: 'auto', maxWidth: '200px', objectFit: 'contain' }} />
 
         {/* DESKTOP NAV - CENTER/RIGHT ON DESKTOP, CSS hides on mobile */}
         <nav className="desktop-nav">
