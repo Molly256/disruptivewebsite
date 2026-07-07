@@ -125,7 +125,7 @@ export default function Sidebar() {
               cursor: 'pointer'
             }}
           >
-            LET'S TALK
+            GET STARTED
           </button>
         </div>
       )}
