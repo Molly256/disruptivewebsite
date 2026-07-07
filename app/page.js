@@ -3,6 +3,16 @@ export default function Home(){
   const scrollTo=id=>{document.getElementById(id)?.scrollIntoView({behavior:'smooth'})};
   return(
     <main style={{background:'#fff',color:'#000',minHeight:'100vh'}}>
+      <style jsx>{`
+        .down-video {
+          height: 10vh;
+        }
+        @media (min-width: 768px) {
+          .down-video {
+            height: 20vh;
+          }
+        }
+      `}</style>
       
       {/* HERO VIDEO - UNCHANGED */}
       <section style={{position:'relative',height:'calc(100vh - 200px)',width:'100%',overflow:'hidden'}}>
@@ -11,8 +21,8 @@ export default function Home(){
         </video>
       </section>
 
-      {/* DOWN VIDEO - HEIGHT: 10VH ONLY */}
-      <section style={{position:'relative',height:'10vh',width:'100%',overflow:'hidden'}}>
+      {/* DOWN VIDEO - 10VH MOBILE, 20VH DESKTOP */}
+      <section className="down-video" style={{position:'relative',width:'100%',overflow:'hidden'}}>
         <video autoPlay muted loop playsInline preload="auto" style={{position:'absolute',top:'50%',left:'50%',minWidth:'100%',minHeight:'100%',transform:'translate(-50%, -50%)',zIndex:0,objectFit:'cover'}}>
           <source src="/videos/down-video.mp4" type="video/mp4"/>
         </video>
