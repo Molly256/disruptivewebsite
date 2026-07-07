@@ -27,9 +27,9 @@ export default function Sidebar() {
   return (
     <>
       {/* TOP BAR - DESKTOP TABS + MOBILE 3 DASHES */}
-      <header className="topbar" style={{ background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px' }}>
-        {/* LOGO LEFT */}
-        <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: '40px' }} />
+      <header className="topbar" style={{ background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', height: '250px' }}>
+        {/* LOGO LEFT - 250PX, FILLS BAR */}
+        <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ maxHeight: '220px', height: 'auto', width: 'auto', maxWidth: '250px', objectFit: 'contain' }} />
 
         {/* DESKTOP NAV - CENTER/RIGHT ON DESKTOP, CSS hides on mobile */}
         <nav className="desktop-nav">
