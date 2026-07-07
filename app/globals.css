@@ -11,12 +11,13 @@ body {
   overflow-x: hidden;
 }
 
-/* TOP BAR - HEIGHT SET BY JS TO MATCH LOGO */
+/* TOP BAR - 84PX LOCKED */
 .topbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
+  height: 84px;
   background: #fff;
   display: flex;
   justify-content: space-between;
@@ -28,6 +29,8 @@ body {
 }
 
 .logo-img {
+  height: 84px;
+  width: auto;
   display: block;
 }
 
@@ -85,8 +88,6 @@ body {
   background: #b30000;
 }
 
-/* REMOVE OLD SIDEBAR STYLES - WE USE FULL SCREEN NOW */
-
 /* Dropdown Chevron Arrow */
 .dropdown-arrow {
   display: inline-block;
@@ -109,8 +110,9 @@ body {
   transform: rotate(225deg) scaleX(0.8);
 }
 
-/* MAIN CONTENT - OFFSET SET BY JS */
+/* MAIN CONTENT - OFFSET FOR 84PX HEADER */
 .main-content {
+  margin-top: 84px;
   background: #fff;
 }
 
@@ -118,6 +120,7 @@ body {
 .hero {
   position: relative;
   width: 100%;
+  height: calc(100vh - 84px);
   overflow: hidden;
 }
 
@@ -170,6 +173,10 @@ header:not(.topbar), hr {
 
 /* DESKTOP - 1024px+ */
 @media (min-width: 1024px) {
+  .topbar {
+    padding: 0 50px;
+  }
+
   .menu-btn {
     display: none;
   }

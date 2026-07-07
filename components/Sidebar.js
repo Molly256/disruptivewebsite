@@ -1,16 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export default function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
-  const [headerHeight, setHeaderHeight] = useState(115) // change to your logo height
-
-  useEffect(() => {
-    const img = new Image()
-    img.src = '/logo.png'
-    img.onload = () => setHeaderHeight(img.height)
-  }, [])
+  const headerHeight = 84 // Fixed 84px
 
   const toggleMenu = (menu) => {
     setActiveMenu(activeMenu === menu? null : menu)
@@ -31,7 +25,7 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* TOP BAR - LOGO STAYS HERE ALWAYS */}
+      {/* TOP BAR - 84PX EXACT */}
       <header className="topbar" style={{
         background: '#fff',
         display: 'flex',
@@ -49,7 +43,6 @@ export default function Sidebar() {
       }}>
         <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: `${headerHeight}px`, width: 'auto', display: 'block' }} />
 
-        {/* DESKTOP NAV - CSS hides on mobile */}
         <nav className="desktop-nav">
           <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHAT WE DO<span className="dropdown-arrow" /></div>
           <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE HELP<span className="dropdown-arrow" /></div>
@@ -59,13 +52,11 @@ export default function Sidebar() {
           <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>LET'S TALK</button>
         </nav>
 
-        {/* HAMBURGER / X - MOBILE ONLY */}
-        <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '32px', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
+        <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '36px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
           {menuOpen? '✕' : '☰'}
         </button>
       </header>
 
-      {/* FULL SCREEN MOBILE MENU - DROPS DOWN BELOW HEADER */}
       {menuOpen && (
         <div className="mobile-menu-overlay" style={{
           position: 'fixed',
@@ -136,12 +127,6 @@ export default function Sidebar() {
           >
             LET'S TALK
           </button>
-
-          <div style={{ display: 'flex', gap: '20px', marginTop: '40px' }}>
-            <a href="#" style={{ color: '#000', fontSize: '24px' }}>f</a>
-            <a href="#" style={{ color: '#000', fontSize: '24px' }}>◎</a>
-            <a href="#" style={{ color: '#000', fontSize: '24px' }}>in</a>
-          </div>
         </div>
       )}
     </>
