@@ -185,7 +185,7 @@ export default function Home(){
         </div>
       </section>
 
-      {/* NEW CLIENT TIMELINE TO SUCCESS - B1 TO B6 FULL WIDTH SEAMLESS */}
+      {/* NEW CLIENT TIMELINE - EXACT #0A0A0A MATCH */}
       <section style={{background:'#0A0A0A',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'80px 0 0',textAlign:'center',color:'#FFFFFF'}}>
         <div style={{maxWidth:'600px',margin:'0 auto',padding:'0 20px 60px'}}>
           <h2 style={{fontSize:'32px',fontWeight:'900',lineHeight:'1.15',letterSpacing:'0.5px',textTransform:'uppercase',margin:'0 0 20px 0',color:'#FFFFFF'}}>
