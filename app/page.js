@@ -14,7 +14,7 @@ export default function Home(){
         }
       `}</style>
       
-      {/* HERO VIDEO - UNCHANGED */}
+      {/* HERO VIDEO */}
       <section style={{position:'relative',height:'calc(100vh - 200px)',width:'100%',overflow:'hidden'}}>
         <video autoPlay muted loop playsInline preload="auto" style={{position:'absolute',top:'50%',left:'50%',minWidth:'100%',minHeight:'100%',transform:'translate(-50%, -50%)',zIndex:0,objectFit:'cover'}}>
           <source src="/videos/hero-video.mp4" type="video/mp4"/>
@@ -185,7 +185,7 @@ export default function Home(){
         </div>
       </section>
 
-      {/* NEW CLIENT TIMELINE TO SUCCESS */}
+      {/* NEW CLIENT TIMELINE TO SUCCESS - B1 TO B6 */}
       <section style={{background:'#1A1A1A',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'80px 20px 100px',textAlign:'center',color:'#fff'}}>
         <div style={{maxWidth:'600px',margin:'0 auto'}}>
           <h2 style={{fontSize:'32px',fontWeight:'900',lineHeight:'1.15',letterSpacing:'0.5px',textTransform:'uppercase',margin:'0 0 20px 0'}}>
@@ -193,16 +193,85 @@ export default function Home(){
           </h2>
           <div style={{width:'50px',height:'2px',background:'#fff',margin:'0 auto 60px'}}></div>
           
-          <div style={{width:'240px',height:'240px',margin:'0 auto 24px',position:'relative'}}>
-            <img src="/b1.jpg" alt="Initial Discovery" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',border:'2px solid #fff'}}/>
+          {/* STEP 1 */}
+          <div style={{marginBottom:'60px'}}>
+            <div style={{width:'240px',height:'240px',margin:'0 auto 24px',position:'relative'}}>
+              <img src="/b1.jpg" alt="Pre-sale" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',border:'2px solid #fff'}}/>
+            </div>
+            <p style={{fontSize:'16px',fontWeight:'400',margin:'0 0 20px 0'}}>Pre-sale</p>
+            <div style={{width:'80%',height:'1px',background:'rgba(255,255,255,0.3)',margin:'0 auto 24px'}}></div>
+            <p style={{fontSize:'15px',fontWeight:'400',lineHeight:'1.6',margin:'0 auto',maxWidth:'420px'}}>
+              We Identify your needs and objectives so we can accurately price & scope what is needed to drive the most value, setting our onboarding team up for success.
+            </p>
           </div>
-          
-          <p style={{fontSize:'16px',fontWeight:'400',margin:'0 0 20px 0'}}>Pre-sale</p>
-          <div style={{width:'80%',height:'1px',background:'rgba(255,255,255,0.3)',margin:'0 auto 24px'}}></div>
-          <p style={{fontSize:'15px',fontWeight:'400',lineHeight:'1.6',margin:'0 auto',maxWidth:'420px'}}>
-            We Identify your needs and objectives so we can accurately price & scope what is needed to drive the most value, setting our onboarding team up for success.
-          </p>
+
+          {/* STEP 2 */}
+          <div style={{marginBottom:'60px'}}>
+            <div style={{width:'240px',height:'240px',margin:'0 auto 24px',position:'relative'}}>
+              <img src="/b2.jpg" alt="Onboarding" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',border:'2px solid #fff'}}/>
+            </div>
+            <p style={{fontSize:'16px',fontWeight:'400',margin:'0 0 20px 0'}}>Onboarding</p>
+            <div style={{width:'80%',height:'1px',background:'rgba(255,255,255,0.3)',margin:'0 auto 24px'}}></div>
+            <p style={{fontSize:'15px',fontWeight:'400',lineHeight:'1.6',margin:'0 auto',maxWidth:'420px'}}>
+              Kick-off call, account access, and strategy alignment with your dedicated team.
+            </p>
+          </div>
+
+          {/* STEP 3 */}
+          <div style={{marginBottom:'60px'}}>
+            <div style={{width:'240px',height:'240px',margin:'0 auto 24px',position:'relative'}}>
+              <img src="/b3.jpg" alt="Week 1-2" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',border:'2px solid #fff'}}/>
+            </div>
+            <p style={{fontSize:'16px',fontWeight:'400',margin:'0 0 20px 0'}}>Week 1-2</p>
+            <div style={{width:'80%',height:'1px',background:'rgba(255,255,255,0.3)',margin:'0 auto 24px'}}></div>
+            <p style={{fontSize:'15px',fontWeight:'400',lineHeight:'1.6',margin:'0 auto',maxWidth:'420px'}}>
+              Full audit completion, campaign builds, tracking setup, and launch preparation.
+            </p>
+          </div>
+
+          {/* STEP 4 */}
+          <div style={{marginBottom:'60px'}}>
+            <div style={{width:'240px',height:'240px',margin:'0 auto 24px',position:'relative'}}>
+              <img src="/b4.jpg" alt="Month 1" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',border:'2px solid #fff'}}/>
+            </div>
+            <p style={{fontSize:'16px',fontWeight:'400',margin:'0 0 20px 0'}}>Month 1</p>
+            <div style={{width:'80%',height:'1px',background:'rgba(255,255,255,0.3)',margin:'0 auto 24px'}}></div>
+            <p style={{fontSize:'15px',fontWeight:'400',lineHeight:'1.6',margin:'0 auto',maxWidth:'420px'}}>
+              Campaigns go live with aggressive testing and first round of data-driven optimizations.
+            </p>
+          </div>
+
+          {/* STEP 5 */}
+          <div style={{marginBottom:'60px'}}>
+            <div style={{width:'240px',height:'240px',margin:'0 auto 24px',position:'relative'}}>
+              <img src="/b5.jpg" alt="Month 2-3" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',border:'2px solid #fff'}}/>
+            </div>
+            <p style={{fontSize:'16px',fontWeight:'400',margin:'0 0 20px 0'}}>Month 2-3</p>
+            <div style={{width:'80%',height:'1px',background:'rgba(255,255,255,0.3)',margin:'0 auto 24px'}}></div>
+            <p style={{fontSize:'15px',fontWeight:'400',lineHeight:'1.6',margin:'0 auto',maxWidth:'420px'}}>
+              Scale winning campaigns, cut waste, and hit your growth targets ahead of schedule.
+            </p>
+          </div>
+
+          {/* STEP 6 */}
+          <div style={{marginBottom:'0'}}>
+            <div style={{width:'240px',height:'240px',margin:'0 auto 24px',position:'relative'}}>
+              <img src="/b6.jpg" alt="90 Days" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',border:'2px solid #fff'}}/>
+            </div>
+            <p style={{fontSize:'16px',fontWeight:'400',margin:'0 0 20px 0'}}>90 Days</p>
+            <div style={{width:'80%',height:'1px',background:'rgba(255,255,255,0.3)',margin:'0 auto 24px'}}></div>
+            <p style={{fontSize:'15px',fontWeight:'400',lineHeight:'1.6',margin:'0 auto',maxWidth:'420px'}}>
+              Measurable ROI guaranteed or you don't pay. That's our risk-free promise.
+            </p>
+          </div>
+
         </div>
+      </section>
+
+      {/* CONTACT SECTION - Add this so scrollTo works */}
+      <section id="contact-us" style={{background:'#fff',padding:'80px 20px',textAlign:'center'}}>
+        <h2 style={{fontSize:'36px',fontWeight:'900',marginBottom:'20px'}}>Contact Us</h2>
+        <p style={{fontSize:'18px'}}>Your form goes here</p>
       </section>
     </main>
   )
