@@ -185,7 +185,7 @@ export default function Home(){
         </div>
       </section>
 
-      {/* NEW CLIENT TIMELINE TO SUCCESS - B1 TO B6 ONLY */}
+      {/* NEW CLIENT TIMELINE TO SUCCESS - B1 TO B6 ONLY - NO GAPS */}
       <section style={{background:'#1A1A1A',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'80px 20px 100px',textAlign:'center',color:'#fff'}}>
         <div style={{maxWidth:'600px',margin:'0 auto'}}>
           <h2 style={{fontSize:'32px',fontWeight:'900',lineHeight:'1.15',letterSpacing:'0.5px',textTransform:'uppercase',margin:'0 0 20px 0'}}>
@@ -193,24 +193,12 @@ export default function Home(){
           </h2>
           <div style={{width:'50px',height:'2px',background:'#fff',margin:'0 auto 60px'}}></div>
           
-          <div style={{marginBottom:'40px'}}>
-            <img src="/b1.jpg" alt="Step 1" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
-          </div>
-          <div style={{marginBottom:'40px'}}>
-            <img src="/b2.jpg" alt="Step 2" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
-          </div>
-          <div style={{marginBottom:'40px'}}>
-            <img src="/b3.jpg" alt="Step 3" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
-          </div>
-          <div style={{marginBottom:'40px'}}>
-            <img src="/b4.jpg" alt="Step 4" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
-          </div>
-          <div style={{marginBottom:'40px'}}>
-            <img src="/b5.jpg" alt="Step 5" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
-          </div>
-          <div style={{marginBottom:'0'}}>
-            <img src="/b6.jpg" alt="Step 6" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
-          </div>
+          <img src="/b1.jpg" alt="Step 1" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
+          <img src="/b2.jpg" alt="Step 2" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
+          <img src="/b3.jpg" alt="Step 3" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
+          <img src="/b4.jpg" alt="Step 4" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
+          <img src="/b5.jpg" alt="Step 5" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
+          <img src="/b6.jpg" alt="Step 6" style={{width:'100%',maxWidth:'400px',height:'auto',margin:'0 auto',display:'block'}}/>
 
         </div>
       </section>
