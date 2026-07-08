@@ -184,6 +184,26 @@ export default function Home(){
           <img src="/team.jpg" style={{width:'100%',height:'auto',display:'block'}}/>
         </div>
       </section>
+
+      {/* NEW CLIENT TIMELINE TO SUCCESS */}
+      <section style={{background:'#1A1A1A',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'80px 20px 100px',textAlign:'center',color:'#fff'}}>
+        <div style={{maxWidth:'600px',margin:'0 auto'}}>
+          <h2 style={{fontSize:'32px',fontWeight:'900',lineHeight:'1.15',letterSpacing:'0.5px',textTransform:'uppercase',margin:'0 0 20px 0'}}>
+            NEW CLIENT TIMELINE<br/>TO SUCCESS
+          </h2>
+          <div style={{width:'50px',height:'2px',background:'#fff',margin:'0 auto 60px'}}></div>
+          
+          <div style={{width:'240px',height:'240px',margin:'0 auto 24px',position:'relative'}}>
+            <img src="/b1.jpg" alt="Initial Discovery" style={{width:'100%',height:'100%',objectFit:'cover',borderRadius:'50%',border:'2px solid #fff'}}/>
+          </div>
+          
+          <p style={{fontSize:'16px',fontWeight:'400',margin:'0 0 20px 0'}}>Pre-sale</p>
+          <div style={{width:'80%',height:'1px',background:'rgba(255,255,255,0.3)',margin:'0 auto 24px'}}></div>
+          <p style={{fontSize:'15px',fontWeight:'400',lineHeight:'1.6',margin:'0 auto',maxWidth:'420px'}}>
+            We Identify your needs and objectives so we can accurately price & scope what is needed to drive the most value, setting our onboarding team up for success.
+          </p>
+        </div>
+      </section>
     </main>
   )
 }
