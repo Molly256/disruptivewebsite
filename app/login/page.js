@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 export default function Login() {
   const router = useRouter()
   const [form, setForm] = useState({
-    phone: '+1',
+    phone: '+',
     password: ''
   })
   const [error, setError] = useState('')
@@ -13,13 +13,11 @@ export default function Login() {
   const handleSubmit = (e) => {
     e.preventDefault()
     
-    // Password must be 6 digits
-    if (!/^\d{6}$/.test(form.password)) {
-      setError('Password must be exactly 6 digits')
+    if (!form.password) {
+      setError('Password is required')
       return
     }
 
-    // Check registered creds
     const savedUser = JSON.parse(localStorage.getItem('user'))
     
     if (!savedUser) {
@@ -29,7 +27,7 @@ export default function Login() {
 
     if (form.phone === savedUser.phone && form.password === savedUser.password) {
       alert('Login successful!')
-      router.push('/') // go to home after login
+      router.push('/')
     } else {
       setError('Invalid phone or password')
     }
@@ -77,7 +75,7 @@ export default function Login() {
             type="tel"
             value={form.phone}
             onChange={(e) => setForm({...form, phone: e.target.value})}
-            placeholder="+1XXXXXXXXXX"
+            placeholder="+44XXXXXXXXXX"
             style={inputStyle}
           />
         </div>
@@ -88,9 +86,7 @@ export default function Login() {
             type="password"
             value={form.password}
             onChange={(e) => setForm({...form, password: e.target.value})}
-            placeholder="6 digits only"
-            maxLength="6"
-            inputMode="numeric"
+            placeholder="Enter your password"
             style={inputStyle}
           />
         </div>

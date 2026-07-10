@@ -6,7 +6,7 @@ export default function Registration() {
   const router = useRouter()
   const [form, setForm] = useState({
     username: '',
-    phone: '+1',
+    phone: '+',
     password: '',
     repeatPassword: '',
     email: ''
@@ -16,16 +16,19 @@ export default function Registration() {
   const validate = () => {
     const newErrors = {}
 
-    if (!/^[a-zA-Z0-9]{6}$/.test(form.username)) {
-      newErrors.username = 'Username must be exactly 6 letters or numbers'
+    // Username: no limit now, just required
+    if (!form.username.trim()) {
+      newErrors.username = 'Username is required'
     }
 
-    if (!/^\+1\d*$/.test(form.phone)) {
-      newErrors.phone = 'Phone must start with +1'
+    // Phone: worldwide format
+    if (!/^\+\d{7,15}$/.test(form.phone)) {
+      newErrors.phone = 'Phone must start with + and country code'
     }
 
-    if (!/^\d{6}$/.test(form.password)) {
-      newErrors.password = 'Password must be exactly 6 digits'
+    // Password: no limits now, just required
+    if (!form.password) {
+      newErrors.password = 'Password is required'
     }
 
     if (form.password !== form.repeatPassword) {
@@ -43,12 +46,11 @@ export default function Registration() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (validate()) {
-      // Save creds to localStorage for login check
       localStorage.setItem('user', JSON.stringify({
         phone: form.phone,
         password: form.password
       }))
-      router.push('/login') // go to login page
+      router.push('/login')
     }
   }
 
@@ -100,8 +102,7 @@ export default function Registration() {
             type="text"
             value={form.username}
             onChange={(e) => setForm({...form, username: e.target.value})}
-            placeholder="6 letters or numbers"
-            maxLength="6"
+            placeholder="Enter any username"
             style={inputStyle}
           />
           {errors.username && <div style={errorStyle}>{errors.username}</div>}
@@ -113,7 +114,7 @@ export default function Registration() {
             type="tel"
             value={form.phone}
             onChange={(e) => setForm({...form, phone: e.target.value})}
-            placeholder="+1XXXXXXXXXX"
+            placeholder="+44XXXXXXXXXX"
             style={inputStyle}
           />
           {errors.phone && <div style={errorStyle}>{errors.phone}</div>}
@@ -125,9 +126,7 @@ export default function Registration() {
             type="password"
             value={form.password}
             onChange={(e) => setForm({...form, password: e.target.value})}
-            placeholder="6 digits only"
-            maxLength="6"
-            inputMode="numeric"
+            placeholder="Enter any password"
             style={inputStyle}
           />
           {errors.password && <div style={errorStyle}>{errors.password}</div>}
@@ -139,9 +138,7 @@ export default function Registration() {
             type="password"
             value={form.repeatPassword}
             onChange={(e) => setForm({...form, repeatPassword: e.target.value})}
-            placeholder="6 digits only"
-            maxLength="6"
-            inputMode="numeric"
+            placeholder="Repeat password"
             style={inputStyle}
           />
           {errors.repeatPassword && <div style={errorStyle}>{errors.repeatPassword}</div>}
@@ -177,6 +174,16 @@ export default function Registration() {
         >
           REGISTER
         </button>
+
+        <div style={{ textAlign: 'center', marginTop: '20px' }}>
+          <span style={{ color: '#666' }}>Already have an account? </span>
+          <span 
+            onClick={() => router.push('/login')} 
+            style={{ color: '#cc0000', cursor: 'pointer', fontWeight: '500' }}
+          >
+            Login
+          </span>
+        </div>
       </form>
     </div>
   )
