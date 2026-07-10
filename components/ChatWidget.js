@@ -5,8 +5,9 @@ import { usePathname } from 'next/navigation'
 export default function ChatWidget() {
   const pathname = usePathname()
 
-  // Don't render on home page
-  if (pathname === '/') return null
+  // Only show on login and registration pages
+  const allowedPaths = ['/login', '/registration']
+  if (!allowedPaths.includes(pathname)) return null
 
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([])
