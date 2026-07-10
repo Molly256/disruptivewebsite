@@ -205,7 +205,7 @@ export default function Registration() {
   const router = useRouter()
   const [form, setForm] = useState({
     username: '',
-    countryCode: '+1',
+    selectedCountryName: 'United States', // store name now
     phone: '',
     password: '',
     repeatPassword: '',
@@ -225,7 +225,7 @@ export default function Registration() {
       newErrors.username = 'Username is required'
     }
 
-    if (!form.phone ||!/^\d{7,15}$/.test(form.phone)) {
+    if (!form.phone || !/^\d{7,15}$/.test(form.phone)) {
       newErrors.phone = 'Enter valid phone number'
     }
 
@@ -233,7 +233,7 @@ export default function Registration() {
       newErrors.password = 'Password is required'
     }
 
-    if (form.password!== form.repeatPassword) {
+    if (form.password !== form.repeatPassword) {
       newErrors.repeatPassword = 'Passwords do not match'
     }
 
@@ -252,7 +252,8 @@ export default function Registration() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (validate()) {
-      const fullPhone = form.countryCode + form.phone
+      const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
+      const fullPhone = selectedCountry.code + form.phone
       localStorage.setItem('user', JSON.stringify({
         phone: fullPhone,
         password: form.password,
@@ -275,7 +276,7 @@ export default function Registration() {
   }
 
   const selectBoxStyle = {
-   ...inputStyle,
+    ...inputStyle,
     cursor: 'pointer',
     background: '#fff',
     display: 'flex',
@@ -289,7 +290,7 @@ export default function Registration() {
     marginBottom: '16px'
   }
 
-  const selectedCountry = countries.find(c => c.code === form.countryCode) || countries[0]
+  const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
 
   const filteredCountries = countries.filter(c =>
     c.name.toLowerCase().includes(searchCountry.toLowerCase()) ||
@@ -340,7 +341,7 @@ export default function Registration() {
             <div
               onClick={() => setShowCountries(!showCountries)}
               style={{
-               ...selectBoxStyle,
+                ...selectBoxStyle,
                 width: '120px',
                 marginBottom: 0
               }}
@@ -354,7 +355,7 @@ export default function Registration() {
               onChange={(e) => setForm({...form, phone: e.target.value})}
               placeholder="XXXXXXXXXX"
               inputMode="numeric"
-              style={{...inputStyle, marginBottom: 0, flex: 1 }}
+              style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
             />
           </div>
           {showCountries && (
@@ -388,9 +389,9 @@ export default function Registration() {
               />
               {filteredCountries.map((c, idx) => (
                 <div
-                  key={`${c.code}-${c.name}-${idx}`}
+                  key={`${c.name}-${c.code}-${idx}`}
                   onClick={() => {
-                    setForm({...form, countryCode: c.code})
+                    setForm({...form, selectedCountryName: c.name})
                     setShowCountries(false)
                     setSearchCountry('')
                   }}
@@ -453,7 +454,7 @@ export default function Registration() {
             onClick={() => setShowGender(!showGender)}
             style={selectBoxStyle}
           >
-            <span style={{ color: form.gender? '#000' : '#999' }}>
+            <span style={{ color: form.gender ? '#000' : '#999' }}>
               {form.gender || 'Select gender'}
             </span>
             <span>▼</span>
@@ -480,7 +481,7 @@ export default function Registration() {
                   style={{
                     padding: '12px 14px',
                     cursor: 'pointer',
-                    borderBottom: g === 'Male'? '1px solid #eee' : 'none'
+                    borderBottom: g === 'Male' ? '1px solid #eee' : 'none'
                   }}
                   onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
                   onMouseLeave={(e) => e.target.style.background = '#fff'}

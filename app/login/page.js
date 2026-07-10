@@ -204,7 +204,7 @@ const countries = [
 export default function Login() {
   const router = useRouter()
   const [form, setForm] = useState({
-    countryCode: '+1',
+    selectedCountryName: 'United States', // use name now, not code
     phone: '',
     password: ''
   })
@@ -227,7 +227,8 @@ export default function Login() {
       return
     }
 
-    const fullPhone = form.countryCode + form.phone
+    const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
+    const fullPhone = selectedCountry.code + form.phone
 
     if (fullPhone === savedUser.phone && form.password === savedUser.password) {
       alert('Login successful!')
@@ -262,7 +263,7 @@ export default function Login() {
     justifyContent: 'space-between'
   }
 
-  const selectedCountry = countries.find(c => c.code === form.countryCode) || countries[0]
+  const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
 
   const filteredCountries = countries.filter(c =>
     c.name.toLowerCase().includes(searchCountry.toLowerCase()) ||
@@ -301,7 +302,7 @@ export default function Login() {
             <div
               onClick={() => setShowCountries(!showCountries)}
               style={{
-               ...selectBoxStyle,
+                ...selectBoxStyle,
                 width: '120px',
                 marginBottom: 0
               }}
@@ -315,7 +316,7 @@ export default function Login() {
               onChange={(e) => setForm({...form, phone: e.target.value})}
               placeholder="XXXXXXXXXX"
               inputMode="numeric"
-              style={{...inputStyle, marginBottom: 0, flex: 1 }}
+              style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
             />
           </div>
           {showCountries && (
@@ -349,9 +350,9 @@ export default function Login() {
               />
               {filteredCountries.map((c, idx) => (
                 <div
-                  key={`${c.code}-${c.name}-${idx}`}
+                  key={`${c.name}-${c.code}-${idx}`}
                   onClick={() => {
-                    setForm({...form, countryCode: c.code})
+                    setForm({...form, selectedCountryName: c.name})
                     setShowCountries(false)
                     setSearchCountry('')
                   }}
