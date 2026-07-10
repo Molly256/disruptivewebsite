@@ -1,10 +1,12 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
-  const headerHeight = 84 // Fixed 84px
+  const router = useRouter()
+  const headerHeight = 84
 
   const toggleMenu = (menu) => {
     setActiveMenu(activeMenu === menu? null : menu)
@@ -13,6 +15,11 @@ export default function Sidebar() {
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
     setMenuOpen(false)
+  }
+
+  const goToRegistration = () => {
+    setMenuOpen(false)
+    router.push('/registration')
   }
 
   const menuData = {
@@ -49,7 +56,7 @@ export default function Sidebar() {
           <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
           <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span className="dropdown-arrow" /></div>
           <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span className="dropdown-arrow" /></div>
-          <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>GET STARTED</button>
+          <button className="desktop-talk-btn" onClick={goToRegistration} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>GET STARTED</button>
         </nav>
 
         <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '36px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
@@ -112,7 +119,7 @@ export default function Sidebar() {
           ))}
 
           <button
-            onClick={() => scrollTo('contact-us')}
+            onClick={goToRegistration}
             style={{
               background: '#cc0000',
               color: '#fff',
@@ -129,6 +136,73 @@ export default function Sidebar() {
           </button>
         </div>
       )}
+
+      {/* FLOATING DRAGGABLE GET STARTED BUTTON */}
+      <div
+        onClick={goToRegistration}
+        style={{
+          position:'fixed',
+          bottom:'20px',
+          right:'20px',
+          zIndex:1000,
+          background:'#e60000',
+          color:'#000',
+          fontWeight:'300',
+          fontSize:'14px',
+          letterSpacing:'1px',
+          padding:'16px 24px',
+          borderRadius:'50px',
+          cursor:'grab',
+          boxShadow:'0 4px 12px rgba(0,0,0,0.3)',
+          userSelect:'none',
+          touchAction:'none'
+        }}
+        onMouseDown={(e)=>{
+          const el = e.currentTarget;
+          el.style.cursor='grabbing';
+          const shiftX = e.clientX - el.getBoundingClientRect().left;
+          const shiftY = e.clientY - el.getBoundingClientRect().top;
+
+          const moveAt = (pageX, pageY) => {
+            el.style.left = pageX - shiftX + 'px';
+            el.style.top = pageY - shiftY + 'px';
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+          }
+
+          const onMouseMove = (e) => moveAt(e.clientX, e.clientY);
+          document.addEventListener('mousemove', onMouseMove);
+
+          el.onmouseup = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            el.onmouseup = null;
+            el.style.cursor='grab';
+          };
+        }}
+        onTouchStart={(e)=>{
+          const el = e.currentTarget;
+          const touch = e.touches[0];
+          const shiftX = touch.clientX - el.getBoundingClientRect().left;
+          const shiftY = touch.clientY - el.getBoundingClientRect().top;
+
+          const moveAt = (pageX, pageY) => {
+            el.style.left = pageX - shiftX + 'px';
+            el.style.top = pageY - shiftY + 'px';
+            el.style.right = 'auto';
+            el.style.bottom = 'auto';
+          }
+
+          const onTouchMove = (e) => moveAt(e.touches[0].clientX, e.touches[0].clientY);
+          document.addEventListener('touchmove', onTouchMove);
+
+          el.ontouchend = () => {
+            document.removeEventListener('touchmove', onTouchMove);
+            el.ontouchend = null;
+          };
+        }}
+      >
+        GET STARTED
+      </div>
     </>
   )
 }
