@@ -119,6 +119,12 @@ export default function Home(){
 </section>{/* HAND IMAGE - NO BG */}
 <section style={{background:'#fff',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'0'}}>
   <img src="/hand.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
+</section>{/* D1-D4 IMAGES STACKED */}
+<section style={{background:'#fff',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'0'}}>
+  <img src="/d1.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
+  <img src="/d2.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
+  <img src="/d3.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
+  <img src="/d4.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
 </section>                                                                                                                                       
     </main>
   )
