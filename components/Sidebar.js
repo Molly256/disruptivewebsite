@@ -56,7 +56,7 @@ export default function Sidebar() {
           <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
           <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span className="dropdown-arrow" /></div>
           <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span className="dropdown-arrow" /></div>
-          <button className="desktop-talk-btn" onClick={goToRegistration} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>GET STARTED</button>
+          <button className="desktop-talk-btn" onClick={goToRegistration} style={{ background: '#cc0000', color: '#000', fontWeight: '500', border: 'none' }}>GET STARTED</button>
         </nav>
 
         <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '36px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
@@ -122,10 +122,10 @@ export default function Sidebar() {
             onClick={goToRegistration}
             style={{
               background: '#cc0000',
-              color: '#fff',
+              color: '#000',
               border: 'none',
               padding: '16px 32px',
-              fontWeight: '700',
+              fontWeight: '500',
               fontSize: '16px',
               letterSpacing: '1px',
               marginTop: '30px',
@@ -147,7 +147,7 @@ export default function Sidebar() {
           zIndex:1000,
           background:'#e60000',
           color:'#000',
-          fontWeight:'300',
+          fontWeight:'500',
           fontSize:'14px',
           letterSpacing:'1px',
           padding:'16px 24px',
