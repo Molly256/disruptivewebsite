@@ -84,7 +84,42 @@ export default function Home(){
       CHRIS VITALE, VP, PHONE NINJAS
     </p>
   </div>
-</section>                                                                                                                                                             
+</section>{/* ABOUT DISRUPTIVE - BLACK SECTION */}
+<section style={{background:'#000',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'80px 20px'}}>
+  <div style={{maxWidth:'768px',margin:'0 auto'}}>
+    <h2 style={{color:'#fff',fontSize:'32px',fontWeight:'700',lineHeight:'1.2',margin:'0 0 20px 0'}}>
+      About Disruptive Advertising: Authenticity Wins™
+    </h2>
+    <div style={{width:'60px',height:'3px',background:'#d40000',marginBottom:'32px'}}></div>
+    
+    <p style={{color:'#fff',fontSize:'16px',fontWeight:'400',lineHeight:'1.7',margin:'0 0 24px 0'}}>
+      At Disruptive Advertising, we envision a world where only authentic brands and marketers win.
+    </p>
+    
+    <p style={{color:'#fff',fontSize:'16px',fontWeight:'400',lineHeight:'1.7',margin:'0 0 24px 0'}}>
+      We elevate the way business is done by empowering marketers to remember and live in alignment with who they are and pairing them with win-win-win minded people and brands they believe in.
+    </p>
+    
+    <p style={{color:'#fff',fontSize:'16px',fontWeight:'400',lineHeight:'1.7',margin:'0 0 24px 0'}}>
+      Disruptive Advertising is the best performance marketing agency for authentic brands and marketers. We align your business goals to the right marketing strategy and provide the people, tools and technology to deliver breakthrough results. In addition, we give you access to exclusive relationships, content and community.
+    </p>
+    
+    <p style={{color:'#fff',fontSize:'16px',fontWeight:'400',lineHeight:'1.7',margin:'0 0 40px 0'}}>
+      With over 10 years of award-winning success and hundreds of five-star reviews from satisfied clients, we guarantee a strategy that gives you confidence and impactful results, without a long-term contract. If we don’t deliver, you don’t pay. At Disruptive, you win with a team you want to work with.
+    </p>
+
+    <button onClick={()=>scrollTo('contact-us')} style={{width:'100%',background:'linear-gradient(180deg, #e60000 0%, #b30000 100%)',color:'#fff',fontWeight:'700',padding:'18px 24px',border:'none',fontSize:'16px',letterSpacing:'1px',cursor:'pointer',textTransform:'uppercase',textAlign:'left',display:'flex',flexDirection:'column',alignItems:'flex-start'}}>
+      <span>GET YOUR FREE MARKETING AUDIT</span>
+      <span style={{fontSize:'20px',fontWeight:'400',lineHeight:'1'}}>&gt;</span>
+    </button>
+  </div>
+</section>{/* SHOW IMAGE */}
+<section style={{background:'#000',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'0'}}>
+  <img src="/show.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
+</section>{/* HAND IMAGE - NO BG */}
+<section style={{background:'#fff',width:'100vw',marginLeft:'calc(-50vw + 50%)',padding:'0'}}>
+  <img src="/hand.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
+</section>                                                                                                                                       
     </main>
   )
 }
