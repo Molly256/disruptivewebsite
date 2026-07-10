@@ -49,7 +49,7 @@ export default function Sidebar() {
           <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
           <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span className="dropdown-arrow" /></div>
           <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span className="dropdown-arrow" /></div>
-          <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>LET'S TALK</button>
+          <button className="desktop-talk-btn" onClick={() => scrollTo('contact-us')} style={{ background: '#cc0000', color: '#fff', border: 'none' }}>GET STARTED</button>
         </nav>
 
         <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '36px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
