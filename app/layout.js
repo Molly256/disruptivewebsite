@@ -1,13 +1,12 @@
 import './globals.css'
-import Sidebar from '../components/Sidebar'
-import ChatWidget from '../components/ChatWidget'
+import ClientWrapper from '../components/ClientWrapper'
 
 export const metadata = {
   title: 'Disruptive - Digital Marketing That Actually Works',
   description: 'Paid Search, Paid Social, SEO, Amazon & more. We grow brands that scale.',
   icons: {
     icon: '/favicon.png',
-    apple: '/favicon.png', // for iOS home screen
+    apple: '/favicon.png',
   },
 }
 
@@ -15,11 +14,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Sidebar />
-        <main className="main-content">
+        {/* The ClientWrapper safely checks layout path constraints */}
+        <ClientWrapper>
           {children}
-        </main>
-        <ChatWidget />
+        </ClientWrapper>
       </body>
     </html>
   )
