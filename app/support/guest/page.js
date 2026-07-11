@@ -79,7 +79,8 @@ export default function GuestSupportChat() {
             border: 'none',
             color: '#cc0000',
             fontSize: '24px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            padding: 0
           }}
         >
           ←
@@ -153,7 +154,8 @@ export default function GuestSupportChat() {
             height: '44px',
             color: '#000',
             cursor: 'pointer',
-            fontSize: '18px'
+            fontSize: '18px',
+            flexShrink: 0
           }}
         >
           →
