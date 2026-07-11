@@ -13,9 +13,8 @@ export default function Sidebar() {
   const hideHeaderRoutes = ['/registration', '/login']
   const shouldHideHeader = hideHeaderRoutes.includes(pathname)
 
-  // SIMPLIFIED HEADER: dashboard + icon pages
-  const simplifiedHeaderRoutes = ['/dashboard', '/vip', '/activity', '/withdrawal', '/deposit', '/records']
-  const useSimplifiedHeader = simplifiedHeaderRoutes.includes(pathname)
+  // SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME + AUTH
+  const useSimplifiedHeader = pathname!== '/' &&!hideHeaderRoutes.includes(pathname)
 
   // GET STARTED only on home page
   const showGetStarted = pathname === '/'
@@ -64,15 +63,15 @@ export default function Sidebar() {
       }}>
         <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: `${headerHeight}px`, width: 'auto', display: 'block' }} />
 
-        {/* SIMPLIFIED HEADER: DASHBOARD + ICON PAGES */}
+        {/* SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME */}
         {useSimplifiedHeader? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               onClick={() => router.push('/contact')}
               style={{
-                background: '#cc0000', // red
-                color: '#000', // black text
-                fontWeight: '600', // medium bold
+                background: '#cc0000',
+                color: '#000',
+                fontWeight: '600',
                 fontSize: '16px',
                 padding: '12px 24px',
                 border: 'none',
