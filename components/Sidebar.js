@@ -9,9 +9,13 @@ export default function Sidebar() {
   const pathname = usePathname()
   const headerHeight = 84
 
-  // HIDE HEADER ON THESE ROUTES
-  const hideHeaderRoutes = ['/registration', '/login', '/dashboard']
+  // HIDE HEADER ONLY ON AUTH PAGES
+  const hideHeaderRoutes = ['/registration', '/login']
   const shouldHideHeader = hideHeaderRoutes.includes(pathname)
+
+  // SIMPLIFIED HEADER: dashboard + icon pages
+  const simplifiedHeaderRoutes = ['/dashboard', '/vip', '/activity', '/withdrawal', '/deposit', '/records']
+  const useSimplifiedHeader = simplifiedHeaderRoutes.includes(pathname)
 
   // GET STARTED only on home page
   const showGetStarted = pathname === '/'
@@ -38,7 +42,6 @@ export default function Sidebar() {
     'RESOURCES': ['General','Blog','Partners','Webinars/Trainings','Reviews','Contact Us']
   }
 
-  // Return null to hide entire header on auth/dashboard pages
   if (shouldHideHeader) return null
 
   return (
@@ -61,23 +64,63 @@ export default function Sidebar() {
       }}>
         <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: `${headerHeight}px`, width: 'auto', display: 'block' }} />
 
-        <nav className="desktop-nav">
-          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHAT WE DO<span className="dropdown-arrow" /></div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE HELP<span className="dropdown-arrow" /></div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span className="dropdown-arrow" /></div>
-          <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span className="dropdown-arrow" /></div>
-          {showGetStarted && (
-            <button className="desktop-talk-btn" onClick={goToRegistration} style={{ background: '#cc0000', color: '#000', fontWeight: '500', border: 'none' }}>GET STARTED</button>
-          )}
-        </nav>
+        {/* SIMPLIFIED HEADER: DASHBOARD + ICON PAGES */}
+        {useSimplifiedHeader? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => router.push('/contact')}
+              style={{
+                background: '#cc0000', // red
+                color: '#000', // black text
+                fontWeight: '600', // medium bold
+                fontSize: '16px',
+                padding: '12px 24px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Contact
+            </button>
+            <div
+              onClick={() => router.push('/profile')}
+              style={{
+                width: '40px',
+                height: '40px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* FULL HEADER: HOME PAGE ONLY */}
+            <nav className="desktop-nav">
+              <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHAT WE DO<span className="dropdown-arrow" /></div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE HELP<span className="dropdown-arrow" /></div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span className="dropdown-arrow" /></div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span className="dropdown-arrow" /></div>
+              {showGetStarted && (
+                <button className="desktop-talk-btn" onClick={goToRegistration} style={{ background: '#cc0000', color: '#000', fontWeight: '500', border: 'none' }}>GET STARTED</button>
+              )}
+            </nav>
 
-        <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '36px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
-          {menuOpen? '✕' : '☰'}
-        </button>
+            <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '36px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
+              {menuOpen? '✕' : '☰'}
+            </button>
+          </>
+        )}
       </header>
 
-      {menuOpen && (
+      {/* MOBILE MENU - ONLY FOR HOME PAGE */}
+      {!useSimplifiedHeader && menuOpen && (
         <div className="mobile-menu-overlay" style={{
           position: 'fixed',
           top: `${headerHeight}px`,
