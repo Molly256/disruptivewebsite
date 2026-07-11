@@ -15,34 +15,29 @@ export default function Sidebar() {
     setMounted(true)
     const checkAuth = () => {
       if (typeof window!== 'undefined') {
-        setIsLoggedIn(!!localStorage.getItem('token') ||!!localStorage.getItem('user'))
+        const token = localStorage.getItem('token')
+        const user = localStorage.getItem('user')
+        setIsLoggedIn(!!token ||!!user)
       }
     }
     checkAuth()
   }, [pathname])
 
-  // Prevent flash of wrong header state
   if (!mounted) return null
 
-  // /support/guest ALWAYS hides header
-  const alwaysHideRoutes = ['/support/guest']
+  // Strip trailing slash: /login/ becomes /login
+  const path = pathname.replace(/\/$/, '') || '/'
 
-  // Auth pages: hide ONLY when logged OUT
-  const authRoutes = ['/registration', '/register', '/login']
+  // /support/guest ALWAYS hides - no exceptions
+  const alwaysHide = path === '/support/guest'
 
-  // /support and /support/chat: hide when logged OUT, show when logged IN
-  const supportRoutes = ['/support', '/support/chat']
+  // These hide ONLY when logged OUT. When logged IN, show header with logo+Contact+Profile
+  const guestOnly = ['/registration', '/login', '/support', '/support/chat'].includes(path)
 
-  const shouldHideHeader =
-    alwaysHideRoutes.includes(pathname) ||
-    (!isLoggedIn && authRoutes.includes(pathname)) ||
-    (!isLoggedIn && supportRoutes.includes(pathname))
+  const shouldHideHeader = alwaysHide || (!isLoggedIn && guestOnly)
 
-  // SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME + HIDDEN ROUTES
-  const useSimplifiedHeader = pathname!== '/' &&!shouldHideHeader
-
-  // GET STARTED only on home page
-  const showGetStarted = pathname === '/'
+  const useSimplifiedHeader = path!== '/' &&!shouldHideHeader
+  const showGetStarted = path === '/'
 
   const toggleMenu = (menu) => {
     setActiveMenu(activeMenu === menu? null : menu)
@@ -86,7 +81,6 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* TOP BAR - 84PX EXACT */}
       <header className="topbar" style={{
         background: '#fff',
         display: 'flex',
@@ -104,7 +98,6 @@ export default function Sidebar() {
       }}>
         <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: `${headerHeight}px`, width: 'auto', display: 'block' }} />
 
-        {/* SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME */}
         {useSimplifiedHeader? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', overflow: 'visible' }}>
             <button
@@ -145,7 +138,6 @@ export default function Sidebar() {
           </div>
         ) : (
           <>
-            {/* FULL HEADER: HOME PAGE ONLY */}
             <nav className="desktop-nav">
               <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHAT WE DO<span className="dropdown-arrow" /></div>
               <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE HELP<span className="dropdown-arrow" /></div>
@@ -164,7 +156,6 @@ export default function Sidebar() {
         )}
       </header>
 
-      {/* MOBILE MENU - ONLY FOR HOME PAGE */}
       {!useSimplifiedHeader && menuOpen && (
         <div className="mobile-menu-overlay" style={{
           position: 'fixed',
@@ -240,7 +231,6 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* FLOATING DRAGGABLE GET STARTED BUTTON */}
       {showGetStarted && (
         <div
           onClick={goToRegistration}
