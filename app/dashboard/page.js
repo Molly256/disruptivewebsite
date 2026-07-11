@@ -1,8 +1,17 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 
 export default function Dashboard() {
   const router = useRouter()
+  const [isDesktop, setIsDesktop] = useState(false)
+
+  useEffect(() => {
+    const checkScreen = () => setIsDesktop(window.innerWidth >= 768)
+    checkScreen()
+    window.addEventListener('resize', checkScreen)
+    return () => window.removeEventListener('resize', checkScreen)
+  }, [])
 
   const quickClicks = [
     { name: 'Event', icon: 'calendar' },
@@ -63,10 +72,10 @@ export default function Dashboard() {
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px' }}>
-      {/* Hero Video Section - Full centered, half height */}
+      {/* Hero Video Section - 50vh mobile, 100vh desktop */}
       <div style={{
         position: 'relative',
-        height: '50vh',
+        height: isDesktop? '100vh' : '50vh',
         width: '100%',
         display: 'flex',
         alignItems: 'center',
