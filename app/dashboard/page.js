@@ -148,7 +148,11 @@ export default function Dashboard() {
           {quickClicks.map((item) => (
             <button
               key={item.name}
-              onClick={() => console.log(item.name)}
+              onClick={() => {
+                if (item.name === 'Event') router.push('/event')
+                else if (item.name === 'VIP Level') router.push('/vip')
+                else console.log(item.name)
+              }}
               style={{
                 background: '#cc0000',
                 border: 'none',
