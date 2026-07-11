@@ -54,7 +54,7 @@ export default function Dashboard() {
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5">
           <circle cx="12" cy="12" r="10"/>
           <line x1="2" y1="12" x2="22" y2="12"/>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 0 0 1-4-10 15.3 0 0 1 4-10z"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 0 0 1-4 10 15.3 0 0 1-4-10 15.3 0 0 1 4-10z"/>
         </svg>
       )
     }
@@ -63,8 +63,16 @@ export default function Dashboard() {
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px' }}>
-      {/* Hero Video Section */}
-      <div style={{ position: 'relative', height: '280px', overflow: 'hidden' }}>
+      {/* Hero Video Section - Full centered, half height */}
+      <div style={{
+        position: 'relative',
+        height: '50vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#000'
+      }}>
         <video
           autoPlay
           loop
@@ -94,13 +102,13 @@ export default function Dashboard() {
         <button
           onClick={() => router.push('/work')}
           style={{
-            background: '#cc0000',
-            color: '#000',
+            background: '#000',
+            color: '#fff',
             border: 'none',
             borderRadius: '25px',
             padding: '12px 24px',
             fontSize: '14px',
-            fontWeight: '400',
+            fontWeight: '300',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
@@ -157,13 +165,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Nav - Hot Red */}
+      {/* Bottom Nav - Black background */}
       <div style={{
         position: 'fixed',
         bottom: 0,
         left: 0,
         right: 0,
-        background: '#cc0000',
+        background: '#000',
         display: 'flex',
         justifyContent: 'space-around',
         alignItems: 'center',
