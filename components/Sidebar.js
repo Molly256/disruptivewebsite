@@ -11,7 +11,6 @@ export default function Sidebar() {
   const headerHeight = 84
 
   useEffect(() => {
-    // Check auth on route change
     const checkAuth = () => {
       if (typeof window!== 'undefined') {
         setIsLoggedIn(!!localStorage.getItem('token') ||!!localStorage.getItem('user'))
@@ -21,7 +20,7 @@ export default function Sidebar() {
   }, [pathname])
 
   // HIDE HEADER COMPLETELY ON THESE ROUTES
-  const hideHeaderRoutes = ['/registration', '/login', '/support/guest']
+  const hideHeaderRoutes = ['/registration', '/register', '/login', '/support', '/support/guest', '/support/chat']
   const shouldHideHeader = hideHeaderRoutes.includes(pathname)
 
   // SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME + HIDDEN ROUTES
@@ -92,7 +91,7 @@ export default function Sidebar() {
 
         {/* SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME */}
         {useSimplifiedHeader? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', overflow: 'visible' }}>
             <button
               onClick={handleContactClick}
               style={{
@@ -112,15 +111,16 @@ export default function Sidebar() {
               <div
                 onClick={handleProfileClick}
                 style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '44px',
+                  height: '44px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  flexShrink: 0
                 }}
               >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
                   <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
               </div>
