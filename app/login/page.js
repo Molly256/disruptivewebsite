@@ -232,7 +232,7 @@ export default function Login() {
 
     if (fullPhone === savedUser.phone && form.password === savedUser.password) {
       alert('Login successful!')
-      router.push('/')
+      router.push('/dashboard')
     } else {
       setError('Invalid phone or password')
     }
