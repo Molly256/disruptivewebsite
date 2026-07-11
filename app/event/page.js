@@ -360,7 +360,7 @@ export default function EventPage() {
                 Daily mission Requirement:
               </div>
               <div style={{ fontSize: '10px', color: '#cc0000', fontWeight: '300', lineHeight: '1.4' }}>
-                Participants must complete two (2) sets of missions per day to qualify for guaranteed income.
+                Participants must complete two (3) sets of missions per day to qualify for guaranteed income.
               </div>
             </div>
           </div>

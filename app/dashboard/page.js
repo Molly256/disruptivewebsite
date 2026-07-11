@@ -55,7 +55,7 @@ export default function Dashboard() {
       ),
       shield: (
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10z"/>
           <polyline points="9 11 12 14 16 10"/>
         </svg>
       ),
@@ -72,7 +72,7 @@ export default function Dashboard() {
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px' }}>
-      {/* Hero Video Section - 50vh mobile, 100vh desktop */}
+      {/* Work Video Section - 50vh mobile, 100vh desktop */}
       <div style={{
         position: 'relative',
         height: isDesktop? '100vh' : '50vh',
@@ -93,7 +93,7 @@ export default function Dashboard() {
             objectFit: 'cover'
           }}
         >
-          <source src="videos/hero-video.mp4" type="video/mp4" />
+          <source src="videos/work-video.mp4" type="video/mp4" />
         </video>
       </div>
 
@@ -199,24 +199,39 @@ export default function Dashboard() {
         </div>
 
         <div style={{
-          width: '56px',
-          height: '56px',
-          background: '#cc0000',
-          borderRadius: '50%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          marginTop: '-28px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          cursor: 'pointer',
-          border: '3px solid #fff'
+          gap: '4px'
         }}>
           <div style={{
-            width: '40px',
-            height: '40px',
+            width: '56px',
+            height: '56px',
+            background: '#cc0000',
             borderRadius: '50%',
-            background: 'repeating-radial-gradient(circle at center, #000 0px, #000 1px, #cc0000 1px, #cc0000 3px)'
-          }}/>
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '-28px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+            cursor: 'pointer',
+            border: '3px solid #fff'
+          }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: 'repeating-radial-gradient(circle at center, #000 0px, #000 1px, #cc0000 1px, #cc0000 3px)'
+            }}/>
+          </div>
+          <div style={{
+            fontSize: '10px',
+            color: '#fff',
+            fontWeight: '300',
+            textShadow: '0 0 8px rgba(255,255,255,0.8), 0 0 12px rgba(255,255,255,0.5)'
+          }}>
+            start
+          </div>
         </div>
 
         <div style={{ textAlign: 'center', cursor: 'pointer' }}>
