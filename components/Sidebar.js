@@ -67,7 +67,7 @@ export default function Sidebar() {
         {useSimplifiedHeader? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
-              onClick={() => router.push('/contact')}
+              onClick={() => router.push('/support/chat')}
               style={{
                 background: '#cc0000',
                 color: '#000',

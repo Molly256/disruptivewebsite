@@ -1,75 +1,38 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 
 export default function ChatWidget() {
+  const router = useRouter()
   const pathname = usePathname()
-
-  // Only show on login, registration, and dashboard pages
-  const allowedPaths = ['/login', '/registration', '/dashboard']
-  if (!allowedPaths.includes(pathname)) return null
-
-  const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState([])
-  const [input, setInput] = useState('')
+  const [unreadCount, setUnreadCount] = useState(0)
   const [pos, setPos] = useState({ x: 20, y: 20 })
   const [dragging, setDragging] = useState(false)
   const [hasMoved, setHasMoved] = useState(false)
-  const fileInputRef = useRef(null)
-  const messagesEndRef = useRef(null)
   const dragStartRef = useRef({ x: 0, y: 0 })
 
+  // Hide widget on auth pages + chat page itself
+  const hideWidgetRoutes = ['/registration', '/login', '/support/chat']
+  const shouldHide = hideWidgetRoutes.includes(pathname)
+
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('chatMessages') || '[]')
-    const savedPos = JSON.parse(localStorage.getItem('chatPos') || '{ "x": 20, "y": 20 }')
-    setMessages(saved)
+    const savedPos = JSON.parse(localStorage.getItem('chatWidgetPos') || '{ "x": 20, "y": 20 }')
     setPos(savedPos)
   }, [])
 
+  // Check for unread messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  const saveMessages = (newMessages) => {
-    setMessages(newMessages)
-    localStorage.setItem('chatMessages', JSON.stringify(newMessages))
-  }
-
-  const sendMessage = (text, image = null) => {
-    if (!text.trim() &&!image) return
-    const newMsg = {
-      id: Date.now(),
-      text,
-      image,
-      sender: 'user',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    const checkUnread = () => {
+      const history = JSON.parse(localStorage.getItem('chatHistory') || '[]')
+      const lastRead = localStorage.getItem('chatLastRead') || '0'
+      const unread = history.filter(msg => msg.timestamp > Number(lastRead) && msg.sender === 'support').length
+      setUnreadCount(unread)
     }
-    const updated = [...messages, newMsg]
-    saveMessages(updated)
-    setInput('')
 
-    setTimeout(() => {
-      const reply = {
-        id: Date.now() + 1,
-        text: 'Thanks for reaching out! Our team will reply shortly.',
-        image: null,
-        sender: 'support',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }
-      saveMessages([...updated, reply])
-    }, 1500)
-  }
-
-  const handleFile = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      sendMessage('', ev.target.result)
-    }
-    reader.readAsDataURL(file)
-    e.target.value = ''
-  }
+    checkUnread()
+    window.addEventListener('storage', checkUnread)
+    return () => window.removeEventListener('storage', checkUnread)
+  }, [pathname])
 
   const startDrag = (clientX, clientY) => {
     setDragging(true)
@@ -97,7 +60,7 @@ export default function ChatWidget() {
   const endDrag = () => {
     if (dragging) {
       setDragging(false)
-      localStorage.setItem('chatPos', JSON.stringify(pos))
+      localStorage.setItem('chatWidgetPos', JSON.stringify(pos))
     }
   }
 
@@ -133,165 +96,60 @@ export default function ChatWidget() {
   const handleTouchEnd = () => endDrag()
 
   const handleClick = () => {
-    if (!hasMoved) setOpen(!open)
+    if (!hasMoved) {
+      router.push('/support/chat')
+    }
   }
 
+  if (shouldHide) return null
+
   return (
-    <>
-      <div
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onClick={handleClick}
-        style={{
-          position: 'fixed',
-          bottom: `${pos.y}px`,
-          right: `${pos.x}px`,
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          background: '#cc0000',
+    <div
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onClick={handleClick}
+      style={{
+        position: 'fixed',
+        bottom: `${pos.y}px`,
+        right: `${pos.x}px`,
+        width: '60px',
+        height: '60px',
+        borderRadius: '50%',
+        background: '#cc0000',
+        color: '#000',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '28px',
+        cursor: dragging? 'grabbing' : 'pointer',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+        zIndex: 9999,
+        userSelect: 'none',
+        touchAction: 'none'
+      }}
+    >
+      🎧
+      {unreadCount > 0 && (
+        <div style={{
+          position: 'absolute',
+          top: '-4px',
+          right: '-4px',
+          background: '#000',
           color: '#fff',
+          borderRadius: '50%',
+          width: '20px',
+          height: '20px',
+          fontSize: '12px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '28px',
-          cursor: dragging? 'grabbing' : 'pointer',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-          zIndex: 9999,
-          userSelect: 'none',
-          touchAction: 'none'
-        }}
-      >
-        🎧
-      </div>
-
-      {open && (
-        <div style={{
-          position: 'fixed',
-          bottom: `${pos.y + 70}px`,
-          right: `${pos.x}px`,
-          width: '320px',
-          height: '450px',
-          background: '#fff',
-          borderRadius: '12px',
-          boxShadow: '0 8px 30px rgba(0,0,0,0.25)',
-          zIndex: 9999,
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
+          fontWeight: '700'
         }}>
-          <div style={{
-            background: '#cc0000',
-            color: '#000',
-            padding: '12px 16px',
-            fontWeight: '600',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <span>Customer Support</span>
-            <span onClick={() => setOpen(false)} style={{ cursor: 'pointer', fontSize: '20px' }}>×</span>
-          </div>
-
-          <div style={{
-            flex: 1,
-            padding: '12px',
-            overflowY: 'auto',
-            background: '#f5f5f5'
-          }}>
-            {messages.length === 0 && (
-              <div style={{ textAlign: 'center', color: '#999', marginTop: '40px', fontSize: '14px' }}>
-                Send a message to start chatting
-              </div>
-            )}
-            {messages.map(m => (
-              <div key={m.id} style={{
-                display: 'flex',
-                justifyContent: m.sender === 'user'? 'flex-end' : 'flex-start',
-                marginBottom: '10px'
-              }}>
-                <div style={{
-                  maxWidth: '70%',
-                  background: m.sender === 'user'? '#cc0000' : '#fff',
-                  color: '#000',
-                  padding: '8px 12px',
-                  borderRadius: '12px',
-                  fontSize: '14px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                }}>
-                  {m.image && (
-                    <img src={m.image} alt="" style={{
-                      width: '100%',
-                      borderRadius: '8px',
-                      marginBottom: m.text? '6px' : 0
-                    }} />
-                  )}
-                  {m.text}
-                  <div style={{ fontSize: '10px', opacity: 0.7, marginTop: '4px', textAlign: 'right' }}>
-                    {m.time}
-                  </div>
-                </div>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div style={{
-            padding: '10px',
-            borderTop: '1px solid #eee',
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center'
-          }}>
-            <button
-              onClick={() => fileInputRef.current.click()}
-              style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '20px',
-                cursor: 'pointer'
-              }}
-            >📎</button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFile}
-              accept="image/*"
-              style={{ display: 'none' }}
-            />
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage(input)}
-              placeholder="Type a message..."
-              style={{
-                flex: 1,
-                padding: '10px',
-                border: '1px solid #ddd',
-                borderRadius: '20px',
-                fontSize: '14px',
-                outline: 'none'
-              }}
-            />
-            <button
-              onClick={() => sendMessage(input)}
-              style={{
-                background: '#cc0000',
-                color: '#000',
-                border: 'none',
-                borderRadius: '50%',
-                width: '36px',
-                height: '36px',
-                fontSize: '16px',
-                cursor: 'pointer'
-              }}
-            >➤</button>
-          </div>
+          {unreadCount}
         </div>
       )}
-    </>
+    </div>
   )
 }

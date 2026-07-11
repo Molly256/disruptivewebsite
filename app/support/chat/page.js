@@ -4,15 +4,42 @@ import { useRouter } from 'next/navigation'
 
 export default function ChatSupport() {
   const router = useRouter()
-  const [messages, setMessages] = useState([
-    { id: 1, type: 'system', text: 'Welcome to Customer Service. How can we assist you today?' },
-    { id: 2, type: 'support', text: 'Welcome to our online support service.\n\nTo help us assist you more efficiently, please keep this chat window open during your inquiry. Thank you for your cooperation.' }
-  ])
+  const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [showEmoji, setShowEmoji] = useState(false)
   const fileInputRef = useRef(null)
   const messagesEndRef = useRef(null)
-  const isAdmin = true // Change this based on your auth. Set false for normal users
+  const isAdmin = false // Change based on your auth
+
+  // Load history from localStorage on mount + mark as read
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('chatHistory') || '[]')
+    if (saved.length === 0) {
+      // First time - add welcome messages
+      const initial = [
+        {
+          id: Date.now(),
+          type: 'system',
+          text: 'Welcome to Customer Service. How can we assist you today?',
+          timestamp: Date.now()
+        },
+        {
+          id: Date.now() + 1,
+          type: 'support',
+          text: 'Welcome to our online support service.\n\nTo help us assist you more efficiently, please keep this chat window open during your inquiry. Thank you for your cooperation.',
+          timestamp: Date.now() + 1
+        }
+      ]
+      setMessages(initial)
+      localStorage.setItem('chatHistory', JSON.stringify(initial))
+    } else {
+      setMessages(saved)
+    }
+
+    // Mark all as read
+    localStorage.setItem('chatLastRead', Date.now().toString())
+    window.dispatchEvent(new Event('storage'))
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -22,16 +49,42 @@ export default function ChatSupport() {
     scrollToBottom()
   }, [messages])
 
+  const saveMessages = (newMessages) => {
+    setMessages(newMessages)
+    localStorage.setItem('chatHistory', JSON.stringify(newMessages))
+    window.dispatchEvent(new Event('storage'))
+  }
+
   const sendMessage = (text, imageUrl = null) => {
     if (!text.trim() &&!imageUrl) return
-    setMessages(prev => [...prev, {
+
+    const newMsg = {
       id: Date.now(),
       type: 'user',
+      sender: 'user',
       text: text.trim(),
       image: imageUrl,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }])
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now()
+    }
+
+    const updated = [...messages, newMsg]
+    saveMessages(updated)
     setInput('')
+
+    // Fake support reply after 1.5s
+    setTimeout(() => {
+      const reply = {
+        id: Date.now() + 1,
+        type: 'support',
+        sender: 'support',
+        text: 'Thanks for reaching out! A support agent will reply shortly.',
+        image: null,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: Date.now()
+      }
+      saveMessages([...updated, reply])
+    }, 1500)
   }
 
   const handleImageUpload = (e) => {
@@ -42,12 +95,19 @@ export default function ChatSupport() {
         sendMessage('', event.target.result)
       }
       reader.readAsDataURL(file)
+      e.target.value = ''
     }
   }
 
   const clearChat = () => {
     if (confirm('Clear all chat messages?')) {
-      setMessages([{ id: 1, type: 'system', text: 'Chat cleared by admin' }])
+      const cleared = [{
+        id: Date.now(),
+        type: 'system',
+        text: 'Chat cleared by admin',
+        timestamp: Date.now()
+      }]
+      saveMessages(cleared)
     }
   }
 
@@ -55,7 +115,7 @@ export default function ChatSupport() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column' }}>
-      {/* HEADER */}
+      {/* HEADER - accounts for 84px topbar */}
       <div style={{
         background: '#fff',
         padding: '16px 20px',
@@ -64,7 +124,7 @@ export default function ChatSupport() {
         justifyContent: 'space-between',
         alignItems: 'center',
         position: 'fixed',
-        top: 0,
+        top: '84px',
         left: 0,
         right: 0,
         zIndex: 10
@@ -76,10 +136,11 @@ export default function ChatSupport() {
             Clear Chat
           </button>
         )}
+        {!isAdmin && <div style={{ width: '60px' }} />}
       </div>
 
       {/* MESSAGES */}
-      <div style={{ flex: 1, padding: '80px 16px 80px', overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: '164px 16px 80px', overflowY: 'auto' }}>
         {messages.map((msg) => (
           <div key={msg.id} style={{ marginBottom: '16px' }}>
             {msg.type === 'system' && (
@@ -110,8 +171,8 @@ export default function ChatSupport() {
             {msg.type === 'user' && (
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <div style={{
-                  background: '#007AFF',
-                  color: '#fff',
+                  background: '#cc0000',
+                  color: '#000',
                   padding: '12px 16px',
                   borderRadius: '12px',
                   maxWidth: '280px',
@@ -152,7 +213,7 @@ export default function ChatSupport() {
             accept="image/*"
             style={{ display: 'none' }}
           />
-          <button onClick={() => fileInputRef.current.click()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#007AFF' }}>+</button>
+          <button onClick={() => fileInputRef.current.click()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#cc0000' }}>+</button>
           <input
             type="text"
             value={input}
@@ -170,7 +231,7 @@ export default function ChatSupport() {
             }}
           />
           <button onClick={() => setShowEmoji(!showEmoji)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😊</button>
-          <button onClick={() => sendMessage(input)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#007AFF' }}>➤</button>
+          <button onClick={() => sendMessage(input)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#cc0000' }}>➤</button>
         </div>
       </div>
     </div>
