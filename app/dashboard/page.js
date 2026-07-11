@@ -76,7 +76,7 @@ export default function Dashboard() {
             objectFit: 'cover'
           }}
         >
-          <source src="/hero-video.mp4" type="video/mp4" />
+          <source src="videos/hero-video.mp4" type="video/mp4" />
         </video>
       </div>
 
