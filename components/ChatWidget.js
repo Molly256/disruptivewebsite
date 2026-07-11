@@ -11,9 +11,15 @@ export default function ChatWidget() {
   const [hasMoved, setHasMoved] = useState(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
 
-  // Only hide on chat page itself to avoid duplicate UI
-  const hideWidgetRoutes = ['/support/chat']
+  // Only hide on chat pages to avoid duplicate UI
+  const hideWidgetRoutes = ['/support/chat', '/support/guest']
   const shouldHide = hideWidgetRoutes.includes(pathname)
+
+  // Check if user is logged in - change 'token' if your auth key is different
+  const isLoggedIn = () => {
+    if (typeof window === 'undefined') return false
+    return!!localStorage.getItem('token') ||!!localStorage.getItem('user')
+  }
 
   useEffect(() => {
     const savedPos = JSON.parse(localStorage.getItem('chatWidgetPos') || '{ "x": 20, "y": 20 }')
@@ -97,7 +103,11 @@ export default function ChatWidget() {
 
   const handleClick = () => {
     if (!hasMoved) {
-      router.push('/support/chat')
+      if (isLoggedIn()) {
+        router.push('/support/chat')
+      } else {
+        router.push('/support/guest')
+      }
     }
   }
 
