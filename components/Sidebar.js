@@ -6,11 +6,13 @@ export default function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const headerHeight = 84
 
   useEffect(() => {
+    setMounted(true)
     const checkAuth = () => {
       if (typeof window!== 'undefined') {
         setIsLoggedIn(!!localStorage.getItem('token') ||!!localStorage.getItem('user'))
@@ -18,6 +20,9 @@ export default function Sidebar() {
     }
     checkAuth()
   }, [pathname])
+
+  // Prevent flash of wrong header state
+  if (!mounted) return null
 
   // /support/guest ALWAYS hides header
   const alwaysHideRoutes = ['/support/guest']
