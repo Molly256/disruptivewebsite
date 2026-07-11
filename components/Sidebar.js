@@ -19,12 +19,22 @@ export default function Sidebar() {
     checkAuth()
   }, [pathname])
 
-  // HIDE HEADER COMPLETELY ON THESE ROUTES
-  const hideHeaderRoutes = ['/registration', '/register', '/login', '/support', '/support/guest', '/support/chat']
-  const shouldHideHeader = hideHeaderRoutes.includes(pathname)
+  // /support/guest ALWAYS hides header
+  const alwaysHideRoutes = ['/support/guest']
+
+  // Auth pages: hide ONLY when logged OUT
+  const authRoutes = ['/registration', '/register', '/login']
+
+  // /support and /support/chat: hide when logged OUT, show when logged IN
+  const supportRoutes = ['/support', '/support/chat']
+
+  const shouldHideHeader =
+    alwaysHideRoutes.includes(pathname) ||
+    (!isLoggedIn && authRoutes.includes(pathname)) ||
+    (!isLoggedIn && supportRoutes.includes(pathname))
 
   // SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME + HIDDEN ROUTES
-  const useSimplifiedHeader = pathname!== '/' &&!hideHeaderRoutes.includes(pathname)
+  const useSimplifiedHeader = pathname!== '/' &&!shouldHideHeader
 
   // GET STARTED only on home page
   const showGetStarted = pathname === '/'
@@ -111,17 +121,19 @@ export default function Sidebar() {
               <div
                 onClick={handleProfileClick}
                 style={{
-                  width: '44px',
-                  height: '44px',
+                  width: '48px',
+                  height: '48px',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  flexShrink: 0
+                  flexShrink: 0,
+                  borderRadius: '50%',
+                  padding: '8px'
                 }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
               </div>
             )}
