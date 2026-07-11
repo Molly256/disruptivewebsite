@@ -1,19 +1,30 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 
 export default function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const headerHeight = 84
 
-  // HIDE HEADER ONLY ON AUTH PAGES
-  const hideHeaderRoutes = ['/registration', '/login']
+  useEffect(() => {
+    // Check auth on route change
+    const checkAuth = () => {
+      if (typeof window!== 'undefined') {
+        setIsLoggedIn(!!localStorage.getItem('token') ||!!localStorage.getItem('user'))
+      }
+    }
+    checkAuth()
+  }, [pathname])
+
+  // HIDE HEADER COMPLETELY ON THESE ROUTES
+  const hideHeaderRoutes = ['/registration', '/login', '/support/guest']
   const shouldHideHeader = hideHeaderRoutes.includes(pathname)
 
-  // SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME + AUTH
+  // SIMPLIFIED HEADER: ALL PAGES EXCEPT HOME + HIDDEN ROUTES
   const useSimplifiedHeader = pathname!== '/' &&!hideHeaderRoutes.includes(pathname)
 
   // GET STARTED only on home page
@@ -31,6 +42,22 @@ export default function Sidebar() {
   const goToRegistration = () => {
     setMenuOpen(false)
     router.push('/registration')
+  }
+
+  const handleContactClick = () => {
+    if (isLoggedIn) {
+      router.push('/support/chat')
+    } else {
+      router.push('/support/guest')
+    }
+  }
+
+  const handleProfileClick = () => {
+    if (isLoggedIn) {
+      router.push('/profile')
+    } else {
+      router.push('/login')
+    }
   }
 
   const menuData = {
@@ -67,7 +94,7 @@ export default function Sidebar() {
         {useSimplifiedHeader? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
-              onClick={() => router.push('/support/chat')}
+              onClick={handleContactClick}
               style={{
                 background: '#cc0000',
                 color: '#000',
@@ -81,21 +108,23 @@ export default function Sidebar() {
             >
               Contact
             </button>
-            <div
-              onClick={() => router.push('/profile')}
-              style={{
-                width: '40px',
-                height: '40px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
+            {isLoggedIn && (
+              <div
+                onClick={handleProfileClick}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            )}
           </div>
         ) : (
           <>
