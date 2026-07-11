@@ -50,7 +50,7 @@ export default function GuestSupportChat() {
   }
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' &&!e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
     }
@@ -60,8 +60,7 @@ export default function GuestSupportChat() {
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      height: '100vh',
-      background: '#0a0a0a',
+      height: '100vh', /* Handled smoothly within layout div frame bounds */
       color: '#fff'
     }}>
       {/* Minimal header - no logo, no contact, no profile */}
@@ -106,9 +105,9 @@ export default function GuestSupportChat() {
           <div
             key={msg.id}
             style={{
-              alignSelf: msg.sender === 'user'? 'flex-end' : 'flex-start',
-              background: msg.sender === 'user'? '#cc0000' : '#1a1a1a',
-              color: msg.sender === 'user'? '#000' : '#fff',
+              alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+              background: msg.sender === 'user' ? '#cc0000' : '#1a1a1a',
+              color: msg.sender === 'user' ? '#000' : '#fff',
               padding: '10px 14px',
               borderRadius: '16px',
               maxWidth: '70%',
@@ -132,7 +131,7 @@ export default function GuestSupportChat() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress} /* Changed from deprecated onKeyPress to onKeyDown */
           placeholder="Type a message..."
           style={{
             flex: 1,

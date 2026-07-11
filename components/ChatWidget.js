@@ -11,14 +11,10 @@ export default function ChatWidget() {
   const [hasMoved, setHasMoved] = useState(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
 
-  // Only hide on chat pages to avoid duplicate UI
-  const hideWidgetRoutes = ['/support/chat', '/support/guest']
-  const shouldHide = hideWidgetRoutes.includes(pathname)
-
-  // Check if user is logged in - change 'token' if your auth key is different
+  // Check if user is logged in
   const isLoggedIn = () => {
     if (typeof window === 'undefined') return false
-    return!!localStorage.getItem('token') ||!!localStorage.getItem('user')
+    return !!localStorage.getItem('token') || !!localStorage.getItem('user')
   }
 
   useEffect(() => {
@@ -111,8 +107,6 @@ export default function ChatWidget() {
     }
   }
 
-  if (shouldHide) return null
-
   return (
     <div
       onMouseDown={handleMouseDown}
@@ -133,7 +127,7 @@ export default function ChatWidget() {
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '28px',
-        cursor: dragging? 'grabbing' : 'pointer',
+        cursor: dragging ? 'grabbing' : 'pointer',
         boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         zIndex: 9999,
         userSelect: 'none',
