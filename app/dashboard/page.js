@@ -54,9 +54,9 @@ export default function Dashboard() {
         </svg>
       ),
       shield: (
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10z"/>
-          <polyline points="9 11 12 14 16 10"/>
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#000" strokeWidth="2">
+          <path d="M16 4 L26 8 V16 C26 22 16 28 16 28 C16 28 6 22 6 16 V8 L16 4 Z"/>
+          <polyline points="12 16 15 19 21 13"/>
         </svg>
       ),
       globe: (
