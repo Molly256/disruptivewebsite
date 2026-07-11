@@ -11,8 +11,8 @@ export default function ChatWidget() {
   const [hasMoved, setHasMoved] = useState(false)
   const dragStartRef = useRef({ x: 0, y: 0 })
 
-  // Hide widget on auth pages + chat page itself
-  const hideWidgetRoutes = ['/registration', '/login', '/support/chat']
+  // Only hide on chat page itself to avoid duplicate UI
+  const hideWidgetRoutes = ['/support/chat']
   const shouldHide = hideWidgetRoutes.includes(pathname)
 
   useEffect(() => {
