@@ -227,8 +227,7 @@ export default function Dashboard() {
           <div style={{
             fontSize: '10px',
             color: '#fff',
-            fontWeight: '300',
-            textShadow: '0 0 8px rgba(255,255,255,0.8), 0 0 12px rgba(255,255,255,0.5)'
+            fontWeight: '300'
           }}>
             start
           </div>
