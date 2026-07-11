@@ -1,6 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 const countries = [
   { code: '+93', flag: '🇦🇫', name: 'Afghanistan' },
@@ -203,59 +204,85 @@ const countries = [
 
 export default function Login() {
   const router = useRouter()
+  const [loginType, setLoginType] = useState('username') // 'username' or 'phone'
   const [form, setForm] = useState({
-    selectedCountryName: 'United States', // use name now, not code
+    selectedCountryName: 'United States',
     phone: '',
-    password: ''
+    username: '',
+    password: '',
+    rememberPassword: false
   })
   const [error, setError] = useState('')
   const [showCountries, setShowCountries] = useState(false)
   const [searchCountry, setSearchCountry] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  useEffect(() => {
+    // Auto-fill if remember was checked during registration
+    const savedUser = JSON.parse(localStorage.getItem('user') || '{}')
+    const remember = localStorage.getItem('rememberPassword') === 'true'
+    if (remember && savedUser) {
+      setForm(prev => ({
+        ...prev,
+        username: savedUser.username || '',
+        password: savedUser.password || '',
+        rememberPassword: true
+      }))
+    }
+  }, [])
 
   const handleSubmit = (e) => {
     e.preventDefault()
-
     if (!form.password) {
       setError('Password is required')
       return
     }
 
     const savedUser = JSON.parse(localStorage.getItem('user'))
-
     if (!savedUser) {
       setError('No account found. Please register first')
       return
     }
 
-    const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
-    const fullPhone = selectedCountry.code + form.phone
-
-    if (fullPhone === savedUser.phone && form.password === savedUser.password) {
-      alert('Login successful!')
-      router.push('/dashboard')
+    let isValid = false
+    if (loginType === 'phone') {
+      const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
+      const fullPhone = selectedCountry.code + form.phone
+      isValid = fullPhone === savedUser.phone && form.password === savedUser.password
     } else {
-      setError('Invalid phone or password')
+      isValid = form.username === savedUser.username && form.password === savedUser.password
+    }
+
+    if (isValid) {
+      if (form.rememberPassword) {
+        localStorage.setItem('rememberPassword', 'true')
+      } else {
+        localStorage.removeItem('rememberPassword')
+      }
+      setShowSuccess(true)
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 1500)
+    } else {
+      setError('Invalid credentials')
     }
   }
 
   const inputStyle = {
     width: '100%',
-    padding: '14px',
+    height: '56px',
+    padding: '0 16px',
     fontSize: '16px',
-    border: '1px solid #ccc',
-    borderRadius: '6px',
-    marginBottom: '16px',
-    boxSizing: 'border-box'
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    marginBottom: '4px',
+    boxSizing: 'border-box',
+    outline: 'none'
   }
 
   const selectBoxStyle = {
-    width: '100%',
-    padding: '14px',
-    fontSize: '16px',
-    border: '1px solid #ccc',
-    borderRadius: '6px',
-    marginBottom: '16px',
-    boxSizing: 'border-box',
+    ...inputStyle,
     cursor: 'pointer',
     background: '#fff',
     display: 'flex',
@@ -263,8 +290,22 @@ export default function Login() {
     justifyContent: 'space-between'
   }
 
-  const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
+  const passwordWrapper = {
+    position: 'relative',
+    width: '100%'
+  }
 
+  const eyeStyle = {
+    position: 'absolute',
+    right: '16px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    cursor: 'pointer',
+    fontSize: '20px',
+    userSelect: 'none'
+  }
+
+  const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
   const filteredCountries = countries.filter(c =>
     c.name.toLowerCase().includes(searchCountry.toLowerCase()) ||
     c.code.includes(searchCountry)
@@ -273,147 +314,229 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#f5f5f5',
-      padding: '120px 20px 40px',
-      display: 'flex',
-      justifyContent: 'center'
+      width: '100%',
+      background: '#fff',
+      padding: '40px 20px',
+      boxSizing: 'border-box'
     }}>
-      <form onSubmit={handleSubmit} style={{
-        background: '#fff',
-        padding: '40px',
-        borderRadius: '12px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-        width: '100%',
-        maxWidth: '400px'
-      }}>
-        <h1 style={{
-          fontSize: '28px',
-          fontWeight: '700',
-          marginBottom: '30px',
-          textAlign: 'center',
-          color: '#000'
+      {/* SUCCESS POPUP */}
+      {showSuccess && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          background: '#fff',
+          padding: '30px 40px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
+          zIndex: 10000,
+          textAlign: 'center'
         }}>
-          Login
-        </h1>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            borderRadius: '50%',
+            background: '#cc0000',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 16px',
+            color: '#fff',
+            fontSize: '28px',
+            fontWeight: '700'
+          }}>✓</div>
+          <div style={{ fontSize: '18px', fontWeight: '600', color: '#000' }}>
+            Login Successful
+          </div>
+          <div style={{ fontSize: '14px', color: '#666', marginTop: '8px' }}>
+            Redirecting to dashboard...
+          </div>
+        </div>
+      )}
 
-        <div style={{ position: 'relative' }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Phone Number</label>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <div
-              onClick={() => setShowCountries(!showCountries)}
+      <div style={{ maxWidth: '400px', margin: '0 auto' }}>
+        {/* HEADER TEXT */}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 12px', color: '#000' }}>
+            DISRUPTIVE WELCOMES YOU
+          </h1>
+          <p style={{ fontSize: '14px', color: '#666', margin: '0 0 24px', lineHeight: '1.5' }}>
+            We specialize in helping B2B and e-commerce businesses dominate the digital space.
+          </p>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0, color: '#000' }}>
+            SIGN IN
+          </h2>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* TOGGLE USERNAME / PHONE */}
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+            <button
+              type="button"
+              onClick={() => setLoginType('username')}
               style={{
-                ...selectBoxStyle,
-                width: '120px',
-                marginBottom: 0
+                flex: 1,
+                height: '40px',
+                background: loginType === 'username' ? '#cc0000' : '#f5f5f5',
+                color: loginType === 'username' ? '#fff' : '#000',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '500',
+                cursor: 'pointer'
               }}
             >
-              <span>{selectedCountry.flag} {selectedCountry.code}</span>
-              <span>▼</span>
-            </div>
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(e) => setForm({...form, phone: e.target.value})}
-              placeholder="XXXXXXXXXX"
-              inputMode="numeric"
-              style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
-            />
+              Username
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginType('phone')}
+              style={{
+                flex: 1,
+                height: '40px',
+                background: loginType === 'phone' ? '#cc0000' : '#f5f5f5',
+                color: loginType === 'phone' ? '#fff' : '#000',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '500',
+                cursor: 'pointer'
+              }}
+            >
+              Phone
+            </button>
           </div>
-          {showCountries && (
-            <div style={{
-              position: 'absolute',
-              top: '80px',
-              left: 0,
-              right: 0,
-              background: '#fff',
-              border: '1px solid #ccc',
-              borderRadius: '6px',
-              maxHeight: '250px',
-              overflowY: 'auto',
-              zIndex: 10,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-            }}>
-              <input
-                type="text"
-                placeholder="Search country..."
-                value={searchCountry}
-                onChange={(e) => setSearchCountry(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  border: 'none',
-                  borderBottom: '1px solid #eee',
-                  boxSizing: 'border-box',
-                  fontSize: '14px'
-                }}
-                onClick={(e) => e.stopPropagation()}
-              />
-              {filteredCountries.map((c, idx) => (
-                <div
-                  key={`${c.name}-${c.code}-${idx}`}
-                  onClick={() => {
-                    setForm({...form, selectedCountryName: c.name})
-                    setShowCountries(false)
-                    setSearchCountry('')
-                  }}
-                  style={{
-                    padding: '12px 14px',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid #eee',
-                    fontSize: '16px'
-                  }}
-                  onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
-                  onMouseLeave={(e) => e.target.style.background = '#fff'}
-                >
-                  {c.flag} {c.name} {c.code}
+
+          {/* USERNAME OR PHONE INPUT */}
+          {loginType === 'username' ? (
+            <input
+              type="text"
+              placeholder="Username"
+              value={form.username}
+              onChange={(e) => setForm({...form, username: e.target.value})}
+              style={inputStyle}
+            />
+          ) : (
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                <div onClick={() => setShowCountries(!showCountries)} style={{...selectBoxStyle, width: '120px', marginBottom: 0}}>
+                  <span>{selectedCountry.flag} {selectedCountry.code}</span>
+                  <span>▼</span>
                 </div>
-              ))}
+                <input
+                  type="tel"
+                  placeholder="Enter a phone number"
+                  value={form.phone}
+                  onChange={(e) => setForm({...form, phone: e.target.value})}
+                  inputMode="numeric"
+                  style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
+                />
+              </div>
+              {showCountries && (
+                <div style={{
+                  position: 'absolute',
+                  top: '60px',
+                  left: 0,
+                  right: 0,
+                  background: '#fff',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 10,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}>
+                  <input
+                    type="text"
+                    placeholder="Search country..."
+                    value={searchCountry}
+                    onChange={(e) => setSearchCountry(e.target.value)}
+                    style={{ width: '100%', padding: '12px', border: 'none', borderBottom: '1px solid #eee', boxSizing: 'border-box', fontSize: '14px' }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  {filteredCountries.map((c, idx) => (
+                    <div
+                      key={`${c.name}-${c.code}-${idx}`}
+                      onClick={() => {
+                        setForm({...form, selectedCountryName: c.name})
+                        setShowCountries(false)
+                        setSearchCountry('')
+                      }}
+                      style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '16px' }}
+                      onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                      onMouseLeave={(e) => e.target.style.background = '#fff'}
+                    >
+                      {c.flag} {c.name} {c.code}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
-        </div>
 
-        <div>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Password</label>
-          <input
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({...form, password: e.target.value})}
-            placeholder="Enter your password"
-            style={inputStyle}
-          />
-        </div>
+          {/* PASSWORD WITH EYE TOGGLE */}
+          <div style={passwordWrapper}>
+            <input
+              type={showPassword? 'text' : 'password'}
+              placeholder="Login Password"
+              value={form.password}
+              onChange={(e) => setForm({...form, password: e.target.value})}
+              style={inputStyle}
+            />
+            <span onClick={() => setShowPassword(!showPassword)} style={eyeStyle}>
+              {showPassword? '👁️' : '👁️‍🗨️'}
+            </span>
+          </div>
 
-        {error && <div style={{ color: '#cc0000', fontSize: '14px', marginBottom: '16px' }}>{error}</div>}
+          {/* FORGOT + REMEMBER */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '-8px' }}>
+            <span style={{ fontSize: '14px', color: '#0066cc', cursor: 'pointer' }}>
+              Forgot your password?
+            </span>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px' }}>
+              <input
+                type="checkbox"
+                checked={form.rememberPassword}
+                onChange={(e) => setForm({...form, rememberPassword: e.target.checked})}
+                style={{ width: '16px', height: '16px', accentColor: '#cc0000', cursor: 'pointer' }}
+              />
+              Remember Password
+            </label>
+          </div>
 
-        <button
-          type="submit"
-          style={{
-            width: '100%',
-            background: '#cc0000',
-            color: '#000',
-            fontWeight: '500',
-            fontSize: '16px',
-            letterSpacing: '1px',
-            padding: '16px',
-            border: 'none',
-            borderRadius: '6px',
-            marginTop: '10px',
-            cursor: 'pointer'
-          }}
-        >
-          LOGIN
-        </button>
+          {error && <div style={{ color: '#cc0000', fontSize: '14px', marginTop: '-8px' }}>{error}</div>}
 
-        <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <span style={{ color: '#666' }}>Don't have an account? </span>
-          <span
-            onClick={() => router.push('/registration')}
-            style={{ color: '#cc0000', cursor: 'pointer', fontWeight: '500' }}
+          <button
+            type="submit"
+            style={{
+              width: '100%',
+              height: '56px',
+              background: '#000',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '18px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginTop: '8px'
+            }}
           >
-            Register
-          </span>
-        </div>
-      </form>
+            Submit
+          </button>
+
+          <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
+            Don't have an account yet? <Link href="/registration" style={{ color: '#0066cc', fontWeight: '500' }}>Sign Up</Link>
+          </div>
+
+          <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
+            Can't sign in? <Link href="/support" style={{ color: '#0066cc', fontWeight: '500' }}>Contact our user support</Link>
+          </div>
+
+          <div style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '40px' }}>
+            Copyrights 2026 © Disruptive
+          </div>
+        </form>
+      </div>
     </div>
   )
 }

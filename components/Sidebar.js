@@ -9,6 +9,10 @@ export default function Sidebar() {
   const pathname = usePathname()
   const headerHeight = 84
 
+  // HIDE HEADER ON THESE ROUTES
+  const hideHeaderRoutes = ['/registration', '/login', '/dashboard']
+  const shouldHideHeader = hideHeaderRoutes.includes(pathname)
+
   // GET STARTED only on home page
   const showGetStarted = pathname === '/'
 
@@ -33,6 +37,9 @@ export default function Sidebar() {
     'RESULTS': [],
     'RESOURCES': ['General','Blog','Partners','Webinars/Trainings','Reviews','Contact Us']
   }
+
+  // Return null to hide entire header on auth/dashboard pages
+  if (shouldHideHeader) return null
 
   return (
     <>
