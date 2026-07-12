@@ -10,12 +10,8 @@ export default function Sidebar() {
   const pathname = usePathname()
   const headerHeight = 56
 
-  // 1. HIDE HEADER ON AUTH PAGES
-  const hideHeaderRoutes = ['/registration', '/login']
-  const shouldHideHeader = hideHeaderRoutes.includes(pathname)
-
-  // 2. SIMPLIFIED HEADER: dashboard + icon pages
-  const simplifiedHeaderRoutes = ['/dashboard', '/vip', '/activity', '/withdrawal', '/deposit', '/records']
+  // 1. SIMPLIFIED HEADER: dashboard + icon pages + auth pages
+  const simplifiedHeaderRoutes = ['/dashboard', '/vip', '/activity', '/withdrawal', '/deposit', '/records', '/registration', '/login']
   const useSimplifiedHeader = simplifiedHeaderRoutes.includes(pathname)
 
   // GET STARTED only on home page
@@ -49,111 +45,109 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
-    .desktop-nav { display: flex; align-items: center; gap: 20px; }
-    .menu-btn { display: none; }
+   .desktop-nav { display: flex; align-items: center; gap: 20px; }
+   .menu-btn { display: none; }
       @media (max-width: 1024px) {
-      .desktop-nav { display: none!important; }
-      .menu-btn { display: block!important; }
+     .desktop-nav { display: none!important; }
+     .menu-btn { display: block!important; }
       }
       `}</style>
 
-      {/* TOP BAR - HIDE ON AUTH PAGES */}
-      {!shouldHideHeader && (
-        <header className="topbar" style={{
-          background: '#fff',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0 20px',
-          height: `${headerHeight}px`,
-          borderBottom: 'none',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 1002
-        }}>
-          <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: '32px', width: 'auto', display: 'block' }} />
+      {/* TOP BAR - 56PX EXACT */}
+      <header className="topbar" style={{
+        background: '#fff',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0 20px',
+        height: `${headerHeight}px`,
+        borderBottom: 'none',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1002
+      }}>
+        <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: '32px', width: 'auto', display: 'block' }} />
 
-          {/* SIMPLIFIED HEADER: DASHBOARD + ICON PAGES */}
-          {useSimplifiedHeader? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <button
-                onClick={() => router.push('/contact')}
-                style={{
-                  background: '#cc0000',
-                  color: '#fff',
-                  fontWeight: '600',
-                  fontSize: '16px',
-                  padding: '12px 24px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                Contact
-              </button>
-              <div
-                onClick={() => router.push('/profile')}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+        {/* SIMPLIFIED HEADER: DASHBOARD + ICON PAGES + AUTH PAGES */}
+        {useSimplifiedHeader? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => router.push('/contact')}
+              style={{
+                background: '#e60000',
+                color: '#000',
+                fontWeight: '600',
+                fontSize: '16px',
+                padding: '12px 24px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Contact
+            </button>
+            <div
+              onClick={() => router.push('/profile')}
+              style={{
+                width: '40px',
+                height: '40px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* FULL HEADER: HOME PAGE ONLY */}
+            <nav className="desktop-nav">
+              <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                WHAT WE DO
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                  <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-            </div>
-          ) : (
-            <>
-              {/* FULL HEADER: HOME PAGE ONLY */}
-              <nav className="desktop-nav">
-                <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  WHAT WE DO
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  WHO WE HELP
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
-                <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  WHO WE ARE
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  RESOURCES
-                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                    <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-                {showGetStarted && (
-                  <button className="desktop-talk-btn" onClick={goToRegistration} style={{ background: '#cc0000', color: '#fff', fontWeight: '500', border: 'none', padding:'10px 20px', borderRadius:4, cursor:'pointer' }}>GET STARTED</button>
-                )}
-              </nav>
+              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                WHO WE HELP
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                  <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                WHO WE ARE
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                  <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                RESOURCES
+                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                  <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              {showGetStarted && (
+                <button className="desktop-talk-btn" onClick={goToRegistration} style={{ background: '#cc0000', color: '#fff', fontWeight: '500', border: 'none', padding:'10px 20px', borderRadius:4, cursor:'pointer' }}>GET STARTED</button>
+              )}
+            </nav>
 
-              <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '28px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
-                {menuOpen? '✕' : '☰'}
-              </button>
-            </>
-          )}
-        </header>
-      )}
+            <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '28px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
+              {menuOpen? '✕' : '☰'}
+            </button>
+          </>
+        )}
+      </header>
 
       {/* MOBILE MENU - ONLY FOR HOME PAGE */}
-      {!useSimplifiedHeader &&!shouldHideHeader && menuOpen && (
+      {!useSimplifiedHeader && menuOpen && (
         <div className="mobile-menu-overlay" style={{
           position: 'fixed',
           top: `${headerHeight}px`,
