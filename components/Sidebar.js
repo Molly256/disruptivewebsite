@@ -25,11 +25,15 @@ export default function Sidebar() {
   const isSupportPage = path === '/support' || path.startsWith('/support/')
 
   // Completely hide the component for unauthenticated users on auth or support paths
-  const hide = !logged && (isAuthPage || isSupportPage)
-  
+  const hide =!logged && (isAuthPage || isSupportPage)
+
   // Apply simple navbar style strictly when not hidden and not on the home route
-  const simple = path !== '/' && !hide
+  const simple = path!== '/' &&!hide
   const home = path === '/'
+
+  // Only show Sidebar on homepage
+  if (!home) return null
+
   const go = r => router.push(r)
   const scroll = id => (document.getElementById(id)?.scrollIntoView({behavior:'smooth'}), setOpen(false))
 
@@ -53,9 +57,9 @@ export default function Sidebar() {
   return <>
     <header style={{background:'#fff',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0 20px',height:84,position:'fixed',top:0,left:0,right:0,zIndex:1002}}>
       <img src="/logo.png" alt="Disruptive" style={{height:84}}/>
-      {simple ? (
+      {simple? (
         <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <button onClick={() => go(logged ? '/support/chat' : '/support/guest')} style={{background:'#cc0000',color:'#000',fontWeight:600,fontSize:16,padding:'12px 24px',border:'none',borderRadius:8,cursor:'pointer'}}>Contact</button>
+          <button onClick={() => go(logged? '/support/chat' : '/support/guest')} style={{background:'#cc0000',color:'#000',fontWeight:600,fontSize:16,padding:'12px 24px',border:'none',borderRadius:8,cursor:'pointer'}}>Contact</button>
           {logged && <div onClick={() => go('/profile')} style={{width:48,height:48,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'50%'}}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="#000"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
           </div>}
