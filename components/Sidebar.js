@@ -44,7 +44,7 @@ export default function Sidebar() {
   return <>
     <style>{`
     .desktop-nav { display: flex; align-items: center; gap: 20px; }
-    .mobile-hamburger { display: none; color: #000; }
+    .mobile-hamburger { display: none; }
     .dropdown-arrow {
         width: 0;
         height: 0;
@@ -59,44 +59,57 @@ export default function Sidebar() {
       }
     `}</style>
 
-    <div style={{position:'fixed',top:0,left:0,right:0,zIndex:1002,height:64}}>
+    <header style={{
+      background:'#fff',
+      display:'flex',
+      justifyContent:'space-between',
+      alignItems:'center',
+      padding:'0 16px',
+      height:56,
+      position:'fixed',
+      top:0,
+      left:0,
+      right:0,
+      zIndex:1002,
+      boxShadow:'0 2px 8px rgba(0,0,0,0.06)'
+    }}>
       <img 
         src="/logo.png" 
         alt="Disruptive" 
         onClick={() => go('/')}
-        style={{
-          width:'100%',
-          height:'64px',
-          objectFit:'cover',
-          display:'block',
-          cursor:'pointer'
-        }}
+        style={{height:22, width:'auto', cursor:'pointer', display:'block'}}
       />
       
-      <div style={{position:'absolute',top:0,right:0,height:'100%',display:'flex',alignItems:'center',paddingRight:'20px'}}>
-        {simple? (
-          <div style={{display:'flex',alignItems:'center',gap:16}}>
-            <button onClick={() => go(logged? '/support/chat' : '/support/guest')} style={{background:'#cc0000',color:'#fff',fontWeight:600,fontSize:16,padding:'12px 24px',border:'none',borderRadius:8,cursor:'pointer'}}>Contact</button>
-            {logged && <div onClick={() => go('/profile')} style={{width:48,height:48,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'50%'}}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="#000"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-            </div>}
-          </div>
-        ) : <>
-          <nav className="desktop-nav">
-            {Object.keys(menu).map(t => (
-              <div key={t} onClick={() => scroll(t.toLowerCase().replace(/ /g,'-'))} style={{color:'#000',display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontWeight:500,fontSize:14}}>
-                {t}{t!=='RESULTS'&&<span className="dropdown-arrow"/>}
-              </div>
-            ))}
-            {home && <button onClick={() => go('/registration')} style={{background:'#cc0000',color:'#fff',fontWeight:500,border:'none',padding:'10px 20px',cursor:'pointer',borderRadius:4}}>GET STARTED</button>}
-          </nav>
-          <button className="mobile-hamburger" onClick={() => setOpen(!open)} style={{color:'#000',fontSize:28,fontWeight:900,background:'none',border:'none',cursor:'pointer',padding:0,lineHeight:1}}>{open?'✕':'☰'}</button>
-        </>}
-      </div>
-    </div>
+      {simple? (
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <button onClick={() => go(logged? '/support/chat' : '/support/guest')} style={{background:'#cc0000',color:'#fff',fontWeight:600,fontSize:16,padding:'12px 24px',border:'none',borderRadius:8,cursor:'pointer'}}>Contact</button>
+          {logged && <div onClick={() => go('/profile')} style={{width:48,height:48,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'50%'}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#000"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>}
+        </div>
+      ) : <>
+        <nav className="desktop-nav">
+          {Object.keys(menu).map(t => (
+            <div key={t} onClick={() => scroll(t.toLowerCase().replace(/ /g,'-'))} style={{color:'#000',display:'flex',alignItems:'center',gap:6,cursor:'pointer',fontWeight:500,fontSize:14}}>
+              {t}{t!=='RESULTS'&&<span className="dropdown-arrow"/>}
+            </div>
+          ))}
+          {home && <button onClick={() => go('/registration')} style={{background:'#cc0000',color:'#fff',fontWeight:500,border:'none',padding:'10px 20px',cursor:'pointer',borderRadius:4}}>GET STARTED</button>}
+        </nav>
+        <button className="mobile-hamburger" onClick={() => setOpen(!open)} style={{background:'none',border:'none',cursor:'pointer',padding:0}}>
+          {open ? (
+            <svg width="24" height="24" viewBox="0 0 24 24" stroke="#000" strokeWidth="2"><path d="M6 6l12 12M6 18L18 6"/></svg>
+          ) : (
+            <svg width="28" height="20" viewBox="0 0 28 20" fill="none">
+              <path d="M0 2H28M0 10H28M0 18H28" stroke="#000" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
+      </>}
+    </header>
 
     {!simple && open && (
-      <div style={{position:'fixed',top:64,left:0,right:0,bottom:0,background:'#fff',zIndex:1001,overflowY:'auto',padding:'40px 20px'}}>
+      <div style={{position:'fixed',top:56,left:0,right:0,bottom:0,background:'#fff',zIndex:1001,overflowY:'auto',padding:'40px 20px'}}>
         {Object.entries(menu).map(([t,subs]) => (
           <div key={t} style={{marginBottom:20}}>
             <div onClick={() => subs.length?setActive(active===t?null:t):scroll(t.toLowerCase().replace(/ /g,'-'))} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'18px 0',cursor:'pointer'}}>

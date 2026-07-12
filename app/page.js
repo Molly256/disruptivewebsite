@@ -8,7 +8,7 @@ export default function Home(){
   return (
     <> 
       <Sidebar />
-      <main style={{background:'#fff',color:'#000',minHeight:'100vh',overflowX:'hidden',width:'100%',paddingTop:'64px'}}> 
+      <main style={{background:'#fff',color:'#000',minHeight:'100vh',overflowX:'hidden',width:'100%',paddingTop:'56px'}}> 
       <style jsx global>{`
         html, body {overflow-x:hidden;width:100%}
         .down-video{height:20vh}@media(min-width:768px){.down-video{height:20vh}}
