@@ -45,11 +45,11 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
- .desktop-nav { display: flex; align-items: center; gap: 20px; }
- .menu-btn { display: none; }
+.desktop-nav { display: flex; align-items: center; gap: 20px; }
+.menu-btn { display: none; }
       @media (max-width: 1024px) {
-   .desktop-nav { display: none!important; }
-   .menu-btn { display: block!important; }
+  .desktop-nav { display: none!important; }
+  .menu-btn { display: block!important; }
       }
       `}</style>
 
@@ -69,21 +69,24 @@ export default function Sidebar() {
         right: 0,
         zIndex: 1002
       }}>
-        <img
-          src="/logo.png"
-          alt="Disruptive"
-          className="logo-img"
-          style={{
-            height: '28px',
-            width: 'auto',
-            display: 'block',
-            objectFit: 'contain'
-          }}
-        />
+        {/* Logo - left, vertically centered */}
+        <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <img
+            src="/logo.png"
+            alt="Disruptive"
+            className="logo-img"
+            style={{
+              height: '28px',
+              width: 'auto',
+              display: 'block',
+              objectFit: 'contain'
+            }}
+          />
+        </div>
 
         {/* SIMPLIFIED HEADER: DASHBOARD + ICON PAGES + AUTH PAGES */}
         {useSimplifiedHeader? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', height: '100%' }}>
             <button
               onClick={() => router.push('/contact')}
               style={{
@@ -149,7 +152,7 @@ export default function Sidebar() {
               )}
             </nav>
 
-            {/* THICK 3-LINE HAMBURGER - MATCHES ORIGINAL */}
+            {/* THICK 3-LINE HAMBURGER - right, vertically centered, mobile only */}
             <button
               className="menu-btn"
               onClick={() => setMenuOpen(!menuOpen)}
@@ -160,7 +163,8 @@ export default function Sidebar() {
                 padding: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                height: '100%'
               }}
             >
               {menuOpen? (
