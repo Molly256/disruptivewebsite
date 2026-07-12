@@ -8,7 +8,7 @@ export default function Sidebar() {
   const [activeMenu, setActiveMenu] = useState(null)
   const router = useRouter()
   const pathname = usePathname()
-  const headerHeight = 56
+  const headerHeight = 48 // Reduced from 56px to match original
 
   // 1. SIMPLIFIED HEADER: dashboard + icon pages + auth pages
   const simplifiedHeaderRoutes = ['/dashboard', '/vip', '/activity', '/withdrawal', '/deposit', '/records', '/registration', '/login']
@@ -50,15 +50,16 @@ export default function Sidebar() {
       @media (max-width: 1024px) {
    .desktop-nav { display: none!important; }
    .menu-btn { display: block!important; }
+      }
       `}</style>
 
-      {/* TOP BAR - 56PX EXACT */}
+      {/* TOP BAR - 48PX EXACT */}
       <header className="topbar" style={{
         background: '#fff',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '0 20px',
+        padding: '0 16px',
         height: `${headerHeight}px`,
         borderBottom: 'none',
         boxShadow: 'none',
@@ -68,7 +69,17 @@ export default function Sidebar() {
         right: 0,
         zIndex: 1002
       }}>
-        <img src="/logo.png" alt="Disruptive" className="logo-img" style={{ height: '32px', width: 'auto', display: 'block' }} />
+        <img
+          src="/logo.png"
+          alt="Disruptive"
+          className="logo-img"
+          style={{
+            height: '28px',
+            width: 'auto',
+            display: 'block',
+            objectFit: 'contain'
+          }}
+        />
 
         {/* SIMPLIFIED HEADER: DASHBOARD + ICON PAGES + AUTH PAGES */}
         {useSimplifiedHeader? (
@@ -79,8 +90,8 @@ export default function Sidebar() {
                 background: '#e60000',
                 color: '#000',
                 fontWeight: '600',
-                fontSize: '16px',
-                padding: '12px 24px',
+                fontSize: '15px',
+                padding: '10px 20px',
                 border: 'none',
                 borderRadius: '8px',
                 cursor: 'pointer'
@@ -91,15 +102,15 @@ export default function Sidebar() {
             <div
               onClick={() => router.push('/profile')}
               style={{
-                width: '40px',
-                height: '40px',
+                width: '36px',
+                height: '36px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
               }}
             >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
                 <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
               </svg>
             </div>
@@ -138,8 +149,29 @@ export default function Sidebar() {
               )}
             </nav>
 
-            <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)} style={{ color: '#000', fontSize: '28px', fontWeight: '900', background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>
-              {menuOpen? '✕' : '☰'}
+            {/* THICK 3-LINE HAMBURGER - MATCHES ORIGINAL */}
+            <button
+              className="menu-btn"
+              onClick={() => setMenuOpen(!menuOpen)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {menuOpen? (
+                <span style={{ color: '#000', fontSize: '28px', fontWeight: '900', lineHeight: 1 }}>✕</span>
+              ) : (
+                <svg width="26" height="20" viewBox="0 0 26 20" fill="none">
+                  <rect y="0" width="26" height="3.5" rx="1.75" fill="#000"/>
+                  <rect y="8.25" width="26" height="3.5" rx="1.75" fill="#000"/>
+                  <rect y="16.5" width="26" height="3.5" rx="1.75" fill="#000"/>
+                </svg>
+              )}
             </button>
           </>
         )}
