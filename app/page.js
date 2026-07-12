@@ -1,9 +1,12 @@
 'use client'
 import Sidebar from '../components/Sidebar'
 export default function Home(){
-  const scrollTo=id=>{document.getElementById(id)?.scrollIntoView({behavior:'smooth'})};
-  return(
-    <>
+ const scrollTo = (id) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+  return (
+    <> 
       <Sidebar />
       <main style={{background:'#fff',color:'#000',minHeight:'100vh',overflowX:'hidden',width:'100%'}}> 
       <style jsx global>{`
