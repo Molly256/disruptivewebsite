@@ -1,4 +1,5 @@
 import './globals.css'
+import ChatWidget from '@/components/ChatWidget' // adjust path if different
 
 export const metadata = {
   title: 'Disruptive - Digital Marketing That Actually Works',
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         {children}
+        <ChatWidget />
       </body>
     </html>
   )
