@@ -10,8 +10,8 @@ export default function Sidebar() {
   const router = useRouter()
   const rawPath = usePathname()
 
-  // Clean trailing slashes reliably and cast to lowercase to prevent string mismatch
-  const path = (rawPath.replace(/\/$/, '') || '/').toLowerCase()
+  // Fix: usePathname can return '' on homepage
+  const path = rawPath === ''? '/' : (rawPath.replace(/\/$/, '') || '/').toLowerCase()
 
   useEffect(() => {
     setMount(true)
