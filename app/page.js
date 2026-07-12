@@ -1,15 +1,11 @@
 'use client'
-import Sidebar from '@/components/Sidebar'
+import Sidebar from '../components/Sidebar'
 export default function Home(){
   const scrollTo=id=>{document.getElementById(id)?.scrollIntoView({behavior:'smooth'})};
   return(
     <>
       <Sidebar />
       <main style={{background:'#fff',color:'#000',minHeight:'100vh',overflowX:'hidden',width:'100%'}}> 
-export default function Home(){
-  const scrollTo=id=>{document.getElementById(id)?.scrollIntoView({behavior:'smooth'})};
-  return(
-    <main style={{background:'#fff',color:'#000',minHeight:'100vh',overflowX:'hidden',width:'100%'}}>
       <style jsx global>{`
         html, body {overflow-x:hidden;width:100%}
         .down-video{height:20vh}@media(min-width:768px){.down-video{height:20vh}}
@@ -134,7 +130,8 @@ export default function Home(){
   <img src="/d2.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
   <img src="/d3.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
   <img src="/d4.jpg" alt="" style={{width:'100%',height:'auto',display:'block',border:'none'}}/>
-</section>                                                                                                                                       
+      </section>                                                                                                                                       
     </main>
+  </>
   )
 }
