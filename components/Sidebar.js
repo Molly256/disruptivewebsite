@@ -45,12 +45,11 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
-   .desktop-nav { display: flex; align-items: center; gap: 20px; }
-   .menu-btn { display: none; }
+ .desktop-nav { display: flex; align-items: center; gap: 20px; }
+ .menu-btn { display: none; }
       @media (max-width: 1024px) {
-     .desktop-nav { display: none!important; }
-     .menu-btn { display: block!important; }
-      }
+   .desktop-nav { display: none!important; }
+   .menu-btn { display: block!important; }
       `}</style>
 
       {/* TOP BAR - 56PX EXACT */}
@@ -62,7 +61,7 @@ export default function Sidebar() {
         padding: '0 20px',
         height: `${headerHeight}px`,
         borderBottom: 'none',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+        boxShadow: 'none',
         position: 'fixed',
         top: 0,
         left: 0,
