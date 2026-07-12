@@ -25,19 +25,20 @@ export default function Sidebar() {
   const isSupportPage = path === '/support' || path.startsWith('/support/')
 
   // Completely hide the component for unauthenticated users on auth or support paths
-  const hide =!logged && (isAuthPage || isSupportPage)
+  const hide = !logged && (isAuthPage || isSupportPage)
+
+  // Explicit rule matching your instructions: Hide header completely on login and registration pages for EVERYONE
+  if (isAuthPage) return null
+
+  // Explicit rule matching your instructions: Hide completely for guest support / unlogged chat
+  if (hide) return null
 
   // Apply simple navbar style strictly when not hidden and not on the home route
-  const simple = path!== '/' &&!hide
+  const simple = path!== '/' && !hide
   const home = path === '/'
-
-  // Only show Sidebar on homepage
-  if (!home) return null
 
   const go = r => router.push(r)
   const scroll = id => (document.getElementById(id)?.scrollIntoView({behavior:'smooth'}), setOpen(false))
-
-  if (hide) return null
 
   const menu = {
     'WHAT WE DO': ['All Services','Paid Search','Paid Social','SEO','Amazon','Lifecycle Marketing','CRO','Creative','Data Analytics','Lead Generation'],
@@ -55,6 +56,16 @@ export default function Sidebar() {
   }
 
   return <>
+    {/* Responsive Media Style Queries matching your layout rules */}
+    <style>{`
+      .desktop-nav { display: flex; align-items: center; gap: 16px; }
+      .mobile-hamburger { display: none; }
+      @media (max-width: 1024px) {
+        .desktop-nav { display: none !important; }
+        .mobile-hamburger { display: block !important; }
+      }
+    `}</style>
+
     <header style={{background:'#fff',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0 20px',height:84,position:'fixed',top:0,left:0,right:0,zIndex:1002}}>
       <img src="/logo.png" alt="Disruptive" style={{height:84}}/>
       {simple? (
@@ -67,13 +78,13 @@ export default function Sidebar() {
       ) : <>
         <nav className="desktop-nav">
           {Object.keys(menu).map(t => (
-            <div key={t} onClick={() => scroll(t.toLowerCase().replace(/ /g,'-'))} style={{color:'#000',display:'flex',alignItems:'center',gap:6}}>
+            <div key={t} onClick={() => scroll(t.toLowerCase().replace(/ /g,'-'))} style={{color:'#000',display:'flex',alignItems:'center',gap:6,cursor:'pointer'}}>
               {t}{t!=='RESULTS'&&<span className="dropdown-arrow"/>}
             </div>
           ))}
-          {home && <button onClick={() => go('/registration')} style={{background:'#cc0000',color:'#000',fontWeight:500,border:'none'}}>GET STARTED</button>}
+          {home && <button onClick={() => go('/registration')} style={{background:'#cc0000',color:'#000',fontWeight:500,border:'none',padding:'10px 20px',cursor:'pointer'}}>GET STARTED</button>}
         </nav>
-        <button onClick={() => setOpen(!open)} style={{color:'#000',fontSize:36,fontWeight:900,background:'none',border:'none',cursor:'pointer'}}>{open?'✕':'☰'}</button>
+        <button className="mobile-hamburger" onClick={() => setOpen(!open)} style={{color:'#000',fontSize:36,fontWeight:900,background:'none',border:'none',cursor:'pointer'}}>{open?'✕':'☰'}</button>
       </>}
     </header>
 
