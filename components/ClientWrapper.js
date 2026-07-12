@@ -9,25 +9,25 @@ export default function ClientWrapper({ children }) {
   const [mount, setMount] = useState(false)
   const rawPath = usePathname()
 
-  const path = rawPath === '' ? '/' : (rawPath.replace(/\/$/, '') || '/').toLowerCase()
+  const path = rawPath === ''? '/' : (rawPath.replace(/\/$/, '') || '/').toLowerCase()
 
   useEffect(() => {
     setMount(true)
     setLogged(!!(localStorage.getItem('token') || localStorage.getItem('user')))
   }, )
 
-  // RULE 1: Show header ONLY if logged in
-  const showHeader = logged
-  
-  // RULE 2: Chat widget shows on ALL pages, always
+  // Chat always shows
   const showChat = true
+
+  // Padding only when header will show: logged in OR guest on homepage
+  const showHeader = logged || (path === '/' &&!logged)
 
   if (!mount) {
     return (
-      <div 
+      <div
         className="main-content"
         style={{
-          paddingTop: showHeader ? '48px' : 0, // 0px for guests, 48px for logged in
+          paddingTop: showHeader? '48px' : 0,
           background: '#fff',
           color: '#000',
           minHeight: '100vh',
@@ -42,12 +42,12 @@ export default function ClientWrapper({ children }) {
 
   return (
     <>
-      {showHeader && <Sidebar />}
-      
-      <div 
+      <Sidebar logged={logged} />
+
+      <div
         className="main-content"
         style={{
-          paddingTop: showHeader ? '48px' : 0, // Only pad when header exists
+          paddingTop: showHeader? '48px' : 0,
           background: '#fff',
           color: '#000',
           minHeight: '100vh',
@@ -57,7 +57,7 @@ export default function ClientWrapper({ children }) {
       >
         {children}
       </div>
-      
+
       {showChat && <ChatWidget />}
     </>
   )

@@ -3,15 +3,26 @@ import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 
-export default function Sidebar() {
+export default function Sidebar({ logged }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
   const router = useRouter()
   const pathname = usePathname()
   const headerHeight = 48
 
-  const simplifiedHeaderRoutes = ['/dashboard', '/vip', '/activity', '/withdrawal', '/deposit', '/records', '/registration', '/login']
-  const useSimplifiedHeader = simplifiedHeaderRoutes.includes(pathname)
+  // RULE: No header on auth pages
+  const isAuthPage = pathname === '/registration' || pathname === '/login'
+  if (isAuthPage) return null
+
+  // RULE: Logged in header = logo left + contact + profile
+  const useLoggedInHeader = logged
+
+  // RULE: Guest home header = full menu
+  const useGuestHomeHeader = pathname === '/' &&!logged
+
+  // If neither, render nothing
+  if (!useLoggedInHeader &&!useGuestHomeHeader) return null
+
   const showGetStarted = pathname === '/'
   const showFloatingButton = ['/', '/registration', '/login'].includes(pathname)
 
@@ -40,13 +51,13 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
-       .desktop-nav { 
-          display: flex; 
-          align-items: center; 
-          gap: 20px; 
+    .desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 20px;
         }
-       .menu-btn { 
-          display: none; 
+    .menu-btn {
+          display: none;
           background: none;
           border: none;
           cursor: pointer;
@@ -54,12 +65,16 @@ export default function Sidebar() {
           align-items: center;
           justify-content: center;
           height: 100%;
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
         }
         @media (max-width: 1024px) {
-         .desktop-nav { display: none!important; }
-         .menu-btn { display: flex!important; }
+      .desktop-nav { display: none!important; }
+      .menu-btn { display: flex!important; }
         }
-       .desktop-nav-item {
+    .desktop-nav-item {
           color: #000;
           display: flex;
           align-items: center;
@@ -68,7 +83,7 @@ export default function Sidebar() {
           font-size: 14px;
           font-weight: 500;
         }
-       .desktop-talk-btn {
+    .desktop-talk-btn {
           background: #cc0000;
           color: #fff;
           font-weight: 500;
@@ -83,7 +98,7 @@ export default function Sidebar() {
       <header className="topbar" style={{
         background: '#fff',
         display: 'flex',
-        justifyContent: useSimplifiedHeader? 'center' : 'space-between',
+        justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0 16px',
         height: `${headerHeight}px`,
@@ -95,14 +110,11 @@ export default function Sidebar() {
         right: 0,
         zIndex: 1002
       }}>
-        {/* Logo - centered on simplified, left on full */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          height: '100%',
-          position: useSimplifiedHeader? 'absolute' : 'static',
-          left: useSimplifiedHeader? '50%' : 'auto',
-          transform: useSimplifiedHeader? 'translateX(-50%)' : 'none'
+        {/* Logo - always left, vertically centered */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          height: '100%'
         }}>
           <img
             src="/logo.png"
@@ -117,45 +129,54 @@ export default function Sidebar() {
           />
         </div>
 
-        {/* SIMPLIFIED HEADER: DASHBOARD + ICON PAGES + AUTH PAGES */}
-        {useSimplifiedHeader? (
-          <>
-            <div style={{ position: 'absolute', right: '16px', display: 'flex', alignItems: 'center', gap: '16px', height: '100%' }}>
-              <button
-                onClick={() => router.push('/contact')}
-                style={{
-                  background: '#e60000',
-                  color: '#000',
-                  fontWeight: '600',
-                  fontSize: '15px',
-                  padding: '10px 20px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                Contact
-              </button>
-              <div
-                onClick={() => router.push('/profile')}
-                style={{
-                  width: '36px',
-                  height: '36px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-              </div>
+        {/* LOGGED IN HEADER: Contact + Profile */}
+        {useLoggedInHeader && (
+          <div style={{
+            position: 'absolute',
+            right: '16px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
+            height: '100%'
+          }}>
+            <button
+              onClick={() => router.push('/contact')}
+              style={{
+                background: '#e60000',
+                color: '#000',
+                fontWeight: '600',
+                fontSize: '15px',
+                padding: '10px 20px',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer'
+              }}
+            >
+              Contact
+            </button>
+            <div
+              onClick={() => router.push('/profile')}
+              style={{
+                width: '36px',
+                height: '36px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
             </div>
-          </>
-        ) : (
+          </div>
+        )}
+
+        {/* GUEST HOME HEADER: Full menu */}
+        {useGuestHomeHeader && (
           <>
-            {/* FULL HEADER: HOME PAGE ONLY */}
             <nav className="desktop-nav">
               <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')}>
                 WHAT WE DO
@@ -187,11 +208,7 @@ export default function Sidebar() {
               )}
             </nav>
 
-            {/* HAMBURGER - NO INLINE DISPLAY STYLE */}
-            <button
-              className="menu-btn"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
+            <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen? (
                 <span style={{ color: '#000', fontSize: '28px', fontWeight: '900', lineHeight: 1 }}>✕</span>
               ) : (
@@ -206,8 +223,8 @@ export default function Sidebar() {
         )}
       </header>
 
-      {/* MOBILE MENU - ONLY FOR HOME PAGE */}
-      {!useSimplifiedHeader && menuOpen && (
+      {/* MOBILE MENU - ONLY FOR GUEST HOME */}
+      {useGuestHomeHeader && menuOpen && (
         <div className="mobile-menu-overlay" style={{
           position: 'fixed',
           top: `${headerHeight}px`,
@@ -282,7 +299,7 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* FLOATING DRAGGABLE GET STARTED BUTTON */}
+      {/* FLOATING GET STARTED BUTTON */}
       {showFloatingButton && (
         <div
           onClick={goToRegistration}
