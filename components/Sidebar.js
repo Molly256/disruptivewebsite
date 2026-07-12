@@ -67,8 +67,11 @@ export default function Sidebar() {
     `}</style>
 
     <header style={{background:'#fff',display:'flex',justifyContent:'space-between',alignItems:'center',padding:'0 20px',height:84,position:'fixed',top:0,left:0,right:0,zIndex:1002}}>
-      <img src="/logo.png" alt="Disruptive" style={{height:84}}/>
+      {/* Left side: Logo displays on both home page and dashboard pages */}
+      <img src="/logo.png" alt="Disruptive" style={{height:84, cursor: 'pointer'}} onClick={() => go('/')}/>
+      
       {simple? (
+        /* INSIDE THE DASHBOARD (app/dashboard/page.js): Contact button and user profile icon on right side */
         <div style={{display:'flex',alignItems:'center',gap:16}}>
           <button onClick={() => go(logged? '/support/chat' : '/support/guest')} style={{background:'#cc0000',color:'#000',fontWeight:600,fontSize:16,padding:'12px 24px',border:'none',borderRadius:8,cursor:'pointer'}}>Contact</button>
           {logged && <div onClick={() => go('/profile')} style={{width:48,height:48,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'50%'}}>
@@ -76,6 +79,7 @@ export default function Sidebar() {
           </div>}
         </div>
       ) : <>
+        /* ON HOMEPAGE WEBSITE FACE (app/page.js): Display tabs ending with Get Started on desktop, show hamburger menu on phone screen */
         <nav className="desktop-nav">
           {Object.keys(menu).map(t => (
             <div key={t} onClick={() => scroll(t.toLowerCase().replace(/ /g,'-'))} style={{color:'#000',display:'flex',alignItems:'center',gap:6,cursor:'pointer'}}>
