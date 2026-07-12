@@ -1,5 +1,4 @@
 import './globals.css'
-import ClientWrapper from '@/components/ClientWrapper' // Fixed using Next.js root alias mapping
 
 export const metadata = {
   title: 'Disruptive - Digital Marketing That Actually Works',
@@ -14,9 +13,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <ClientWrapper>
-          {children}
-        </ClientWrapper>
+        {children}
       </body>
     </html>
   )
