@@ -48,19 +48,12 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
-      .desktop-nav { display: flex; align-items: center; gap: 20px; }
-      .menu-btn { display: none; }
-      .dropdown-arrow {
-          width: 0;
-          height: 0;
-          border-left: 4px solid transparent;
-          border-right: 4px solid transparent;
-          border-top: 4px solid #000;
-          display: inline-block;
-        }
+     .desktop-nav { display: flex; align-items: center; gap: 20px; }
+     .menu-btn { display: none; }
+     .dropdown-arrow { display: inline-flex; align-items: center; margin-left: 4px; }
         @media (max-width: 1024px) {
-        .desktop-nav { display: none!important; }
-        .menu-btn { display: block!important; }
+       .desktop-nav { display: none!important; }
+       .menu-btn { display: block!important; }
         }
       `}</style>
 
@@ -120,11 +113,39 @@ export default function Sidebar() {
           <>
             {/* FULL HEADER: HOME PAGE ONLY */}
             <nav className="desktop-nav">
-              <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHAT WE DO<span className="dropdown-arrow" /></div>
-              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE HELP<span className="dropdown-arrow" /></div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                WHAT WE DO
+                <span className="dropdown-arrow">
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                    <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                WHO WE HELP
+                <span className="dropdown-arrow">
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                    <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+              </div>
               <div className="desktop-nav-item" onClick={() => scrollTo('results')} style={{ color: '#000' }}>RESULTS</div>
-              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>WHO WE ARE<span className="dropdown-arrow" /></div>
-              <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>RESOURCES<span className="dropdown-arrow" /></div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                WHO WE ARE
+                <span className="dropdown-arrow">
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                    <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+              </div>
+              <div className="desktop-nav-item" onClick={() => scrollTo('resources')} style={{ color: '#000', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                RESOURCES
+                <span className="dropdown-arrow">
+                  <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                    <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
+              </div>
               {showGetStarted && (
                 <button className="desktop-talk-btn" onClick={goToRegistration} style={{ background: '#cc0000', color: '#fff', fontWeight: '500', border: 'none', padding:'10px 20px', borderRadius:4, cursor:'pointer' }}>GET STARTED</button>
               )}
