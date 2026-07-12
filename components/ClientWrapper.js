@@ -14,31 +14,51 @@ export default function ClientWrapper({ children }) {
   useEffect(() => {
     setMount(true)
     setLogged(!!(localStorage.getItem('token') || localStorage.getItem('user')))
-  }, [path])
+  }, )
 
-  const isAuthPage = path === '/registration' || path === '/login'
-  const isSupportPage = path === '/support' || path.startsWith('/support/')
-
-  // RULE: Wipe out headers/widgets completely on login, registration, and guest support paths
-  const shouldHideWidgets = isAuthPage || (!logged && isSupportPage)
+  // RULE 1: Show header ONLY if logged in
+  const showHeader = logged
+  
+  // RULE 2: Chat widget shows on ALL pages, always
+  const showChat = true
 
   if (!mount) {
     return (
-      <main className={`main-content ${shouldHideWidgets ? 'no-widgets' : ''}`}>
+      <div 
+        className="main-content"
+        style={{
+          paddingTop: showHeader ? '48px' : 0, // 0px for guests, 48px for logged in
+          background: '#fff',
+          color: '#000',
+          minHeight: '100vh',
+          overflowX: 'hidden',
+          width: '100%'
+        }}
+      >
         {children}
-      </main>
+      </div>
     )
   }
 
   return (
     <>
-      {!shouldHideWidgets && <Sidebar />}
+      {showHeader && <Sidebar />}
       
-      <main className={`main-content ${shouldHideWidgets ? 'no-widgets' : ''}`}>
+      <div 
+        className="main-content"
+        style={{
+          paddingTop: showHeader ? '48px' : 0, // Only pad when header exists
+          background: '#fff',
+          color: '#000',
+          minHeight: '100vh',
+          overflowX: 'hidden',
+          width: '100%'
+        }}
+      >
         {children}
-      </main>
+      </div>
       
-      {!shouldHideWidgets && <ChatWidget />}
+      {showChat && <ChatWidget />}
     </>
   )
 }

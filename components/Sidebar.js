@@ -10,7 +10,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const headerHeight = 48
 
-  const simplifiedHeaderRoutes = ['/dashboard', '/vip', '/activity', '/withdrawal', '/deposit', '/records', '/registration', '/login']
+  const simplifiedHeaderRoutes = ['/dashboard', '/vip', '/activity', '/withdrawal', '/deposit', '/records', '/registration', '/login', '/']
   const useSimplifiedHeader = simplifiedHeaderRoutes.includes(pathname)
   const showGetStarted = pathname === '/'
   const showFloatingButton = ['/', '/registration', '/login'].includes(pathname)
@@ -40,13 +40,13 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
-       .desktop-nav { 
-          display: flex; 
-          align-items: center; 
-          gap: 20px; 
+      .desktop-nav {
+          display: flex;
+          align-items: center;
+          gap: 20px;
         }
-       .menu-btn { 
-          display: none; 
+      .menu-btn {
+          display: none;
           background: none;
           border: none;
           cursor: pointer;
@@ -56,10 +56,10 @@ export default function Sidebar() {
           height: 100%;
         }
         @media (max-width: 1024px) {
-         .desktop-nav { display: none!important; }
-         .menu-btn { display: flex!important; }
+        .desktop-nav { display: none!important; }
+        .menu-btn { display: flex!important; }
         }
-       .desktop-nav-item {
+      .desktop-nav-item {
           color: #000;
           display: flex;
           align-items: center;
@@ -68,7 +68,7 @@ export default function Sidebar() {
           font-size: 14px;
           font-weight: 500;
         }
-       .desktop-talk-btn {
+      .desktop-talk-btn {
           background: #cc0000;
           color: #fff;
           font-weight: 500;
@@ -95,14 +95,15 @@ export default function Sidebar() {
         right: 0,
         zIndex: 1002
       }}>
-        {/* Logo - centered on simplified, left on full */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        {/* Logo - always centered */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
           height: '100%',
-          position: useSimplifiedHeader? 'absolute' : 'static',
-          left: useSimplifiedHeader? '50%' : 'auto',
-          transform: useSimplifiedHeader? 'translateX(-50%)' : 'none'
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)'
         }}>
           <img
             src="/logo.png"
@@ -117,10 +118,10 @@ export default function Sidebar() {
           />
         </div>
 
-        {/* SIMPLIFIED HEADER: DASHBOARD + ICON PAGES + AUTH PAGES */}
+        {/* SIMPLIFIED HEADER: ALL LOGGED IN PAGES + AUTH PAGES */}
         {useSimplifiedHeader? (
           <>
-            <div style={{ position: 'absolute', right: '16px', display: 'flex', alignItems: 'center', gap: '16px', height: '100%' }}>
+            <div style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '16px', height: '100%' }}>
               <button
                 onClick={() => router.push('/contact')}
                 style={{
@@ -148,14 +149,14 @@ export default function Sidebar() {
                 }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                 </svg>
               </div>
             </div>
           </>
         ) : (
           <>
-            {/* FULL HEADER: HOME PAGE ONLY */}
+            {/* FULL HEADER: GUEST HOME PAGE ONLY */}
             <nav className="desktop-nav">
               <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')}>
                 WHAT WE DO
@@ -187,10 +188,16 @@ export default function Sidebar() {
               )}
             </nav>
 
-            {/* HAMBURGER - NO INLINE DISPLAY STYLE */}
+            {/* HAMBURGER - MOBILE ONLY, VERTICALLY CENTERED */}
             <button
               className="menu-btn"
               onClick={() => setMenuOpen(!menuOpen)}
+              style={{
+                position: 'absolute',
+                right: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)'
+              }}
             >
               {menuOpen? (
                 <span style={{ color: '#000', fontSize: '28px', fontWeight: '900', lineHeight: 1 }}>✕</span>
@@ -206,7 +213,7 @@ export default function Sidebar() {
         )}
       </header>
 
-      {/* MOBILE MENU - ONLY FOR HOME PAGE */}
+      {/* MOBILE MENU - ONLY FOR GUEST HOME PAGE */}
       {!useSimplifiedHeader && menuOpen && (
         <div className="mobile-menu-overlay" style={{
           position: 'fixed',
