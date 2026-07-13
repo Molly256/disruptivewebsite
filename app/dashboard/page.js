@@ -35,7 +35,7 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
-      {/* DASHBOARD HEADER - FINAL */}
+      {/* DASHBOARD HEADER - FIXED PROFILE ICON */}
       <div style={{ 
         background: '#FFFFFF',
         display: 'flex',
@@ -99,8 +99,8 @@ export default function Dashboard() {
               justifyContent: 'center'
             }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
+              <path d="M12 6C13.1 6 14 6.9 14 8C14 9.1 13.1 10 12 10C10.9 10 10 9.1 10 8C10 6.9 10.9 6 12 6ZM12 16C14.7 16 17.8 17.29 18 18H6C6.23 17.28 9.31 16 12 16Z"/>
             </svg>
           </div>
         </div>
