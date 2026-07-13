@@ -35,7 +35,7 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
-      {/* DASHBOARD HEADER - FIXED PROFILE ICON */}
+      {/* DASHBOARD HEADER - MEDIUM PROFILE ICON */}
       <div style={{ 
         background: '#FFFFFF',
         display: 'flex',
@@ -91,15 +91,15 @@ export default function Dashboard() {
           <div
             onClick={() => router.push('/profile')}
             style={{
-              width: '36px',
-              height: '36px',
+              width: '40px',
+              height: '40px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="#000">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="#000">
               <path d="M12 6C13.1 6 14 6.9 14 8C14 9.1 13.1 10 12 10C10.9 10 10 9.1 10 8C10 6.9 10.9 6 12 6ZM12 16C14.7 16 17.8 17.29 18 18H6C6.23 17.28 9.31 16 12 16Z"/>
             </svg>
           </div>
