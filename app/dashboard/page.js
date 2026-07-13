@@ -35,26 +35,30 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
-      {/* DASHBOARD HEADER - MATCHES SIDEBAR EXACTLY */}
+      {/* DASHBOARD HEADER - DEBUG VERSION */}
       <header style={{ 
-        background: '#fff',
+        background: 'lime',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0 16px',
         height: '64px',
-        borderBottom: '1px solid #eee',
+        borderBottom: '3px solid red',
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
-        zIndex: 1002
+        zIndex: 99999
       }}>
-        <div style={{
+        <div style={{ 
           display: 'flex',
           alignItems: 'center',
-          height: '100%'
+          height: '100%',
+          gap: '12px'
         }}>
+          <div style={{ color: 'black', fontSize: '20px', fontWeight: 'bold' }}>
+            HEADER WORKS
+          </div>
           <img
             src="/logo.png"
             alt="Disruptive"
@@ -62,7 +66,8 @@ export default function Dashboard() {
               height: '28px',
               width: 'auto',
               display: 'block',
-              objectFit: 'contain'
+              objectFit: 'contain',
+              border: '1px solid blue' // Shows if image loads
             }}
           />
         </div>
@@ -77,7 +82,7 @@ export default function Dashboard() {
             onClick={() => router.push('/contact')}
             style={{
               background: '#e60000',
-              color: '#000',
+              color: '#fff',
               fontWeight: '600',
               fontSize: '15px',
               padding: '10px 20px',
@@ -96,10 +101,11 @@ export default function Dashboard() {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              background: 'black'
             }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
           </div>
@@ -107,7 +113,17 @@ export default function Dashboard() {
       </header>
 
       {/* 1. HERO VIDEO SECTION */}
-      <div style={{ position: 'relative', height: isDesktop ? 'calc(100vh - 64px)' : '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', overflow: 'hidden' }}>
+      <div style={{ 
+        position: 'relative', 
+        height: isDesktop ? 'calc(100vh - 64px)' : '50vh', 
+        width: '100%', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        background: '#000', 
+        overflow: 'hidden',
+        zIndex: 1
+      }}>
         <video autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}>
           <source src="/videos/work-video.mp4" type="video/mp4" />
         </video>
