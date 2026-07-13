@@ -1,8 +1,6 @@
 import './globals.css'
 import ChatWidget from '@/components/ChatWidget'
 import Sidebar from '@/components/Sidebar'
-import DashboardHeader from '@/components/DashboardHeader'
-import { headers } from 'next/headers'
 
 export const metadata = {
   title: 'Disruptive - Digital Marketing That Actually Works',
@@ -14,19 +12,10 @@ export const metadata = {
 }
 
 export default function RootLayout({ children }) {
-  const headersList = headers()
-  const pathname = headersList.get('x-pathname') || headersList.get('x-invoke-path') || '/'
-  
-  // Kept exactly as you wrote it to protect your homepage header rules
-  const isLoggedIn = pathname !== '/' && pathname !== '/login' && pathname !== '/registration'
-  
-  const isDashboardRoute = pathname.startsWith('/dashboard')
-
   return (
     <html lang="en">
       <body>
-        {isDashboardRoute && <DashboardHeader />}
-        <Sidebar logged={isLoggedIn} />
+        <Sidebar />
         {children}
         <ChatWidget />
       </body>

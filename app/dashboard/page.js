@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -33,10 +34,60 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px' }}>
+    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
+      {/* DASHBOARD HEADER - INLINE, NO EXTRA FILES */}
+      <header style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        right: 0, 
+        height: '64px', 
+        background: '#fff', 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '0 20px', 
+        zIndex: 1001,
+        borderBottom: '1px solid #eee'
+      }}>
+        <Image 
+          src="/logo.png" 
+          alt="Logo" 
+          width={120} 
+          height={40} 
+          style={{ objectFit: 'contain' }}
+          priority
+        />
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button 
+            onClick={() => router.push('/contact')}
+            style={{ 
+              background: '#cc0000', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: '6px',
+              padding: '8px 16px', 
+              fontSize: '14px', 
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Contact
+          </button>
+          
+          <div onClick={() => router.push('/profile')} style={{ cursor: 'pointer' }}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+        </div>
+      </header>
+
       {/* 1. HERO VIDEO SECTION */}
-      <div style={{ position: 'relative', height: isDesktop ? '100vh' : '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: isDesktop ? 'calc(100vh - 64px)' : '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', overflow: 'hidden' }}>
         <video autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}>
           <source src="/videos/work-video.mp4" type="video/mp4" />
         </video>
