@@ -1,30 +1,16 @@
 'use client'
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import Link from 'next/link'
 
-export default function Sidebar({ logged }) {
+export default function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
   const router = useRouter()
   const pathname = usePathname()
   const headerHeight = 48
 
-  // RULE: No header on auth pages
-  const isAuthPage = pathname === '/registration' || pathname === '/login'
-  if (isAuthPage) return null
-
-  // RULE: Logged in header = logo left + contact + profile
-  const useLoggedInHeader = logged
-
-  // RULE: Guest home header = full menu - FIXED: removed!logged check
-  const useGuestHomeHeader = pathname === '/'
-
-  // If neither, render nothing
-  if (!useLoggedInHeader &&!useGuestHomeHeader) return null
-
-  const showGetStarted = pathname === '/'
-  const showFloatingButton = ['/', '/registration', '/login'].includes(pathname)
+  // ONLY RENDER ON HOMEPAGE
+  if (pathname!== '/') return null
 
   const toggleMenu = (menu) => {
     setActiveMenu(activeMenu === menu? null : menu)
@@ -51,12 +37,12 @@ export default function Sidebar({ logged }) {
   return (
     <>
       <style>{`
-   .desktop-nav {
+      .desktop-nav {
           display: flex;
           align-items: center;
           gap: 20px;
         }
-   .menu-btn {
+      .menu-btn {
           display: none;
           background: none;
           border: none;
@@ -71,10 +57,10 @@ export default function Sidebar({ logged }) {
           transform: translateY(-50%);
         }
         @media (max-width: 1024px) {
-     .desktop-nav { display: none!important; }
-     .menu-btn { display: flex!important; }
+        .desktop-nav { display: none!important; }
+        .menu-btn { display: flex!important; }
         }
-   .desktop-nav-item {
+      .desktop-nav-item {
           color: #000;
           display: flex;
           align-items: center;
@@ -83,7 +69,7 @@ export default function Sidebar({ logged }) {
           font-size: 14px;
           font-weight: 500;
         }
-   .desktop-talk-btn {
+      .desktop-talk-btn {
           background: #cc0000;
           color: #fff;
           font-weight: 500;
@@ -94,7 +80,6 @@ export default function Sidebar({ logged }) {
         }
       `}</style>
 
-      {/* TOP BAR - 48PX EXACT */}
       <header className="topbar" style={{
         background: '#fff',
         display: 'flex',
@@ -110,7 +95,6 @@ export default function Sidebar({ logged }) {
         right: 0,
         zIndex: 1002
       }}>
-        {/* Logo - always left, vertically centered */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -129,102 +113,49 @@ export default function Sidebar({ logged }) {
           />
         </div>
 
-        {/* LOGGED IN HEADER: Contact + Profile */}
-        {useLoggedInHeader && (
-          <div style={{
-            position: 'absolute',
-            right: '16px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            height: '100%'
-          }}>
-            <button
-              onClick={() => router.push('/contact')}
-              style={{
-                background: '#e60000',
-                color: '#000',
-                fontWeight: '600',
-                fontSize: '15px',
-                padding: '10px 20px',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer'
-              }}
-            >
-              Contact
-            </button>
-            <div
-              onClick={() => router.push('/profile')}
-              style={{
-                width: '36px',
-                height: '36px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
+        <nav className="desktop-nav">
+          <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')}>
+            WHAT WE DO
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </div>
-        )}
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')}>
+            WHO WE HELP
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('results')}>RESULTS</div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')}>
+            WHO WE ARE
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="desktop-nav-item" onClick={() => scrollTo('resources')}>
+            RESOURCES
+            <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+              <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <button className="desktop-talk-btn" onClick={goToRegistration}>GET STARTED</button>
+        </nav>
 
-        {/* GUEST HOME HEADER: Full menu */}
-        {useGuestHomeHeader && (
-          <>
-            <nav className="desktop-nav">
-              <div className="desktop-nav-item" onClick={() => scrollTo('what-we-do')}>
-                WHAT WE DO
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                  <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-help')}>
-                WHO WE HELP
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                  <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div className="desktop-nav-item" onClick={() => scrollTo('results')}>RESULTS</div>
-              <div className="desktop-nav-item" onClick={() => scrollTo('who-we-are')}>
-                WHO WE ARE
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                  <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div className="desktop-nav-item" onClick={() => scrollTo('resources')}>
-                RESOURCES
-                <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
-                  <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              {showGetStarted && (
-                <button className="desktop-talk-btn" onClick={goToRegistration}>GET STARTED</button>
-              )}
-            </nav>
-
-            <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen? (
-                <span style={{ color: '#000', fontSize: '28px', fontWeight: '900', lineHeight: 1 }}>✕</span>
-              ) : (
-                <svg width="26" height="20" viewBox="0 0 26 20" fill="none">
-                  <rect y="0" width="26" height="3.5" rx="1.75" fill="#000"/>
-                  <rect y="8.25" width="26" height="3.5" rx="1.75" fill="#000"/>
-                  <rect y="16.5" width="26" height="3.5" rx="1.75" fill="#000"/>
-                </svg>
-              )}
-            </button>
-          </>
-        )}
+        <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
+          {menuOpen? (
+            <span style={{ color: '#000', fontSize: '28px', fontWeight: '900', lineHeight: 1 }}>✕</span>
+          ) : (
+            <svg width="26" height="20" viewBox="0 0 26 20" fill="none">
+              <rect y="0" width="26" height="3.5" rx="1.75" fill="#000"/>
+              <rect y="8.25" width="26" height="3.5" rx="1.75" fill="#000"/>
+              <rect y="16.5" width="26" height="3.5" rx="1.75" fill="#000"/>
+            </svg>
+          )}
+        </button>
       </header>
 
-      {/* MOBILE MENU - ONLY FOR GUEST HOME */}
-      {useGuestHomeHeader && menuOpen && (
+      {menuOpen && (
         <div className="mobile-menu-overlay" style={{
           position: 'fixed',
           top: `${headerHeight}px`,
@@ -278,52 +209,47 @@ export default function Sidebar({ logged }) {
             </div>
           ))}
 
-          {showGetStarted && (
-            <button
-              onClick={goToRegistration}
-              style={{
-                background: '#cc0000',
-                color: '#fff',
-                border: 'none',
-                padding: '16px 32px',
-                fontWeight: '500',
-                fontSize: '16px',
-                letterSpacing: '1px',
-                marginTop: '30px',
-                cursor: 'pointer'
-              }}
-            >
-              GET STARTED
-            </button>
-          )}
+          <button
+            onClick={goToRegistration}
+            style={{
+              background: '#cc0000',
+              color: '#fff',
+              border: 'none',
+              padding: '16px 32px',
+              fontWeight: '500',
+              fontSize: '16px',
+              letterSpacing: '1px',
+              marginTop: '30px',
+              cursor: 'pointer'
+            }}
+          >
+            GET STARTED
+          </button>
         </div>
       )}
 
-      {/* FLOATING GET STARTED BUTTON */}
-      {showFloatingButton && (
-        <div
-          onClick={goToRegistration}
-          style={{
-            position:'fixed',
-            bottom:'20px',
-            right:'20px',
-            zIndex:1000,
-            background:'#e60000',
-            color:'#fff',
-            fontWeight:'500',
-            fontSize:'14px',
-            letterSpacing:'1px',
-            padding:'16px 24px',
-            borderRadius:'50px',
-            cursor:'grab',
-            boxShadow:'0 4px 12px rgba(0,0,0,0.3)',
-            userSelect:'none',
-            touchAction:'none'
-          }}
-        >
-          GET STARTED
-        </div>
-      )}
+      <div
+        onClick={goToRegistration}
+        style={{
+          position:'fixed',
+          bottom:'20px',
+          right:'20px',
+          zIndex:1000,
+          background:'#e60000',
+          color:'#fff',
+          fontWeight:'500',
+          fontSize:'14px',
+          letterSpacing:'1px',
+          padding:'16px 24px',
+          borderRadius:'50px',
+          cursor:'grab',
+          boxShadow:'0 4px 12px rgba(0,0,0,0.3)',
+          userSelect:'none',
+          touchAction:'none'
+        }}
+      >
+        GET STARTED
+      </div>
     </>
   )
 }
