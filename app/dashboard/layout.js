@@ -1,4 +1,4 @@
-import DashboardHeader from './Dashboardheader' // Changed to match your file name exactly
+import DashboardHeader from '../../components/DashboardHeader' // Navigates out of app/dashboard up into the components folder
 
 export default function DashboardLayout({ children }) {
   return (
