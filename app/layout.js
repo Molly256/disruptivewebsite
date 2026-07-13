@@ -1,6 +1,7 @@
 import './globals.css'
 import ChatWidget from '@/components/ChatWidget'
-import Sidebar from '@/components/Sidebar' // <-- add this
+import Sidebar from '@/components/Sidebar'
+import { headers } from 'next/headers'
 
 export const metadata = {
   title: 'Disruptive - Digital Marketing That Actually Works',
@@ -12,10 +13,16 @@ export const metadata = {
 }
 
 export default function RootLayout({ children }) {
+  const headersList = headers()
+  const pathname = headersList.get('x-pathname') || headersList.get('x-invoke-path') || '/'
+  
+  // Show logged-in header on all pages except home, login, registration
+  const isLoggedIn = pathname !== '/' && pathname !== '/login' && pathname !== '/registration'
+
   return (
     <html lang="en">
       <body>
-        <Sidebar /> {/* <-- add this */}
+        <Sidebar logged={isLoggedIn} />
         {children}
         <ChatWidget />
       </body>

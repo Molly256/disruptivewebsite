@@ -17,8 +17,8 @@ export default function Sidebar({ logged }) {
   // RULE: Logged in header = logo left + contact + profile
   const useLoggedInHeader = logged
 
-  // RULE: Guest home header = full menu
-  const useGuestHomeHeader = pathname === '/' &&!logged
+  // RULE: Guest home header = full menu - FIXED: removed!logged check
+  const useGuestHomeHeader = pathname === '/'
 
   // If neither, render nothing
   if (!useLoggedInHeader &&!useGuestHomeHeader) return null
@@ -51,12 +51,12 @@ export default function Sidebar({ logged }) {
   return (
     <>
       <style>{`
-    .desktop-nav {
+   .desktop-nav {
           display: flex;
           align-items: center;
           gap: 20px;
         }
-    .menu-btn {
+   .menu-btn {
           display: none;
           background: none;
           border: none;
@@ -71,10 +71,10 @@ export default function Sidebar({ logged }) {
           transform: translateY(-50%);
         }
         @media (max-width: 1024px) {
-      .desktop-nav { display: none!important; }
-      .menu-btn { display: flex!important; }
+     .desktop-nav { display: none!important; }
+     .menu-btn { display: flex!important; }
         }
-    .desktop-nav-item {
+   .desktop-nav-item {
           color: #000;
           display: flex;
           align-items: center;
@@ -83,7 +83,7 @@ export default function Sidebar({ logged }) {
           font-size: 14px;
           font-weight: 500;
         }
-    .desktop-talk-btn {
+   .desktop-talk-btn {
           background: #cc0000;
           color: #fff;
           font-weight: 500;
