@@ -1,6 +1,7 @@
 import './globals.css'
 import ChatWidget from '@/components/ChatWidget'
 import Sidebar from '@/components/Sidebar'
+import DashboardHeader from '@/components/DashboardHeader' // Imports your new header safely
 import { headers } from 'next/headers'
 
 export const metadata = {
@@ -16,12 +17,18 @@ export default function RootLayout({ children }) {
   const headersList = headers()
   const pathname = headersList.get('x-pathname') || headersList.get('x-invoke-path') || '/'
   
-  // Show logged-in header on all pages except home, login, registration
+  // Kept exactly as you wrote it to protect your homepage header rules
   const isLoggedIn = pathname !== '/' && pathname !== '/login' && pathname !== '/registration'
+
+  // NEW RULE: Only true if the user is explicitly inside the dashboard paths
+  const isDashboardRoute = pathname.startsWith('/dashboard')
 
   return (
     <html lang="en">
       <body>
+        {/* Renders your dashboard layout rules ONLY on dashboard paths, completely leaving your home page header alone */}
+        {isDashboardRoute && <DashboardHeader />}
+        
         <Sidebar logged={isLoggedIn} />
         {children}
         <ChatWidget />
