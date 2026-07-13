@@ -33,52 +33,17 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh', boxSizing: 'border-box' }}>
+    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px' }}>
       
-      {/* 1. FIXED TOP HEADER (Forced to the front using zIndex: 9999) */}
-      <header style={{ 
-        background: '#ffffff', 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        padding: '0 16px', 
-        height: '66px', 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        zIndex: 9999, // Forced front execution layer
-        boxSizing: 'border-box', 
-        borderBottom: '1px solid #f2f2f7' 
-      }}>
-        {/* Swapped out the Next.js Image component completely for a direct, clean HTML img tag */}
-        <img 
-          src="/logo.png" 
-          alt="Logo" 
-          style={{ height: '32px', width: 'auto', objectFit: 'contain', cursor: 'pointer', display: 'block' }} 
-          onClick={() => router.push('/dashboard')} 
-        />
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <button onClick={() => router.push('/contact')} style={{ background: '#ff0000', color: '#ffffff', fontWeight: '500', fontSize: '14px', padding: '8px 18px', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}>Contact</button>
-          <button onClick={() => router.push('/profile')} aria-label="Profile" style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '32px', height: '32px' }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z" /></svg>
-          </button>
-        </div>
-      </header>
-
-      {/* HEADER SPACER */}
-      <div style={{ height: '66px' }} />
-
-      {/* 2. HERO VIDEO SECTION (Tucked behind header layer with zIndex: 1) */}
-      <div style={{ position: 'relative', height: isDesktop ? 'calc(100vh - 66px)' : '40vh', width: '100%', background: '#000', overflow: 'hidden', zIndex: 1 }}>
+      {/* 1. HERO VIDEO SECTION (No layout-breaking margins or extra headers here anymore!) */}
+      <div style={{ position: 'relative', height: isDesktop ? 'calc(100vh - 64px)' : '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', overflow: 'hidden' }}>
         <video autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}>
           <source src="/videos/work-video.mp4" type="video/mp4" />
         </video>
       </div>
 
-      {/* 3. TEXT INTRO */}
-      <div style={{ padding: '20px' }}>
+      {/* 2. TEXT INTRO */}
+      <div style={{ padding: '20px 20px 0' }}>
         <p style={{ color: '#000', fontSize: '14px', lineHeight: '1.5', marginBottom: '16px', fontWeight: '300' }}>
           We are a digitally native design agency evolving brands through creative vision & technology.
         </p>
@@ -87,8 +52,8 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* 4. QUICK CLICKS GRID */}
-      <div style={{ padding: '10px 20px 40px' }}>
+      {/* 3. QUICK CLICKS GRID */}
+      <div style={{ padding: '24px 20px' }}>
         <h2 style={{ fontSize: '12px', fontWeight: '400', color: '#666', letterSpacing: '1px', marginBottom: '16px' }}>QUICK CLICKS</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
           {clicks.map((item) => (
@@ -100,13 +65,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 5. FOOTER */}
+      {/* 4. FOOTER */}
       <div style={{ background: '#000', padding: '40px 20px 140px', textAlign: 'center' }}>
         <img src="/logo.png" alt="Disruptive" style={{ height: '32px', width: 'auto', marginBottom: '16px', objectFit: 'contain' }} />
         <div style={{ color: '#fff', fontSize: '12px', fontWeight: '300' }}>Copyright 2026 © disruptiveadvertising</div>
       </div>
 
-      {/* 6. FIXED BOTTOM NAVIGATION BAR */}
+      {/* 5. FIXED BOTTOM NAVIGATION BAR */}
       <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#000', display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '12px 0 24px', zIndex: 1000, borderTop: '1px solid #222' }}>
         <div onClick={() => router.push('/dashboard')} style={{ textAlign: 'center', cursor: 'pointer' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
