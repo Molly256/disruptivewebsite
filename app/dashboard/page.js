@@ -28,12 +28,12 @@ export default function Dashboard() {
     if (type === 'diamond') return <svg {...props}><path d="M6 3h12l4 6-10 12L2 9l4-6zM2 9h20M8.5 9l3.5 12M15.5 9l-3.5 12M6 3l6 6 6-6"/></svg>
     if (type === 'chat') return <svg {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg>
     if (type === 'terms') return <svg {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    if (type === 'cert') return <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#000" strokeWidth="2"><path d="M16 4 L26 8 V16 C26 22 16 28 16 28 C16 28 6 22 6 16 V8 L16 4 Z"/><polyline points="12 16 15 19 21 13"/></svg>
+    if (type === 'cert') return <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="#000" strokeWidth="2"><path d="M16 4 L26 8 V16 C26 22 16 28 C16 28 6 22 6 16 V8 L16 4 Z"/><polyline points="12 16 15 19 21 13"/></svg>
     if (type === 'globe') return <svg {...props}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
   }
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px' }}>
+    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
       {/* 1. HERO VIDEO SECTION */}
       <div style={{ position: 'relative', height: isDesktop ? 'calc(100vh - 64px)' : '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', overflow: 'hidden' }}>
@@ -67,7 +67,6 @@ export default function Dashboard() {
 
       {/* 4. FOOTER */}
       <div style={{ background: '#000', padding: '40px 20px 140px', textAlign: 'center' }}>
-        <img src="/logo.png" alt="Disruptive" style={{ height: '32px', width: 'auto', marginBottom: '16px', objectFit: 'contain' }} />
         <div style={{ color: '#fff', fontSize: '12px', fontWeight: '300' }}>Copyright 2026 © disruptiveadvertising</div>
       </div>
 
