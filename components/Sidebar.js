@@ -1,4 +1,4 @@
- 'use client'
+remove'use client'
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -326,4 +326,4 @@ export default function Sidebar({ logged }) {
       )}
     </>
   )
-}
+} any codes fr wrapper
