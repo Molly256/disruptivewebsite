@@ -6,73 +6,63 @@ export default function DashboardHeader() {
 
   return (
     <header style={{
-      background: '#000000', // Changed to pure black so the light logo is visible
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '0 16px', 
-      height: '66px', 
-      position: 'fixed',
+      position: 'fixed',       // Pinned to the top as expected by your dashboard layout
       top: 0,
       left: 0,
       right: 0,
-      zIndex: 9999,
+      height: '64px',          // Matches the paddingTop in your layout.js perfectly
+      background: '#ffffff',   // White background
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '0 20px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
       boxSizing: 'border-box',
-      borderBottom: '1px solid #1c1c1e'
+      zIndex: 1000,            // Ensures it stays on top of page content
+      fontFamily: 'sans-serif'
     }}>
+      {/* Left Side: Logo */}
       <div style={{ display: 'flex', alignItems: 'center' }}>
-        <img
-          src="/logo.png" 
-          alt="Logo"
-          style={{
-            height: '32px', 
-            width: 'auto', 
-            display: 'block',
-            objectFit: 'contain',
-            cursor: 'pointer'
+        <img 
+          src="/logo.png"       // Next.js direct path from public folder
+          alt="Logo" 
+          style={{ height: '36px', objectFit: 'contain' }} // Slightly smaller height to fit the 64px bar nicely
+          onError={(e) => {
+            e.currentTarget.src = 'https://placeholder.com'
           }}
-          onClick={() => router.push('/dashboard')}
         />
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+      {/* Right Side: Button and Profile Icon */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        {/* Hot Red Contact Button */}
         <button
-          onClick={() => router.push('/contact')}
+          onClick={() => router.push('/support/chat')}
           style={{
-            background: '#ff0000', 
-            color: '#ffffff',
-            fontWeight: '500', 
-            fontSize: '14px', 
-            padding: '8px 18px', 
+            background: '#ff0000', // Hot red color
+            color: '#000000',      // Black text
             border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap'
+            borderRadius: '8px',
+            padding: '8px 20px',   // Adjusted padding for the 64px layout height
+            fontSize: '15px',
+            fontWeight: '600',     // Medium bold
+            cursor: 'pointer'
           }}
         >
           Contact
         </button>
 
-        <button
-          onClick={() => router.push('/profile')}
-          aria-label="User Profile"
-          style={{
-            background: 'none',
-            border: 'none',
-            padding: 0,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '32px',
-            height: '32px'
-          }}
-        >
-          {/* Changed profile icon fill to white so it's visible on the black header */}
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="#ffffff">
-            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z" />
+        {/* Black User Profile Icon */}
+        <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+          <svg 
+            width="28"             // Adjusted proportions to look sleek in a 64px header
+            height="28" 
+            viewBox="0 0 24 24" 
+            fill="#000000"          // Black icon color
+          >
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
           </svg>
-        </button>
+        </div>
       </div>
     </header>
   )
