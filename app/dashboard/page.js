@@ -1,7 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -36,51 +35,72 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
-      {/* DASHBOARD HEADER - INLINE, NO EXTRA FILES */}
+      {/* DASHBOARD HEADER - MATCHES SIDEBAR EXACTLY */}
       <header style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        right: 0, 
-        height: '64px', 
-        background: '#fff', 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        padding: '0 20px', 
-        zIndex: 1001,
-        borderBottom: '1px solid #eee'
+        background: '#fff',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0 16px',
+        height: '64px',
+        borderBottom: '1px solid #eee',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1002
       }}>
-        <Image 
-          src="/logo.png" 
-          alt="Logo" 
-          width={120} 
-          height={40} 
-          style={{ objectFit: 'contain' }}
-          priority
-        />
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button 
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          height: '100%'
+        }}>
+          <img
+            src="/logo.png"
+            alt="Disruptive"
+            style={{
+              height: '28px',
+              width: 'auto',
+              display: 'block',
+              objectFit: 'contain'
+            }}
+          />
+        </div>
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          height: '100%'
+        }}>
+          <button
             onClick={() => router.push('/contact')}
-            style={{ 
-              background: '#cc0000', 
-              color: '#fff', 
-              border: 'none', 
-              borderRadius: '6px',
-              padding: '8px 16px', 
-              fontSize: '14px', 
+            style={{
+              background: '#e60000',
+              color: '#000',
               fontWeight: '600',
+              fontSize: '15px',
+              padding: '10px 20px',
+              border: 'none',
+              borderRadius: '8px',
               cursor: 'pointer'
             }}
           >
             Contact
           </button>
-          
-          <div onClick={() => router.push('/profile')} style={{ cursor: 'pointer' }}>
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
+          <div
+            onClick={() => router.push('/profile')}
+            style={{
+              width: '36px',
+              height: '36px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
           </div>
         </div>
