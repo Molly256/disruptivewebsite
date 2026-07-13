@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import Link from 'next/link'
 
 export default function Sidebar() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -11,21 +10,19 @@ export default function Sidebar() {
   const pathname = usePathname()
   const headerHeight = 48
 
-  // Replace this with your actual auth check
   useEffect(() => {
-    const token = localStorage.getItem('token') // or your cookie check
-    setIsLoggedIn(!!token)
+    if (typeof window!== 'undefined') {
+      const token = localStorage.getItem('token')
+      setIsLoggedIn(!!token)
+    }
   }, [pathname])
 
-  // RULE 1: No header on auth pages
+  // No header on auth pages
   const isAuthPage = pathname === '/registration' || pathname === '/login'
   if (isAuthPage) return null
 
-  // RULE 2: Homepage gets full guest menu
   const isHomePage = pathname === '/'
-
-  // RULE 3: Everything else when logged in = dashboard header
-  const showDashboardHeader =!isHomePage && isLoggedIn
+  const isDashboard = pathname === '/dashboard'
 
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
@@ -48,17 +45,16 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
-       .desktop-nav { display: flex; align-items: center; gap: 20px; }
-       .menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 8px; align-items: center; justify-content: center; height: 100%; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
+     .desktop-nav { display: flex; align-items: center; gap: 20px; }
+     .menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 8px; align-items: center; justify-content: center; height: 100%; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
         @media (max-width: 1024px) {
-         .desktop-nav { display: none!important; }
-         .menu-btn { display: flex!important; }
+       .desktop-nav { display: none!important; }
+       .menu-btn { display: flex!important; }
         }
-       .desktop-nav-item { color: #000; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
-       .desktop-talk-btn { background: #cc0000; color: #fff; font-weight: 500; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+     .desktop-nav-item { color: #000; display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; font-weight: 500; }
+     .desktop-talk-btn { background: #cc0000; color: #fff; font-weight: 500; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
       `}</style>
 
-      {/* TOP BAR */}
       <header style={{
         background: '#fff',
         display: 'flex',
@@ -70,11 +66,11 @@ export default function Sidebar() {
         top: 0, left: 0, right: 0,
         zIndex: 1002
       }}>
-        {/* Logo - same for both headers */}
+        {/* Logo - same for all */}
         <img src="/logo.png" alt="Disruptive" style={{ height: '28px', width: 'auto' }} />
 
-        {/* DASHBOARD HEADER: Logo + Contact + Profile */}
-        {showDashboardHeader && (
+        {/* DASHBOARD ONLY: Contact + Profile */}
+        {isDashboard && isLoggedIn && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               onClick={() => router.push('/contact')}
@@ -94,7 +90,7 @@ export default function Sidebar() {
           </div>
         )}
 
-        {/* HOMEPAGE HEADER: Full menu */}
+        {/* HOMEPAGE: Keep your original menu exactly */}
         {isHomePage && (
           <>
             <nav className="desktop-nav">
