@@ -33,10 +33,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
+    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px' }}>
       
       {/* 1. HERO VIDEO SECTION */}
-      <div style={{ position: 'relative', height: isDesktop ? 'calc(100vh - 64px)' : '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', height: isDesktop ? '100vh' : '50vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', overflow: 'hidden' }}>
         <video autoPlay loop muted playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}>
           <source src="/videos/work-video.mp4" type="video/mp4" />
         </video>
