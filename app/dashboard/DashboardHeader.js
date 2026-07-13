@@ -3,7 +3,6 @@ import { useRouter } from 'next/navigation'
 
 export default function DashboardHeader() {
   const router = useRouter()
-  const headerHeight = 48
 
   return (
     <header style={{
@@ -11,9 +10,10 @@ export default function DashboardHeader() {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '0 16px',
-      height: `${headerHeight}px`,
-      borderBottom: '1px solid #eee',
+      padding: '0 20px',
+      height: '84px',
+      borderBottom: 'none',
+      boxShadow: 'none',
       position: 'fixed',
       top: 0,
       left: 0,
@@ -45,7 +45,7 @@ export default function DashboardHeader() {
         <button
           onClick={() => router.push('/contact')}
           style={{
-            background: '#cc0000', // changed to match Contact page
+            background: '#cc0000',
             color: '#000',
             fontWeight: '600',
             fontSize: '15px',
