@@ -35,8 +35,8 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
-      {/* DASHBOARD HEADER - DEBUG VERSION */}
-      <header style={{ 
+      {/* DASHBOARD HEADER - CHANGED TO DIV */}
+      <div style={{ 
         background: 'lime',
         display: 'flex',
         justifyContent: 'space-between',
@@ -67,7 +67,7 @@ export default function Dashboard() {
               width: 'auto',
               display: 'block',
               objectFit: 'contain',
-              border: '1px solid blue' // Shows if image loads
+              border: '1px solid blue'
             }}
           />
         </div>
@@ -110,7 +110,7 @@ export default function Dashboard() {
             </svg>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* 1. HERO VIDEO SECTION */}
       <div style={{ 
