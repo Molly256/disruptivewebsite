@@ -1,5 +1,4 @@
 'use client'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 export default function DashboardHeader() {
@@ -11,56 +10,47 @@ export default function DashboardHeader() {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '0 16px', // Side spacing matching the layout image
-      height: '64px', // Compact mobile header height matching your screenshot
+      padding: '0 16px', 
+      height: '66px', 
       position: 'fixed',
       top: 0,
       left: 0,
       right: 0,
-      zIndex: 1000,
-      boxSizing: 'border-box'
+      zIndex: 9999, // Guarantees it stays in front of the video
+      boxSizing: 'border-box',
+      borderBottom: '1px solid #f2f2f7'
     }}>
-      {/* Left Side: Logo */}
-      <div 
-        onClick={() => router.push('/dashboard')}
-        style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          position: 'relative', 
-          height: '32px', 
-          width: '110px', 
-          cursor: 'pointer' 
-        }}
-      >
-        <Image
-          src="/logo.png" // Custom local file logo
+      {/* Left Side: Logo Area - Flex alignment ensures it doesn't collapse */}
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <img
+          src="/logo.png" // Exact same source that works in your footer
           alt="Logo"
-          fill
-          sizes="110px"
-          style={{ objectFit: 'contain' }}
-          priority
+          style={{
+            height: '32px', // Explicit height matching your footer layout
+            width: 'auto', // Lets width scale naturally so it never hits 0px
+            display: 'block',
+            objectFit: 'contain',
+            cursor: 'pointer'
+          }}
+          onClick={() => router.push('/dashboard')}
         />
       </div>
 
-      {/* Right Side: Contact Button + Solid Profile Icon */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px' // Clean, precise spacing matching the reference picture
-      }}>
+      {/* Right Side: Contact Button + Profile Icon */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
         {/* Hot Red Contact Button */}
         <button
           onClick={() => router.push('/contact')}
           style={{
             background: '#ff0000', // Absolute hot red
             color: '#ffffff',
-            fontWeight: '500', // Medium font weight
-            fontSize: '14px', // Crisp medium font size for mobile
-            padding: '8px 18px', // Visual proportions match the screenshot button shape
+            fontWeight: '500', 
+            fontSize: '14px', 
+            padding: '8px 18px', 
             border: 'none',
-            borderRadius: '6px', // Balanced rounded corners
+            borderRadius: '6px',
             cursor: 'pointer',
-            whiteSpace: 'nowrap' // Keeps text on a single line
+            whiteSpace: 'nowrap'
           }}
         >
           Contact
@@ -82,7 +72,6 @@ export default function DashboardHeader() {
             height: '32px'
           }}
         >
-          {/* Solid fill silhouette icon matching your reference layout style */}
           <svg width="26" height="26" viewBox="0 0 24 24" fill="#000000">
             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-4-8-4z" />
           </svg>
