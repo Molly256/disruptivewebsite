@@ -1,6 +1,5 @@
 import './globals.css'
 import ChatWidget from '@/components/ChatWidget'
-import Sidebar from '@/components/Sidebar'
 
 export const metadata = {
   title: 'Disruptive - Digital Marketing That Actually Works',
@@ -15,7 +14,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <Sidebar />
         {children}
         <ChatWidget />
       </body>
