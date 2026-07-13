@@ -35,15 +35,15 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
-      {/* DASHBOARD HEADER - CHANGED TO DIV */}
+      {/* DASHBOARD HEADER - FINAL */}
       <div style={{ 
-        background: 'lime',
+        background: '#FFFFFF',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: '0 16px',
         height: '64px',
-        borderBottom: '3px solid red',
+        borderBottom: '1px solid #eee',
         position: 'fixed',
         top: 0,
         left: 0,
@@ -53,21 +53,16 @@ export default function Dashboard() {
         <div style={{ 
           display: 'flex',
           alignItems: 'center',
-          height: '100%',
-          gap: '12px'
+          height: '100%'
         }}>
-          <div style={{ color: 'black', fontSize: '20px', fontWeight: 'bold' }}>
-            HEADER WORKS
-          </div>
           <img
             src="/logo.png"
             alt="Disruptive"
             style={{
-              height: '28px',
+              height: '32px',
               width: 'auto',
               display: 'block',
-              objectFit: 'contain',
-              border: '1px solid blue'
+              objectFit: 'contain'
             }}
           />
         </div>
@@ -101,11 +96,10 @@ export default function Dashboard() {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              background: 'black'
+              justifyContent: 'center'
             }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#000">
               <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
             </svg>
           </div>
