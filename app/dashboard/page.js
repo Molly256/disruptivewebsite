@@ -50,7 +50,6 @@ export default function Dashboard() {
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14 2 14 8 20 8"/>
-          <path d="M10 2H18a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H10"/>
         </svg>
       ),
       shield: (
@@ -63,7 +62,7 @@ export default function Dashboard() {
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5">
           <circle cx="12" cy="12" r="10"/>
           <line x1="2" y1="12" x2="22" y2="12"/>
-          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 0 0 1-4 10 15.3 0 0 1-4-10 15.3 0 0 1 4-10z"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
       )
     }
@@ -93,7 +92,7 @@ export default function Dashboard() {
             objectFit: 'cover'
           }}
         >
-          <source src="videos/work-video.mp4" type="video/mp4" />
+          <source src="/videos/work-video.mp4" type="video/mp4" />
         </video>
       </div>
 
@@ -151,7 +150,10 @@ export default function Dashboard() {
               onClick={() => {
                 if (item.name === 'Event') router.push('/event')
                 else if (item.name === 'VIP Level') router.push('/vip')
-                else console.log(item.name)
+                else if (item.name === 'FAQs') router.push('/faqs')
+                else if (item.name === "T&C's") router.push('/terms')
+                else if (item.name === 'Certificate') router.push('/certificate')
+                else if (item.name === 'About Us') router.push('/about')
               }}
               style={{
                 background: '#cc0000',
@@ -178,6 +180,31 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Footer with Logo + Copyright */}
+      <div style={{
+        background: '#000',
+        padding: '40px 20px',
+        textAlign: 'center'
+      }}>
+        <img
+          src="/logo.png"
+          alt="Disruptive"
+          style={{
+            height: '32px',
+            width: 'auto',
+            marginBottom: '16px',
+            objectFit: 'contain'
+          }}
+        />
+        <div style={{
+          color: '#fff',
+          fontSize: '12px',
+          fontWeight: '300'
+        }}>
+          Copyright 2026 © disruptiveadvertising
+        </div>
+      </div>
+
       {/* Bottom Nav - Black background */}
       <div style={{
         position: 'fixed',
@@ -191,7 +218,7 @@ export default function Dashboard() {
         padding: '12px 0 20px',
         zIndex: 1000
       }}>
-        <div style={{ textAlign: 'center', cursor: 'pointer' }}>
+        <div onClick={() => router.push('/dashboard')} style={{ textAlign: 'center', cursor: 'pointer' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5">
             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           </svg>
@@ -204,7 +231,7 @@ export default function Dashboard() {
           alignItems: 'center',
           gap: '4px'
         }}>
-          <div style={{
+          <div onClick={() => router.push('/start')} style={{
             width: '56px',
             height: '56px',
             background: '#cc0000',
@@ -233,7 +260,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', cursor: 'pointer' }}>
+        <div onClick={() => router.push('/records')} style={{ textAlign: 'center', cursor: 'pointer' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5">
             <rect x="3" y="3" width="18" height="18" rx="2"/>
             <line x1="9" y1="3" x2="9" y2="21"/>
