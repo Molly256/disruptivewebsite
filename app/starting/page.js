@@ -26,42 +26,54 @@ export default function StartingPage() {
     setProducts(imageList)
   }, [])
 
-  // Nonstop auto-scroll + center zoom
+  // Fixed auto-scroll - starts after DOM paints
   useEffect(() => {
     const scroller = productScrollerRef.current
     if (!scroller || products.length === 0) return
 
     let animationId
+    let position = 0
 
-    const autoScroll = () => {
-      scroller.scrollLeft += 0.7
-      
-      // Reset at 1/3 since we tripled the array
-      if (scroller.scrollLeft >= scroller.scrollWidth / 3) {
-        scroller.scrollLeft = 0
-      }
-
-      // Update center zoom
-      const items = scroller.querySelectorAll('.product-item')
-      const scrollerCenter = scroller.scrollLeft + scroller.offsetWidth / 2
-
-      items.forEach((item) => {
-        const itemCenter = item.offsetLeft + item.offsetWidth / 2
-        const distance = Math.abs(scrollerCenter - itemCenter)
-
-        if (distance < item.offsetWidth / 2) {
-          item.classList.add('active')
-        } else {
-          item.classList.remove('active')
+    // Wait for images to render before starting
+    const startScroll = () => {
+      const scroll = () => {
+        position += 1
+        const singleSetWidth = scroller.scrollWidth / 3
+        
+        if (position >= singleSetWidth) {
+          position = 0
         }
-      })
+        
+        scroller.scrollLeft = position
 
-      animationId = requestAnimationFrame(autoScroll)
+        // Update center zoom
+        const items = scroller.querySelectorAll('.product-item')
+        const scrollerCenter = scroller.scrollLeft + scroller.offsetWidth / 2
+
+        items.forEach((item) => {
+          const itemCenter = item.offsetLeft + item.offsetWidth / 2
+          const distance = Math.abs(scrollerCenter - itemCenter)
+
+          if (distance < item.offsetWidth / 2) {
+            item.classList.add('active')
+          } else {
+            item.classList.remove('active')
+          }
+        })
+
+        animationId = requestAnimationFrame(scroll)
+      }
+      
+      animationId = requestAnimationFrame(scroll)
     }
 
-    animationId = requestAnimationFrame(autoScroll)
+    // Small delay to let DOM calculate scrollWidth
+    const timeout = setTimeout(startScroll, 100)
 
-    return () => cancelAnimationFrame(animationId)
+    return () => {
+      clearTimeout(timeout)
+      cancelAnimationFrame(animationId)
+    }
   }, [products])
 
   const allProducts = [...products, ...products, ...products]
