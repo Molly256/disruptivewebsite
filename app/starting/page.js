@@ -51,7 +51,7 @@ export default function StartingPage() {
   const allMessages = [...winnerMessages, ...winnerMessages]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column', paddingTop: '84px' }}>
+    <div className="starting-wrapper">
       
       {/* Marquee Bar */}
       <div className="marquee-container">
@@ -76,13 +76,16 @@ export default function StartingPage() {
         </div>
       </div>
 
-      {/* Product Carousel */}
+      {/* Product Carousel - NO CARD WRAPPER */}
       <div className="product-carousel">
         <div ref={productScrollerRef} className="product-scroller">
           {allProducts.map((src, i) => (
-            <div key={i} className="product-card">
-              <img src={src} alt={`Product ${i % 30 + 1}`} loading="lazy" />
-            </div>
+            <img 
+              key={i} 
+              src={src} 
+              alt={`Product ${i % 30 + 1}`} 
+              loading="lazy" 
+            />
           ))}
         </div>
       </div>
