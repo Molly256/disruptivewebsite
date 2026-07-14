@@ -158,10 +158,10 @@ export default function Dashboard() {
           <div style={{ fontSize: '10px', color: '#fff', marginTop: '4px', fontWeight: '300' }}>Home</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-          <div onClick={() => router.push('/start')} style={{ width: '56px', height: '56px', background: '#cc0000', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '-28px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', cursor: 'pointer', border: '3px solid #fff' }}>
+          <div onClick={() => router.push('/starting')} style={{ width: '56px', height: '56px', background: '#cc0000', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '-28px', boxShadow: '0 4px 12px rgba(0,0,0,0.3)', cursor: 'pointer', border: '3px solid #fff' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'repeating-radial-gradient(circle at center, #000 0px, #000 1px, #cc0000 1px, #cc0000 3px)' }}/>
           </div>
-          <div style={{ fontSize: '10px', color: '#fff', fontWeight: '300' }}>start</div>
+          <div style={{ fontSize: '10px', color: '#fff', fontWeight: '300' }}>Starting</div>
         </div>
         <div onClick={() => router.push('/records')} style={{ textAlign: 'center', cursor: 'pointer' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
