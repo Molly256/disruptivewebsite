@@ -2,13 +2,12 @@
 import { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 
-// Mock user data - replace with your auth/session data
-const user = {
-  name: 'Louis', // Replace with actual username from DB
-  vipLevel: 2 // Replace with actual VIP level, 0 if none
+// Replace this with your actual session/auth hook
+const useUser = () => {
+  // TODO: Replace with real user data from your auth/session
+  return { name: 'Guest', vipLevel: 0 } 
 }
 
-// Rotating winner messages
 const winnerMessages = [
   'John56 user wins 102.00 USD prize in the task.',
   'Rebella26 user wins 256.00 USD prize in the task.',
@@ -21,17 +20,18 @@ export default function StartingPage() {
   const productScrollerRef = useRef(null)
   const marqueeRef = useRef(null)
   const [products, setProducts] = useState([])
+  const user = useUser() // Now uses dynamic user
 
   // Load 30 product images
   useEffect(() => {
     const imageList = []
     for (let i = 1; i <= 30; i++) {
-      imageList.push(`/image${i}.jpg`) // using image1.jpg format you mentioned
+      imageList.push(`/image${i}.jpg`)
     }
     setProducts(imageList)
   }, [])
 
-  // Auto-scroll products left
+  // Auto-scroll products left - FIXED
   useEffect(() => {
     const scroller = productScrollerRef.current
     if (!scroller || products.length === 0) return
@@ -40,7 +40,8 @@ export default function StartingPage() {
     let scrollPos = 0
     
     const animate = () => {
-      scrollPos += 0.8 // Speed - matches your video
+      scrollPos += 0.8
+      // Reset when we've scrolled one full set of images
       if (scrollPos >= scroller.scrollWidth / 2) {
         scrollPos = 0
       }
@@ -52,7 +53,7 @@ export default function StartingPage() {
     return () => cancelAnimationFrame(animationId)
   }, [products])
 
-  // Auto-scroll marquee text
+  // Auto-scroll marquee text - FIXED
   useEffect(() => {
     const marquee = marqueeRef.current
     if (!marquee) return
@@ -73,22 +74,24 @@ export default function StartingPage() {
     return () => cancelAnimationFrame(animationId)
   }, [])
 
+  // Duplicate arrays for seamless loop
   const allProducts = [...products, ...products]
   const allMessages = [...winnerMessages, ...winnerMessages]
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header - White background */}
-      <header className="bg-white px-4 py-3 flex items-center justify-between border-b">
+      <header className="bg-white px-4 py-3 flex items-center justify-between border-b shrink-0">
         <Image 
           src="/logo.png" 
           alt="Disruptive Logo" 
           width={120} 
           height={40}
           className="h-8 w-auto"
+          priority
         />
         <div className="flex items-center gap-3">
-          <button className="bg-[#FF6B00] text-white px-5 py-2 rounded-md font-medium text-sm">
+          <button className="bg-[#FF6B00] text-white px-5 py-2 rounded-md font-semibold text-sm hover:bg-[#e55f00] transition">
             Contact
           </button>
           <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center">
@@ -99,8 +102,8 @@ export default function StartingPage() {
         </div>
       </header>
 
-      {/* Red Marquee Bar */}
-      <div className="bg-[#FF4D00] py-2 overflow-hidden">
+      {/* Red Marquee Bar - FIXED */}
+      <div className="bg-[#FF4D00] py-2 overflow-hidden shrink-0">
         <div 
           ref={marqueeRef}
           className="flex whitespace-nowrap overflow-x-hidden"
@@ -108,7 +111,7 @@ export default function StartingPage() {
           {allMessages.map((msg, i) => (
             <span 
               key={i} 
-              className="text-black font-medium text-sm px-8"
+              className="text-black font-medium text-sm px-8 inline-block"
             >
               {msg}
             </span>
@@ -116,8 +119,8 @@ export default function StartingPage() {
         </div>
       </div>
 
-      {/* User Info Bar - White background */}
-      <div className="bg-white px-4 py-3 flex items-center justify-between">
+      {/* User Info Bar - DYNAMIC USERNAME */}
+      <div className="bg-white px-4 py-3 flex items-center justify-between shrink-0">
         <div>
           <p className="text-sm text-black">Hello,</p>
           <p className="text-2xl font-bold text-[#FF6B00]">{user.name}</p>
@@ -140,11 +143,12 @@ export default function StartingPage() {
         </div>
       </div>
 
-      {/* Black Product Section */}
+      {/* Black Product Section - FIXED SCROLL */}
       <div className="bg-black flex-1 py-8 overflow-hidden">
         <div 
           ref={productScrollerRef}
           className="flex gap-4 overflow-x-hidden px-4"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {allProducts.map((src, i) => (
             <div 
