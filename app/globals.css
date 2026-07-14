@@ -214,7 +214,7 @@ header:not(.topbar), hr {
   }
 }
 
-/* ==================== STARTING PAGE - CENTER ZOOM CAROUSEL ==================== */
+/* ==================== STARTING PAGE - FIXED: TOP ALIGN + FULL IMAGE + AUTO SCROLL ==================== */
 
 .starting-wrapper {
   min-height: 100vh;
@@ -286,21 +286,25 @@ header:not(.topbar), hr {
 
 .product-carousel {
   background: #000;
-  padding: 40px 0;
+  padding: 0;
   overflow: hidden;
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  padding-top: 16px;
 }
 
 .product-scroller {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   padding: 0 50vw;
   overflow-x: scroll;
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  pointer-events: none;
+  height: 100%;
 }
 
 .product-scroller::-webkit-scrollbar {
@@ -309,30 +313,28 @@ header:not(.topbar), hr {
 
 .product-item {
   flex-shrink: 0;
-  width: 200px;
-  height: 200px;
+  width: 220px;
   scroll-snap-align: center;
   transition: transform 0.3s ease, opacity 0.3s ease;
-  transform: scale(0.8);
-  opacity: 0.5;
+  transform: scale(0.85);
+  opacity: 0.6;
 }
 
 .product-item img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
   display: block;
+  background: #fff;
 }
 
-/* Center item zooms */
 .product-item.active {
-  transform: scale(1.15);
+  transform: scale(1);
   opacity: 1;
 }
 
 @media (min-width: 1024px) {
   .product-item {
-    width: 280px;
-    height: 280px;
+    width: 300px;
   }
 }

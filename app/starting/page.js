@@ -26,16 +26,22 @@ export default function StartingPage() {
     setProducts(imageList)
   }, [])
 
-  // Auto-scroll + center zoom logic
+  // Nonstop auto-scroll + center zoom
   useEffect(() => {
     const scroller = productScrollerRef.current
     if (!scroller || products.length === 0) return
 
     let animationId
-    let isUserScrolling = false
-    let scrollTimeout
 
-    const updateActiveItem = () => {
+    const autoScroll = () => {
+      scroller.scrollLeft += 0.7
+      
+      // Reset at 1/3 since we tripled the array
+      if (scroller.scrollLeft >= scroller.scrollWidth / 3) {
+        scroller.scrollLeft = 0
+      }
+
+      // Update center zoom
       const items = scroller.querySelectorAll('.product-item')
       const scrollerCenter = scroller.scrollLeft + scroller.offsetWidth / 2
 
@@ -49,34 +55,13 @@ export default function StartingPage() {
           item.classList.remove('active')
         }
       })
-    }
 
-    const autoScroll = () => {
-      if (!isUserScrolling) {
-        scroller.scrollLeft += 0.5
-        if (scroller.scrollLeft >= scroller.scrollWidth - scroller.offsetWidth) {
-          scroller.scrollLeft = 0
-        }
-      }
-      updateActiveItem()
       animationId = requestAnimationFrame(autoScroll)
     }
 
-    const handleScroll = () => {
-      isUserScrolling = true
-      clearTimeout(scrollTimeout)
-      scrollTimeout = setTimeout(() => {
-        isUserScrolling = false
-      }, 1000)
-    }
-
-    scroller.addEventListener('scroll', handleScroll)
     animationId = requestAnimationFrame(autoScroll)
 
-    return () => {
-      cancelAnimationFrame(animationId)
-      scroller.removeEventListener('scroll', handleScroll)
-    }
+    return () => cancelAnimationFrame(animationId)
   }, [products])
 
   const allProducts = [...products, ...products, ...products]
