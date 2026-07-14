@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import Image from 'next/image'
 
 const useUser = () => {
   return { name: 'Guest', vipLevel: 0 } // Replace with real session
@@ -27,27 +26,60 @@ export default function StartingPage() {
     setProducts(imageList)
   }, [])
 
+  // Auto-scroll + center zoom logic
   useEffect(() => {
     const scroller = productScrollerRef.current
     if (!scroller || products.length === 0) return
-    
+
     let animationId
-    let scrollPos = 0
-    
-    const animate = () => {
-      scrollPos += 0.8
-      if (scrollPos >= scroller.scrollWidth / 2) {
-        scrollPos = 0
-      }
-      scroller.scrollLeft = scrollPos
-      animationId = requestAnimationFrame(animate)
+    let isUserScrolling = false
+    let scrollTimeout
+
+    const updateActiveItem = () => {
+      const items = scroller.querySelectorAll('.product-item')
+      const scrollerCenter = scroller.scrollLeft + scroller.offsetWidth / 2
+
+      items.forEach((item) => {
+        const itemCenter = item.offsetLeft + item.offsetWidth / 2
+        const distance = Math.abs(scrollerCenter - itemCenter)
+
+        if (distance < item.offsetWidth / 2) {
+          item.classList.add('active')
+        } else {
+          item.classList.remove('active')
+        }
+      })
     }
-    
-    animate()
-    return () => cancelAnimationFrame(animationId)
+
+    const autoScroll = () => {
+      if (!isUserScrolling) {
+        scroller.scrollLeft += 0.5
+        if (scroller.scrollLeft >= scroller.scrollWidth - scroller.offsetWidth) {
+          scroller.scrollLeft = 0
+        }
+      }
+      updateActiveItem()
+      animationId = requestAnimationFrame(autoScroll)
+    }
+
+    const handleScroll = () => {
+      isUserScrolling = true
+      clearTimeout(scrollTimeout)
+      scrollTimeout = setTimeout(() => {
+        isUserScrolling = false
+      }, 1000)
+    }
+
+    scroller.addEventListener('scroll', handleScroll)
+    animationId = requestAnimationFrame(autoScroll)
+
+    return () => {
+      cancelAnimationFrame(animationId)
+      scroller.removeEventListener('scroll', handleScroll)
+    }
   }, [products])
 
-  const allProducts = [...products, ...products]
+  const allProducts = [...products, ...products, ...products]
   const allMessages = [...winnerMessages, ...winnerMessages]
 
   return (
@@ -76,16 +108,17 @@ export default function StartingPage() {
         </div>
       </div>
 
-      {/* Product Carousel - NO CARD WRAPPER */}
+      {/* Product Carousel - CENTER ZOOM */}
       <div className="product-carousel">
         <div ref={productScrollerRef} className="product-scroller">
           {allProducts.map((src, i) => (
-            <img 
-              key={i} 
-              src={src} 
-              alt={`Product ${i % 30 + 1}`} 
-              loading="lazy" 
-            />
+            <div key={i} className="product-item">
+              <img
+                src={src}
+                alt={`Product ${i % 30 + 1}`}
+                loading="lazy"
+              />
+            </div>
           ))}
         </div>
       </div>
