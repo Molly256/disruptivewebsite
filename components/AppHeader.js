@@ -1,4 +1,4 @@
-'use client'
+7'use client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -13,7 +13,7 @@ export default function AppHeader() {
       alignItems: 'center',
       padding: '0 16px',
       height: '64px',
-      borderBottom: '1px solid #eee',
+      borderBottom: 'none',
       position: 'fixed',
       top: 0,
       left: 0,
