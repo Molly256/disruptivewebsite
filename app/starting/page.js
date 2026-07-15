@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 const useUser = () => {
   return { name: 'Guest', vipLevel: 0 } // Replace with real session
@@ -16,6 +16,9 @@ const winnerMessages = [
 export default function StartingPage() {
   const [products, setProducts] = useState([])
   const user = useUser()
+  const trackRef = useRef(null)
+  const animationRef = useRef(null)
+  const zoomIntervalRef = useRef(null)
 
   useEffect(() => {
     const imageList = []
@@ -26,7 +29,47 @@ export default function StartingPage() {
     setProducts(shuffled)
   }, [])
 
-  const allProducts = [...products, ...products] // 2x for seamless CSS loop
+  useEffect(() => {
+    if (products.length === 0) return
+    const track = trackRef.current
+    if (!track) return
+
+    const items = Array.from(track.children)
+    
+    // 1. Random starting position - user sees different image on return
+    const randomStart = Math.floor(Math.random() * products.length)
+    let scrollPos = items[randomStart]?.offsetLeft || 0
+    track.style.transform = `translateX(-${scrollPos}px)`
+
+    // 2. Auto-scroll left - medium speed
+    const scrollSpeed = 0.5 // 0.3 slower, 0.8 faster
+    const animate = () => {
+      scrollPos += scrollSpeed
+      // Reset when scrolled past first set for infinite loop
+      if (scrollPos >= track.scrollWidth / 2) {
+        scrollPos = 0
+      }
+      track.style.transform = `translateX(-${scrollPos}px)`
+      animationRef.current = requestAnimationFrame(animate)
+    }
+    animate()
+
+    // 3. Random zoom every 1 second
+    const zoomRandom = () => {
+      items.forEach(item => item.classList.remove('zoomed'))
+      const randomItem = items[Math.floor(Math.random() * items.length)]
+      randomItem?.classList.add('zoomed')
+    }
+    zoomIntervalRef.current = setInterval(zoomRandom, 1000)
+    zoomRandom() // Start immediately
+
+    return () => {
+      cancelAnimationFrame(animationRef.current)
+      clearInterval(zoomIntervalRef.current)
+    }
+  }, [products])
+
+  const allProducts = [...products, ...products] // 2x for seamless loop
   const allMessages = [...winnerMessages, ...winnerMessages]
 
   return (
@@ -55,9 +98,9 @@ export default function StartingPage() {
         </div>
       </div>
 
-      {/* Product Carousel - CSS AUTO SCROLL */}
+      {/* Product Carousel - JS CONTROLLED */}
       <div className="product-carousel">
-        <div className="product-track">
+        <div className="product-track" ref={trackRef}>
           {allProducts.map((src, i) => (
             <div key={`${src}-${i}`} className="product-item">
               <img
