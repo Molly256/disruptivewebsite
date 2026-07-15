@@ -13,10 +13,15 @@ const winnerMessages = [
   'Kennethpa user wins 1,000 USD prize in the task.'
 ]
 
+const SCROLL_TIME = 2000 // 2.0s slide
+const HOLD_TIME = 1900 // 1.9s hold
+const CYCLE_TIME = SCROLL_TIME + HOLD_TIME // 3.9s per image
+
 export default function StartingPage() {
   const [products, setProducts] = useState([])
   const user = useUser()
   const trackRef = useRef(null)
+  const carouselRef = useRef(null)
 
   useEffect(() => {
     const imageList = []
@@ -30,71 +35,89 @@ export default function StartingPage() {
   useEffect(() => {
     if (products.length === 0) return
     const track = trackRef.current
-    if (!track) return
+    const carousel = carouselRef.current
+    if (!track ||!carousel) return
 
-    const items = Array.from(track.children)
-    const gap = 24
-    const itemWidth = items[0]?.offsetWidth + gap
-
-    let currentIndex = Math.floor(Math.random() * products.length)
-    let isAnimating = false
-    let timeoutId
-
-    const SCROLL_TIME = 2000 // 2.0s to reach center
-    const HOLD_TIME = 1900 // 1.9s to stay zoomed
-
-    const updateActive = () => {
-      items.forEach((item, i) => {
-        if (i % products.length === currentIndex) {
-          item.classList.add('active')
-        } else {
-          item.classList.remove('active')
-        }
-      })
-    }
-
-    const goToIndex = (index, animate = true) => {
-      currentIndex = index % products.length
-      const scrollPos = currentIndex * itemWidth
-
-      if (animate) {
-        isAnimating = true
-        track.style.transition = `transform ${SCROLL_TIME}ms ease-in-out`
-      } else {
-        track.style.transition = 'none'
+    const init = () => {
+      const items = Array.from(track.children)
+      if (items.length === 0 || items[0].offsetWidth === 0) {
+        requestAnimationFrame(init)
+        return
       }
 
-      track.style.transform = `translateX(-${scrollPos}px)`
+      const gap = 24
+      const itemWidth = items[0].offsetWidth + gap
+      const containerWidth = carousel.offsetWidth
+      const centerOffset = containerWidth / 2 - items[0].offsetWidth / 2
+
+      let timeoutId
+      let animationFrameId
+
+      const getCurrentIndexFromTime = () => {
+        // This is the key: use real time so it never stops
+        const elapsed = Date.now() % (products.length * CYCLE_TIME)
+        return Math.floor(elapsed / CYCLE_TIME)
+      }
+
+      const getProgressInCycle = () => {
+        const elapsed = Date.now() % CYCLE_TIME
+        return elapsed
+      }
+
+      const updateActive = (index) => {
+        const centerIndex = products.length + (index % products.length)
+        items.forEach((item, i) => {
+          if (i === centerIndex) {
+            item.classList.add('active')
+          } else {
+            item.classList.remove('active')
+          }
+        })
+      }
+
+      const setPosition = (index, progressMs) => {
+        const realIndex = products.length + (index % products.length)
+        const basePos = realIndex * itemWidth - centerOffset
+
+        // If we're in slide phase, calculate partial slide
+        let currentPos = basePos
+        if (progressMs < SCROLL_TIME) {
+          const prevIndex = (index - 1 + products.length) % products.length
+          const prevRealIndex = products.length + prevIndex
+          const prevPos = prevRealIndex * itemWidth - centerOffset
+          const slideProgress = progressMs / SCROLL_TIME
+          currentPos = prevPos + (basePos - prevPos) * slideProgress
+          track.style.transition = 'none'
+        } else {
+          track.style.transition = 'none'
+        }
+
+        track.style.transform = `translateX(-${currentPos}px)`
+        updateActive(index)
+      }
+
+      const tick = () => {
+        const currentIndex = getCurrentIndexFromTime()
+        const progress = getProgressInCycle()
+        setPosition(currentIndex, progress)
+
+        animationFrameId = requestAnimationFrame(tick)
+      }
+
+      // Start the infinite tick
+      tick()
+
+      return () => {
+        cancelAnimationFrame(animationFrameId)
+        clearTimeout(timeoutId)
+      }
     }
 
-    const scrollToNext = () => {
-      if (isAnimating) return
-      goToIndex(currentIndex + 1, true)
-    }
-
-    const handleTransitionEnd = () => {
-      isAnimating = false
-      updateActive() // Zoom ONLY after it reaches center
-
-      // Hold for 1.9s, then slide to next
-      timeoutId = setTimeout(scrollToNext, HOLD_TIME)
-    }
-
-    // Initial setup
-    goToIndex(currentIndex, false)
-    updateActive()
-    track.addEventListener('transitionend', handleTransitionEnd)
-
-    // Start cycle after initial hold
-    timeoutId = setTimeout(scrollToNext, HOLD_TIME)
-
-    return () => {
-      clearTimeout(timeoutId)
-      track.removeEventListener('transitionend', handleTransitionEnd)
-    }
+    const cleanup = init()
+    return cleanup
   }, [products])
 
-  const allProducts = [...products,...products,...products] // 3x for seamless loop
+  const allProducts = [...products,...products,...products]
   const allMessages = [...winnerMessages,...winnerMessages]
 
   return (
@@ -124,15 +147,11 @@ export default function StartingPage() {
       </div>
 
       {/* Product Carousel - JS CONTROLLED */}
-      <div className="product-carousel">
+      <div className="product-carousel" ref={carouselRef}>
         <div className="product-track" ref={trackRef}>
           {allProducts.map((src, i) => (
             <div key={`${src}-${i}`} className="product-item">
-              <img
-                src={src}
-                alt=""
-                loading="lazy"
-              />
+              <img src={src} alt="" />
             </div>
           ))}
         </div>
