@@ -1,5 +1,7 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import AppHeader from '@/components/AppHeader'
+import BottomNav from '@/components/BottomNav'
 
 const useUser = () => {
   return { name: 'Guest', vipLevel: 0 } // Replace with real session
@@ -45,7 +47,7 @@ export default function StartingPage() {
         return
       }
 
-      const gap = 20 // CHANGED FROM 24 TO 20 TO MATCH CSS
+      const gap = 20
       const itemWidth = items[0].offsetWidth + gap
       const containerWidth = carousel.offsetWidth
       const centerOffset = containerWidth / 2 - items[0].offsetWidth / 2
@@ -64,7 +66,7 @@ export default function StartingPage() {
 
       const updateActive = (index, progressMs) => {
         const centerIndex = products.length + (index % products.length)
-        const isInHoldPhase = progressMs >= SCROLL_TIME // Only zoom after 1.0s slide ends
+        const isInHoldPhase = progressMs >= SCROLL_TIME
         items.forEach((item, i) => {
           if (i === centerIndex && isInHoldPhase) {
             item.classList.add('active')
@@ -80,7 +82,6 @@ export default function StartingPage() {
 
         let currentPos = basePos
         if (progressMs < SCROLL_TIME) {
-          // We're in the 1.0s slide phase
           const prevIndex = (index - 1 + products.length) % products.length
           const prevRealIndex = products.length + prevIndex
           const prevPos = prevRealIndex * itemWidth - centerOffset
@@ -115,7 +116,8 @@ export default function StartingPage() {
   const allMessages = [...winnerMessages,...winnerMessages]
 
   return (
-    <div className="starting-wrapper">
+    <div className="starting-wrapper" style={{ paddingTop: '64px' }}>
+      <AppHeader />
 
       {/* Marquee Bar */}
       <div className="marquee-container">

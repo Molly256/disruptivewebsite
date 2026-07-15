@@ -1,5 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import AppHeader from '@/components/AppHeader'
+import BottomNav from '@/components/BottomNav'
 
 export default function EventPage() {
   const router = useRouter()
@@ -29,33 +31,8 @@ export default function EventPage() {
   )
 
   return (
-    <div style={{ background: '#E8E8E8', minHeight: '100vh', paddingBottom: '90px' }}>
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px 20px',
-        background: '#E8E8E8',
-        position: 'relative'
-      }}>
-        <button
-          onClick={() => router.back()}
-          style={{
-            position: 'absolute',
-            left: '20px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '8px'
-          }}
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
-        <h1 style={{ fontSize: '18px', fontWeight: '400', margin: 0, color: '#000' }}>Event</h1>
-      </div>
+    <div style={{ background: '#E8E8E8', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
+      <AppHeader />
 
       {/* SECTION 1: Deposit-Boost */}
       <div style={{ padding: '0 12px', marginBottom: '16px' }}>

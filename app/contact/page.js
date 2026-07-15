@@ -1,5 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import AppHeader from '@/components/AppHeader'
+import BottomNav from '@/components/BottomNav'
 
 export default function Contact() {
   const router = useRouter()
@@ -8,10 +10,13 @@ export default function Contact() {
     <div style={{
       minHeight: '100vh',
       background: '#fff',
-      padding: '120px 20px 40px',
+      paddingTop: '64px',
+      paddingBottom: '40px',
       boxSizing: 'border-box'
     }}>
-      <div style={{ maxWidth: '500px', margin: '0 auto' }}>
+      <AppHeader />
+
+      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '40px 20px 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
           <button
             onClick={() => router.back()}
@@ -29,7 +34,7 @@ export default function Contact() {
         <div
           onClick={() => router.push('/support/chat')}
           style={{
-            background: '#cc0000', // red button like you asked
+            background: '#cc0000',
             borderRadius: '12px',
             padding: '16px',
             display: 'flex',

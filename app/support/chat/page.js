@@ -1,6 +1,8 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import AppHeader from '@/components/AppHeader'
+import BottomNav from '@/components/BottomNav'
 
 export default function ChatSupport() {
   const router = useRouter()
@@ -114,8 +116,10 @@ export default function ChatSupport() {
   const emojis = ['😀','😂','😍','👍','❤️','🙏','🔥','💯','😊','🤔','😎','👋']
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column' }}>
-      {/* HEADER - accounts for 84px topbar */}
+    <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column', paddingTop: '64px' }}>
+      <AppHeader />
+
+      {/* CHAT HEADER BAR - now below AppHeader */}
       <div style={{
         background: '#fff',
         padding: '16px 20px',
@@ -124,7 +128,7 @@ export default function ChatSupport() {
         justifyContent: 'space-between',
         alignItems: 'center',
         position: 'fixed',
-        top: '84px',
+        top: '64px',
         left: 0,
         right: 0,
         zIndex: 10
@@ -140,7 +144,7 @@ export default function ChatSupport() {
       </div>
 
       {/* MESSAGES */}
-      <div style={{ flex: 1, padding: '164px 16px 80px', overflowY: 'auto' }}>
+      <div style={{ flex: 1, padding: '144px 16px 80px', overflowY: 'auto' }}>
         {messages.map((msg) => (
           <div key={msg.id} style={{ marginBottom: '16px' }}>
             {msg.type === 'system' && (
