@@ -37,6 +37,18 @@ export default function Dashboard() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
+      <style jsx>{`
+        @keyframes scroll {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+        .notice-marquee {
+          display: flex;
+          animation: scroll 15s linear infinite;
+          white-space: nowrap;
+        }
+      `}</style>
+
       <AppHeader />
 
       {/* 1. HERO VIDEO SECTION */}
@@ -56,7 +68,7 @@ export default function Dashboard() {
         </video>
       </div>
 
-      {/* 2. TEXT INTRO + RED NOTICE BAR */}
+      {/* 2. TEXT INTRO + ROTATING RED NOTICE BAR */}
       <div style={{ padding: '20px 20px 0' }}>
         <p style={{ color: '#000', fontSize: '14px', lineHeight: '1.5', marginBottom: '16px', fontWeight: '300' }}>
           We are a digitally native design agency evolving brands through creative vision & technology.
@@ -68,18 +80,31 @@ export default function Dashboard() {
           display: 'flex', 
           alignItems: 'center', 
           gap: '12px',
-          position: 'relative'
+          overflow: 'hidden'
         }}>
-          <span style={{ fontSize: '20px', lineHeight: '1' }}>🔔</span>
-          <p style={{ 
-            color: '#000', 
-            fontSize: '13px', 
-            fontWeight: '500', 
-            margin: 0,
-            lineHeight: '1.4'
-          }}>
-            Thank you for your support on the disruptive advertising platform. kindly read rules and regulations. Thank you.
-          </p>
+          <span style={{ fontSize: '20px', lineHeight: '1', flexShrink: 0 }}>🔔</span>
+          <div style={{ overflow: 'hidden', flex: 1 }}>
+            <div className="notice-marquee">
+              <p style={{ 
+                color: '#000', 
+                fontSize: '13px', 
+                fontWeight: '500', 
+                margin: 0,
+                paddingRight: '50px'
+              }}>
+                Thank you for your support on the disruptive advertising platform. kindly read rules and regulations. Thank you.
+              </p>
+              <p style={{ 
+                color: '#000', 
+                fontSize: '13px', 
+                fontWeight: '500', 
+                margin: 0,
+                paddingRight: '50px'
+              }}>
+                Thank you for your support on the disruptive advertising platform. kindly read rules and regulations. Thank you.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
