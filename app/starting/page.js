@@ -119,12 +119,15 @@ export default function StartingPage() {
     <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px' }}>
       <AppHeader />
 
-      {/* Marquee Bar - FLUSH TO HEADER */}
+      {/* Marquee Bar - ATTACHED TO HEADER NO GAP */}
       <div className="marquee-container" style={{
         margin: 0,
+        marginTop: '-1px',
         padding: 0,
         background: '#cc0000',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        position: 'relative',
+        zIndex: 10
       }}>
         <div className="marquee-content" style={{
           display: 'flex',
@@ -150,7 +153,7 @@ export default function StartingPage() {
       `}</style>
 
       {/* User Bar */}
-      <div className="user-bar" style={{ marginTop: 0, padding: '16px 20px' }}>
+      <div className="user-bar" style={{ marginTop: 0, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '300' }}>Hello,</p>
           <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{user.name}</p>
@@ -174,12 +177,12 @@ export default function StartingPage() {
         </div>
       </div>
 
-      {/* Starting Button */}
+      {/* Starting Button - RED WITH TEXT */}
       <div className="starting-btn-container" style={{ padding: '20px' }}>
         <button className="starting-btn" style={{
           width: '100%',
-          background: '#000',
-          color: '#fff',
+          background: '#cc0000',
+          color: '#000',
           border: 'none',
           borderRadius: '25px',
           padding: '16px',
