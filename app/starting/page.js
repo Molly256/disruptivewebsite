@@ -26,7 +26,7 @@ export default function StartingPage() {
     setProducts(imageList)
   }, [])
 
-  // Fixed auto-scroll - starts after DOM paints
+  // Auto-scroll with medium speed
   useEffect(() => {
     const scroller = productScrollerRef.current
     if (!scroller || products.length === 0) return
@@ -34,10 +34,9 @@ export default function StartingPage() {
     let animationId
     let position = 0
 
-    // Wait for images to render before starting
     const startScroll = () => {
       const scroll = () => {
-        position += 1
+        position += 1.8 // Medium energy speed
         const singleSetWidth = scroller.scrollWidth / 3
         
         if (position >= singleSetWidth) {
@@ -67,7 +66,6 @@ export default function StartingPage() {
       animationId = requestAnimationFrame(scroll)
     }
 
-    // Small delay to let DOM calculate scrollWidth
     const timeout = setTimeout(startScroll, 100)
 
     return () => {

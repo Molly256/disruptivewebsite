@@ -214,7 +214,7 @@ header:not(.topbar), hr {
   }
 }
 
-/* ==================== STARTING PAGE - FIXED: TOP ALIGN + FULL IMAGE + AUTO SCROLL ==================== */
+/* ==================== STARTING PAGE ==================== */
 
 .starting-wrapper {
   min-height: 100vh;
@@ -288,11 +288,11 @@ header:not(.topbar), hr {
   background: #000;
   padding: 0;
   overflow: hidden;
-  flex: 1;
   display: flex;
   align-items: flex-start;
   padding-top: 16px;
   padding-bottom: 24px;
+  height: 280px;
 }
 
 .product-scroller {
@@ -336,7 +336,7 @@ header:not(.topbar), hr {
 /* STARTING BUTTON */
 .starting-btn-container {
   background: #000;
-  padding: 0 16px 32px;
+  padding: 0 16px 40px;
 }
 
 .starting-btn {
@@ -359,5 +359,9 @@ header:not(.topbar), hr {
 @media (min-width: 1024px) {
   .product-item {
     height: 300px;
+  }
+  
+  .product-carousel {
+    height: 360px;
   }
 }
