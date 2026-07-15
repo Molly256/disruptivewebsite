@@ -297,7 +297,7 @@ header:not(.topbar), hr {
   display: flex;
   gap: 16px;
   padding: 0 50vw;
-  animation: autoScroll 30s linear infinite;
+  animation: autoScroll 15s linear infinite;
   will-change: transform;
 }
 
