@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const useUser = () => {
   return { name: 'Guest', vipLevel: 0 } // Replace with real session
@@ -14,72 +14,24 @@ const winnerMessages = [
 ]
 
 export default function StartingPage() {
-  const productScrollerRef = useRef(null)
   const [products, setProducts] = useState([])
   const user = useUser()
 
   useEffect(() => {
     const imageList = []
-    for (let i = 1; i <= 30; i++) {
+    for (let i = 1; i <= 74; i++) {
       imageList.push(`/image${i}.jpg`)
     }
-    setProducts(imageList)
+    const shuffled = imageList.sort(() => Math.random() - 0.5)
+    setProducts(shuffled)
   }, [])
 
-  // Auto-scroll with medium speed
-  useEffect(() => {
-    const scroller = productScrollerRef.current
-    if (!scroller || products.length === 0) return
-
-    let animationId
-    let position = 0
-
-    const startScroll = () => {
-      const scroll = () => {
-        position += 1.8 // Medium energy speed
-        const singleSetWidth = scroller.scrollWidth / 3
-        
-        if (position >= singleSetWidth) {
-          position = 0
-        }
-        
-        scroller.scrollLeft = position
-
-        // Update center zoom
-        const items = scroller.querySelectorAll('.product-item')
-        const scrollerCenter = scroller.scrollLeft + scroller.offsetWidth / 2
-
-        items.forEach((item) => {
-          const itemCenter = item.offsetLeft + item.offsetWidth / 2
-          const distance = Math.abs(scrollerCenter - itemCenter)
-
-          if (distance < item.offsetWidth / 2) {
-            item.classList.add('active')
-          } else {
-            item.classList.remove('active')
-          }
-        })
-
-        animationId = requestAnimationFrame(scroll)
-      }
-      
-      animationId = requestAnimationFrame(scroll)
-    }
-
-    const timeout = setTimeout(startScroll, 100)
-
-    return () => {
-      clearTimeout(timeout)
-      cancelAnimationFrame(animationId)
-    }
-  }, [products])
-
-  const allProducts = [...products, ...products, ...products]
+  const allProducts = [...products, ...products] // 2x for seamless CSS loop
   const allMessages = [...winnerMessages, ...winnerMessages]
 
   return (
     <div className="starting-wrapper">
-      
+
       {/* Marquee Bar */}
       <div className="marquee-container">
         <div className="marquee-content">
@@ -103,14 +55,14 @@ export default function StartingPage() {
         </div>
       </div>
 
-      {/* Product Carousel - CENTER ZOOM */}
+      {/* Product Carousel - CSS AUTO SCROLL */}
       <div className="product-carousel">
-        <div ref={productScrollerRef} className="product-scroller">
+        <div className="product-track">
           {allProducts.map((src, i) => (
-            <div key={i} className="product-item">
+            <div key={`${src}-${i}`} className="product-item">
               <img
                 src={src}
-                alt={`Product ${i % 30 + 1}`}
+                alt=""
                 loading="lazy"
               />
             </div>
