@@ -17,7 +17,6 @@ export default function StartingPage() {
   const [products, setProducts] = useState([])
   const user = useUser()
   const trackRef = useRef(null)
-  const animationRef = useRef(null)
 
   useEffect(() => {
     const imageList = []
@@ -38,13 +37,11 @@ export default function StartingPage() {
     const itemWidth = items[0]?.offsetWidth + gap
 
     let currentIndex = Math.floor(Math.random() * products.length)
-    let scrollPos = currentIndex * itemWidth
-    track.style.transform = `translateX(-${scrollPos}px)`
+    let isAnimating = false
+    let timeoutId
 
-    // Set your timing here
     const SCROLL_TIME = 2000 // 2.0s to reach center
     const HOLD_TIME = 1900 // 1.9s to stay zoomed
-    let timeoutId
 
     const updateActive = () => {
       items.forEach((item, i) => {
@@ -56,32 +53,44 @@ export default function StartingPage() {
       })
     }
 
-    const scrollToNext = () => {
-      currentIndex = (currentIndex + 1) % products.length
-      scrollPos = currentIndex * itemWidth
+    const goToIndex = (index, animate = true) => {
+      currentIndex = index % products.length
+      const scrollPos = currentIndex * itemWidth
 
-      // Animate slide to center over 2.0s
-      track.style.transition = `transform ${SCROLL_TIME}ms ease-in-out`
-      track.style.transform = `translateX(-${scrollPos}px)`
-
-      updateActive()
-
-      // After slide + hold time, do it again
-      timeoutId = setTimeout(() => {
+      if (animate) {
+        isAnimating = true
+        track.style.transition = `transform ${SCROLL_TIME}ms ease-in-out`
+      } else {
         track.style.transition = 'none'
-        scrollToNext()
-      }, SCROLL_TIME + HOLD_TIME)
+      }
+
+      track.style.transform = `translateX(-${scrollPos}px)`
     }
 
-    // Set first item active immediately
-    updateActive()
+    const scrollToNext = () => {
+      if (isAnimating) return
+      goToIndex(currentIndex + 1, true)
+    }
 
-    // Hold first item for 1.9s, then start scrolling
+    const handleTransitionEnd = () => {
+      isAnimating = false
+      updateActive() // Zoom ONLY after it reaches center
+
+      // Hold for 1.9s, then slide to next
+      timeoutId = setTimeout(scrollToNext, HOLD_TIME)
+    }
+
+    // Initial setup
+    goToIndex(currentIndex, false)
+    updateActive()
+    track.addEventListener('transitionend', handleTransitionEnd)
+
+    // Start cycle after initial hold
     timeoutId = setTimeout(scrollToNext, HOLD_TIME)
 
     return () => {
       clearTimeout(timeoutId)
-      cancelAnimationFrame(animationRef.current)
+      track.removeEventListener('transitionend', handleTransitionEnd)
     }
   }, [products])
 
