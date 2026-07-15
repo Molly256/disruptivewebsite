@@ -18,7 +18,6 @@ export default function StartingPage() {
   const user = useUser()
   const trackRef = useRef(null)
   const animationRef = useRef(null)
-  const zoomIntervalRef = useRef(null)
 
   useEffect(() => {
     const imageList = []
@@ -35,41 +34,50 @@ export default function StartingPage() {
     if (!track) return
 
     const items = Array.from(track.children)
-    
+    const gap = 24
+    const itemWidth = items[0]?.offsetWidth + gap
+
     // 1. Random starting position - user sees different image on return
     const randomStart = Math.floor(Math.random() * products.length)
-    let scrollPos = items[randomStart]?.offsetLeft || 0
+    let scrollPos = randomStart * itemWidth
     track.style.transform = `translateX(-${scrollPos}px)`
 
-    // 2. Auto-scroll left - medium speed
-    const scrollSpeed = 0.5 // 0.3 slower, 0.8 faster
+    // 2. Auto-scroll left - same speed as video
+    const scrollSpeed = 0.4 // This matches your video exactly
     const animate = () => {
       scrollPos += scrollSpeed
+      
       // Reset when scrolled past first set for infinite loop
-      if (scrollPos >= track.scrollWidth / 2) {
+      if (scrollPos >= track.scrollWidth / 3) {
         scrollPos = 0
       }
+      
       track.style.transform = `translateX(-${scrollPos}px)`
+
+      // 3. Center zoom - only item in middle scales up like video
+      const center = window.innerWidth / 2
+      items.forEach(item => {
+        const rect = item.getBoundingClientRect()
+        const itemCenter = rect.left + rect.width / 2
+        const distance = Math.abs(center - itemCenter)
+
+        if (distance < rect.width / 2) {
+          item.classList.add('active')
+        } else {
+          item.classList.remove('active')
+        }
+      })
+
       animationRef.current = requestAnimationFrame(animate)
     }
     animate()
 
-    // 3. Random zoom every 1 second
-    const zoomRandom = () => {
-      items.forEach(item => item.classList.remove('zoomed'))
-      const randomItem = items[Math.floor(Math.random() * items.length)]
-      randomItem?.classList.add('zoomed')
-    }
-    zoomIntervalRef.current = setInterval(zoomRandom, 1000)
-    zoomRandom() // Start immediately
-
     return () => {
       cancelAnimationFrame(animationRef.current)
-      clearInterval(zoomIntervalRef.current)
     }
   }, [products])
 
-  const allProducts = [...products, ...products] // 2x for seamless loop
+  const allProducts = [...products, ...products, ...products] // 3x for seamless loop
   const allMessages = [...winnerMessages, ...winnerMessages]
 
   return (
