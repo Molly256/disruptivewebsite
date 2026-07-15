@@ -119,6 +119,14 @@ export default function StartingPage() {
           ))}
         </div>
       </div>
+
+      {/* Starting Button */}
+      <div className="starting-btn-container">
+        <button className="starting-btn">
+          Starting (0 / 45)
+        </button>
+      </div>
+
     </div>
   )
 }
