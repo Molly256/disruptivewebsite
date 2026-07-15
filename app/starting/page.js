@@ -116,11 +116,11 @@ export default function StartingPage() {
   const allMessages = [...winnerMessages,...winnerMessages]
 
   return (
-    <div className="starting-wrapper" style={{ paddingTop: '64px' }}>
+    <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px' }}>
       <AppHeader />
 
       {/* Marquee Bar */}
-      <div className="marquee-container">
+      <div className="marquee-container" style={{ margin: 0 }}>
         <div className="marquee-content">
           {allMessages.map((msg, i) => (
             <span key={i} className="marquee-item">{msg}</span>
@@ -129,7 +129,7 @@ export default function StartingPage() {
       </div>
 
       {/* User Bar */}
-      <div className="user-bar">
+      <div className="user-bar" style={{ marginTop: 0 }}>
         <div>
           <p className="user-greeting">Hello,</p>
           <p className="user-name">{user.name}</p>
@@ -160,6 +160,7 @@ export default function StartingPage() {
         </button>
       </div>
 
+      <BottomNav />
     </div>
   )
 }

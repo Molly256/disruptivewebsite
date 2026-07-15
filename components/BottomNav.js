@@ -40,19 +40,28 @@ export default function BottomNav() {
             boxShadow: '0 4px 12px rgba(0,0,0,0.3)', 
             cursor: 'pointer', 
             border: '3px solid #fff',
-            overflow: 'hidden'
+            padding: '3px'
           }}
         >
-          <img 
-            src="/logo.png" 
-            alt="Starting" 
-            style={{ 
-              width: '40px', 
-              height: '40px', 
-              borderRadius: '50%', 
-              objectFit: 'cover' 
-            }} 
-          />
+          <div style={{
+            width: '100%',
+            height: '100%',
+            background: '#fff',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <span style={{
+              color: '#cc0000',
+              fontSize: '8.5px',
+              fontWeight: '500',
+              letterSpacing: '-0.5px',
+              fontFamily: 'system-ui, sans-serif'
+            }}>
+              disruptive
+            </span>
+          </div>
         </div>
         <div style={{ fontSize: '10px', color: '#fff', fontWeight: '300' }}>Starting</div>
       </div>
