@@ -45,7 +45,7 @@ export default function StartingPage() {
         return
       }
 
-      const gap = 24
+      const gap = 20 // CHANGED FROM 24 TO 20 TO MATCH CSS
       const itemWidth = items[0].offsetWidth + gap
       const containerWidth = carousel.offsetWidth
       const centerOffset = containerWidth / 2 - items[0].offsetWidth / 2
