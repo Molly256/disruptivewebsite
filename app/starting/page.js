@@ -119,11 +119,15 @@ export default function StartingPage() {
     <>
       <AppHeader />
 
-      <div className="starting-wrapper" style={{ paddingTop: 0, paddingBottom: '90px' }}>
-        {/* Marquee Bar - ATTACHED TO HEADER */}
+      <div className="starting-wrapper" style={{
+        paddingTop: 0,
+        paddingBottom: '90px',
+        marginTop: 0 // ADD THIS - overrides global 84px
+      }}>
+        {/* Marquee Bar - ATTACHED TO 64PX HEADER */}
         <div className="marquee-container" style={{
           margin: 0,
-          marginTop: '64px',
+          marginTop: '64px', // Offset for AppHeader height only
           padding: 0,
           background: '#cc0000',
           overflow: 'hidden'
