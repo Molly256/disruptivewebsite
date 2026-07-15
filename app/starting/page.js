@@ -37,48 +37,56 @@ export default function StartingPage() {
     const gap = 24
     const itemWidth = items[0]?.offsetWidth + gap
 
-    // 1. Random starting position
-    const randomStart = Math.floor(Math.random() * products.length)
-    let scrollPos = randomStart * itemWidth
+    let currentIndex = Math.floor(Math.random() * products.length)
+    let scrollPos = currentIndex * itemWidth
     track.style.transform = `translateX(-${scrollPos}px)`
 
-    // 2. Auto-scroll left - 1.2 = ~3.4s per item
-    const scrollSpeed = 1.2
-    const animate = () => {
-      scrollPos += scrollSpeed
-      
-      // Reset using exact product count - prevents micro-jump
-      if (scrollPos >= itemWidth * products.length) {
-        scrollPos = 0
-      }
-      
-      track.style.transform = `translateX(-${scrollPos}px)`
+    // Set your timing here
+    const SCROLL_TIME = 2000 // 2.0s to reach center
+    const HOLD_TIME = 1900 // 1.9s to stay zoomed
+    let timeoutId
 
-      // 3. Center zoom - tighter detection
-      const center = window.innerWidth / 2
-      items.forEach(item => {
-        const rect = item.getBoundingClientRect()
-        const itemCenter = rect.left + rect.width / 2
-        const distance = Math.abs(center - itemCenter)
-
-        if (distance < itemWidth / 2) {
+    const updateActive = () => {
+      items.forEach((item, i) => {
+        if (i % products.length === currentIndex) {
           item.classList.add('active')
         } else {
           item.classList.remove('active')
         }
       })
-
-      animationRef.current = requestAnimationFrame(animate)
     }
-    animate()
+
+    const scrollToNext = () => {
+      currentIndex = (currentIndex + 1) % products.length
+      scrollPos = currentIndex * itemWidth
+
+      // Animate slide to center over 2.0s
+      track.style.transition = `transform ${SCROLL_TIME}ms ease-in-out`
+      track.style.transform = `translateX(-${scrollPos}px)`
+
+      updateActive()
+
+      // After slide + hold time, do it again
+      timeoutId = setTimeout(() => {
+        track.style.transition = 'none'
+        scrollToNext()
+      }, SCROLL_TIME + HOLD_TIME)
+    }
+
+    // Set first item active immediately
+    updateActive()
+
+    // Hold first item for 1.9s, then start scrolling
+    timeoutId = setTimeout(scrollToNext, HOLD_TIME)
 
     return () => {
+      clearTimeout(timeoutId)
       cancelAnimationFrame(animationRef.current)
     }
   }, [products])
 
-  const allProducts = [...products, ...products, ...products] // 3x for seamless loop
-  const allMessages = [...winnerMessages, ...winnerMessages]
+  const allProducts = [...products,...products,...products] // 3x for seamless loop
+  const allMessages = [...winnerMessages,...winnerMessages]
 
   return (
     <div className="starting-wrapper">
