@@ -37,31 +37,31 @@ export default function StartingPage() {
     const gap = 24
     const itemWidth = items[0]?.offsetWidth + gap
 
-    // 1. Random starting position - user sees different image on return
+    // 1. Random starting position
     const randomStart = Math.floor(Math.random() * products.length)
     let scrollPos = randomStart * itemWidth
     track.style.transform = `translateX(-${scrollPos}px)`
 
-    // 2. Auto-scroll left - same speed as video
-    const scrollSpeed = 0.4 // This matches your video exactly
+    // 2. Auto-scroll left - 1.2 = ~3.4s per item
+    const scrollSpeed = 1.2
     const animate = () => {
       scrollPos += scrollSpeed
       
-      // Reset when scrolled past first set for infinite loop
-      if (scrollPos >= track.scrollWidth / 3) {
+      // Reset using exact product count - prevents micro-jump
+      if (scrollPos >= itemWidth * products.length) {
         scrollPos = 0
       }
       
       track.style.transform = `translateX(-${scrollPos}px)`
 
-      // 3. Center zoom - only item in middle scales up like video
+      // 3. Center zoom - tighter detection
       const center = window.innerWidth / 2
       items.forEach(item => {
         const rect = item.getBoundingClientRect()
         const itemCenter = rect.left + rect.width / 2
         const distance = Math.abs(center - itemCenter)
 
-        if (distance < rect.width / 2) {
+        if (distance < itemWidth / 2) {
           item.classList.add('active')
         } else {
           item.classList.remove('active')
