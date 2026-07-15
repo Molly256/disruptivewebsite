@@ -13,9 +13,9 @@ const winnerMessages = [
   'Kennethpa user wins 1,000 USD prize in the task.'
 ]
 
-const SCROLL_TIME = 2000 // 2.0s slide
-const HOLD_TIME = 1900 // 1.9s hold
-const CYCLE_TIME = SCROLL_TIME + HOLD_TIME // 3.9s per image
+const SCROLL_TIME = 1000 // 1.0s to come to center
+const HOLD_TIME = 900 // 0.9s hold while zoomed
+const CYCLE_TIME = SCROLL_TIME + HOLD_TIME // 1.9s per image total
 
 export default function StartingPage() {
   const [products, setProducts] = useState([])
@@ -50,11 +50,9 @@ export default function StartingPage() {
       const containerWidth = carousel.offsetWidth
       const centerOffset = containerWidth / 2 - items[0].offsetWidth / 2
 
-      let timeoutId
       let animationFrameId
 
       const getCurrentIndexFromTime = () => {
-        // This is the key: use real time so it never stops
         const elapsed = Date.now() % (products.length * CYCLE_TIME)
         return Math.floor(elapsed / CYCLE_TIME)
       }
@@ -64,10 +62,11 @@ export default function StartingPage() {
         return elapsed
       }
 
-      const updateActive = (index) => {
+      const updateActive = (index, progressMs) => {
         const centerIndex = products.length + (index % products.length)
+        const isInHoldPhase = progressMs >= SCROLL_TIME // Only zoom after 1.0s slide ends
         items.forEach((item, i) => {
-          if (i === centerIndex) {
+          if (i === centerIndex && isInHoldPhase) {
             item.classList.add('active')
           } else {
             item.classList.remove('active')
@@ -79,37 +78,32 @@ export default function StartingPage() {
         const realIndex = products.length + (index % products.length)
         const basePos = realIndex * itemWidth - centerOffset
 
-        // If we're in slide phase, calculate partial slide
         let currentPos = basePos
         if (progressMs < SCROLL_TIME) {
+          // We're in the 1.0s slide phase
           const prevIndex = (index - 1 + products.length) % products.length
           const prevRealIndex = products.length + prevIndex
           const prevPos = prevRealIndex * itemWidth - centerOffset
           const slideProgress = progressMs / SCROLL_TIME
           currentPos = prevPos + (basePos - prevPos) * slideProgress
-          track.style.transition = 'none'
-        } else {
-          track.style.transition = 'none'
         }
 
+        track.style.transition = 'none'
         track.style.transform = `translateX(-${currentPos}px)`
-        updateActive(index)
+        updateActive(index, progressMs)
       }
 
       const tick = () => {
         const currentIndex = getCurrentIndexFromTime()
         const progress = getProgressInCycle()
         setPosition(currentIndex, progress)
-
         animationFrameId = requestAnimationFrame(tick)
       }
 
-      // Start the infinite tick
       tick()
 
       return () => {
         cancelAnimationFrame(animationFrameId)
-        clearTimeout(timeoutId)
       }
     }
 
