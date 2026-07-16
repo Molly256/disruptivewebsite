@@ -219,6 +219,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
     if (!form.password) {
       setError('Password is required')
       return
@@ -245,7 +246,7 @@ export default function Login() {
       localStorage.setItem('user', JSON.stringify(data.user))
       setShowSuccess(true)
       setTimeout(() => {
-        router.push('/dashboard')
+        window.location.href = '/dashboard' // Hard redirect so server sees cookie
       }, 1500)
     } else {
       setError(data.error)

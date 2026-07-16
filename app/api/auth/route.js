@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// DELETE the countryCodes object - frontend sends the code
-
 export async function POST(req) {
   try {
     const body = await req.json()
@@ -13,8 +11,8 @@ export async function POST(req) {
       const {
         username,
         selectedCountryName,
-        countryCode, // <-- use this from frontend
-        fullPhone,   // <-- use this from frontend
+        countryCode,
+        fullPhone,
         phone,
         loginPassword,
         transactionPassword,
@@ -22,11 +20,10 @@ export async function POST(req) {
         inviteCode
       } = body
 
-      if (!username ||!phone ||!loginPassword ||!transactionPassword ||!gender) {
+      if (!username || !phone || !loginPassword || !transactionPassword || !gender) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
       }
 
-      // No lookup needed - frontend already sent correct code
       if (!countryCode || !fullPhone) {
         return NextResponse.json({ error: 'Country code missing' }, { status: 400 })
       }
@@ -60,7 +57,7 @@ export async function POST(req) {
 
     // LOGIN
     if (action === 'login') {
-      const { loginType, username, phone, selectedCountryName, countryCode, fullPhone, password } = body
+      const { loginType, username, phone, countryCode, fullPhone, password } = body
 
       let user = null
 
@@ -70,17 +67,16 @@ export async function POST(req) {
       } else {
         if (!phone && !fullPhone) return NextResponse.json({ error: 'Phone required' }, { status: 400 })
         
-        // Use fullPhone from frontend if sent, else build it
         const phoneToCheck = fullPhone || (countryCode + phone)
-        
         user = await prisma.user.findUnique({ where: { phone: phoneToCheck } })
       }
 
-      if (!user || user.loginPassword!== password) {
+      if (!user || user.loginPassword !== password) {
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
       }
 
-      return NextResponse.json({
+      // Create response and set cookie
+      const res = NextResponse.json({
         success: true,
         user: {
           id: user.id,
@@ -89,6 +85,17 @@ export async function POST(req) {
           gender: user.gender
         }
       })
+
+      // This cookie lets middleware/server know user is logged in
+      res.cookies.set('session', String(user.id), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        path: '/'
+      })
+
+      return res
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
