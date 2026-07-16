@@ -240,10 +240,19 @@ export default function Registration() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (validate()) {
+      const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
+      const countryCode = selectedCountry?.code || '+1'
+      const fullPhone = countryCode + form.phone
+
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, action: 'register' })
+        body: JSON.stringify({
+          ...form,
+          countryCode,
+          fullPhone,
+          action: 'register'
+        })
       })
       const data = await res.json()
       if (res.ok) {

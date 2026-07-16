@@ -224,10 +224,20 @@ export default function Login() {
       return
     }
 
+    const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
+    const countryCode = selectedCountry?.code || '+1'
+    const fullPhone = countryCode + form.phone
+
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...form, action: 'login', loginType })
+      body: JSON.stringify({
+        ...form,
+        countryCode,
+        fullPhone,
+        action: 'login',
+        loginType
+      })
     })
     const data = await res.json()
     
