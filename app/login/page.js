@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -204,13 +204,12 @@ const countries = [
 
 export default function Login() {
   const router = useRouter()
-  const [loginType, setLoginType] = useState('username') // 'username' or 'phone'
+  const [loginType, setLoginType] = useState('username')
   const [form, setForm] = useState({
     selectedCountryName: 'United States',
     phone: '',
     username: '',
-    password: '',
-    rememberPassword: false
+    password: ''
   })
   const [error, setError] = useState('')
   const [showCountries, setShowCountries] = useState(false)
@@ -218,54 +217,28 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
 
-  useEffect(() => {
-    // Auto-fill if remember was checked during registration
-    const savedUser = JSON.parse(localStorage.getItem('user') || '{}')
-    const remember = localStorage.getItem('rememberPassword') === 'true'
-    if (remember && savedUser) {
-      setForm(prev => ({
-        ...prev,
-        username: savedUser.username || '',
-        password: savedUser.password || '',
-        rememberPassword: true
-      }))
-    }
-  }, [])
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.password) {
       setError('Password is required')
       return
     }
 
-    const savedUser = JSON.parse(localStorage.getItem('user'))
-    if (!savedUser) {
-      setError('No account found. Please register first')
-      return
-    }
-
-    let isValid = false
-    if (loginType === 'phone') {
-      const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
-      const fullPhone = selectedCountry.code + form.phone
-      isValid = fullPhone === savedUser.phone && form.password === savedUser.password
-    } else {
-      isValid = form.username === savedUser.username && form.password === savedUser.password
-    }
-
-    if (isValid) {
-      if (form.rememberPassword) {
-        localStorage.setItem('rememberPassword', 'true')
-      } else {
-        localStorage.removeItem('rememberPassword')
-      }
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, action: 'login', loginType })
+    })
+    const data = await res.json()
+    
+    if (res.ok) {
+      localStorage.setItem('user', JSON.stringify(data.user))
       setShowSuccess(true)
       setTimeout(() => {
         router.push('/dashboard')
       }, 1500)
     } else {
-      setError('Invalid credentials')
+      setError(data.error)
     }
   }
 
@@ -319,7 +292,6 @@ export default function Login() {
       padding: '40px 20px',
       boxSizing: 'border-box'
     }}>
-      {/* SUCCESS POPUP */}
       {showSuccess && (
         <div style={{
           position: 'fixed',
@@ -356,7 +328,6 @@ export default function Login() {
       )}
 
       <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-        {/* HEADER TEXT */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 12px', color: '#000' }}>
             DISRUPTIVE WELCOMES YOU
@@ -371,7 +342,6 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           
-          {/* TOGGLE USERNAME / PHONE */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
             <button
               type="button"
@@ -407,11 +377,12 @@ export default function Login() {
             </button>
           </div>
 
-          {/* USERNAME OR PHONE INPUT */}
           {loginType === 'username' ? (
             <input
               type="text"
+              name="username"
               placeholder="Username"
+              autoComplete="username"
               value={form.username}
               onChange={(e) => setForm({...form, username: e.target.value})}
               style={inputStyle}
@@ -425,7 +396,9 @@ export default function Login() {
                 </div>
                 <input
                   type="tel"
+                  name="phone"
                   placeholder="Enter a phone number"
+                  autoComplete="tel"
                   value={form.phone}
                   onChange={(e) => setForm({...form, phone: e.target.value})}
                   inputMode="numeric"
@@ -474,11 +447,12 @@ export default function Login() {
             </div>
           )}
 
-          {/* PASSWORD WITH EYE TOGGLE */}
           <div style={passwordWrapper}>
             <input
               type={showPassword? 'text' : 'password'}
+              name="password"
               placeholder="Login Password"
+              autoComplete="current-password"
               value={form.password}
               onChange={(e) => setForm({...form, password: e.target.value})}
               style={inputStyle}
@@ -488,20 +462,10 @@ export default function Login() {
             </span>
           </div>
 
-          {/* FORGOT + REMEMBER */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '-8px' }}>
             <span style={{ fontSize: '14px', color: '#0066cc', cursor: 'pointer' }}>
               Forgot your password?
             </span>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '14px' }}>
-              <input
-                type="checkbox"
-                checked={form.rememberPassword}
-                onChange={(e) => setForm({...form, rememberPassword: e.target.checked})}
-                style={{ width: '16px', height: '16px', accentColor: '#cc0000', cursor: 'pointer' }}
-              />
-              Remember Password
-            </label>
           </div>
 
           {error && <div style={{ color: '#cc0000', fontSize: '14px', marginTop: '-8px' }}>{error}</div>}

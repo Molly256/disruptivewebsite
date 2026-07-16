@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["dataProxy"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")        // your prisma:// accelerate URL
+  directUrl = env("DIRECT_DATABASE_URL") // your postgresql:// direct URL for migrations
+}
+
+model User {
+  id                  String   @id @default(cuid())
+  username            String   @unique
+  phone               String   @unique  // full number like +1234567890
+  countryCode         String   // "+1", "+93"
+  countryName         String   // "United States"
+  loginPassword       String   // bcrypt hashed
+  transactionPassword String   // bcrypt hashed
+  gender              String   // "Male" or "Female"
+  inviteCode          String?  // optional
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}

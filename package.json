@@ -4,12 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build", 
+    "build": "next build",
     "start": "next start"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
     "next": "14.2.5",
+    "prisma": "^5.22.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "dotenv": "^17.4.2"
   }
 }

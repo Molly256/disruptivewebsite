@@ -237,23 +237,23 @@ export default function Registration() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (validate()) {
-      const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
-      const fullPhone = selectedCountry.code + form.phone
-      localStorage.setItem('user', JSON.stringify({
-        phone: fullPhone,
-        password: form.loginPassword,
-        transactionPassword: form.transactionPassword,
-        username: form.username,
-        gender: form.gender,
-        inviteCode: form.inviteCode
-      }))
-      setShowSuccess(true)
-      setTimeout(() => {
-        router.push('/login')
-      }, 2000)
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, action: 'register' })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setShowSuccess(true)
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
+      } else {
+        setErrors({ submit: data.error })
+      }
     }
   }
 
@@ -526,6 +526,8 @@ export default function Registration() {
             </span>
           </label>
           {errors.acceptTerms && <div style={errorStyle}>{errors.acceptTerms}</div>}
+
+          {errors.submit && <div style={errorStyle}>{errors.submit}</div>}
 
           <button
             type="submit"

@@ -2,3 +2,9 @@ node_modules
 .next 
 node_modules/** 
 .vercel
+
+/app/generated/prisma
+
+.env*
+
+/app/generated/prisma

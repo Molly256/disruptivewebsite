@@ -7,13 +7,46 @@ import BottomNav from '@/components/BottomNav'
 export default function Dashboard() {
   const router = useRouter()
   const [isDesktop, setIsDesktop] = useState(false)
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const checkScreen = () => setIsDesktop(window.innerWidth >= 768)
     checkScreen()
     window.addEventListener('resize', checkScreen)
+
+    // Check if user is logged in + fetch fresh data
+    const fetchUser = async () => {
+      const savedUser = localStorage.getItem('user')
+      if (!savedUser) {
+        router.push('/login')
+        return
+      }
+
+      const localUser = JSON.parse(savedUser)
+      try {
+        const res = await fetch(`/api/user?id=${localUser.id}`)
+        const data = await res.json()
+        
+        if (res.ok && data.user) {
+          setUser(data.user)
+          localStorage.setItem('user', JSON.stringify(data.user)) // update cache
+        } else {
+          localStorage.removeItem('user')
+          router.push('/login')
+        }
+      } catch (e) {
+        console.error(e)
+        // fallback to localStorage if API fails
+        setUser(localUser)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUser()
     return () => window.removeEventListener('resize', checkScreen)
-  }, [])
+  }, [router])
 
   const clicks = [
     { name: 'Event', icon: 'calendar', url: '/event' },
@@ -34,6 +67,8 @@ export default function Dashboard() {
     if (type === 'globe') return <svg {...props}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
   }
 
+  if (loading || !user) return null
+
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       
@@ -42,7 +77,7 @@ export default function Dashboard() {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
-        .notice-marquee {
+       .notice-marquee {
           display: flex;
           animation: scroll 15s linear infinite;
           white-space: nowrap;
@@ -54,7 +89,7 @@ export default function Dashboard() {
       {/* 1. HERO VIDEO SECTION */}
       <div style={{ 
         position: 'relative', 
-        height: isDesktop ? 'calc(100vh - 64px)' : '50vh', 
+        height: isDesktop? 'calc(100vh - 64px)' : '50vh', 
         width: '100%', 
         display: 'flex', 
         alignItems: 'center', 
@@ -70,6 +105,9 @@ export default function Dashboard() {
 
       {/* 2. TEXT INTRO + ROTATING RED NOTICE BAR */}
       <div style={{ padding: '20px 20px 0' }}>
+        <p style={{ color: '#000', fontSize: '14px', lineHeight: '1.5', marginBottom: '8px', fontWeight: '300' }}>
+          Welcome back, {user.username}
+        </p>
         <p style={{ color: '#000', fontSize: '14px', lineHeight: '1.5', marginBottom: '16px', fontWeight: '300' }}>
           We are a digitally native design agency evolving brands through creative vision & technology.
         </p>
