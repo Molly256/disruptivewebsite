@@ -11,7 +11,7 @@ export async function GET(req) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(id) },
+      where: { id }, // removed parseInt() because your id is String cuid()
       select: {
         id: true,
         username: true,
@@ -20,7 +20,8 @@ export async function GET(req) {
         countryCode: true,
         gender: true,
         inviteCode: true,
-        createdAt: true
+        createdAt: true,
+        updatedAt: true
         // loginPassword and transactionPassword excluded for security
       }
     })
@@ -31,7 +32,7 @@ export async function GET(req) {
 
     return NextResponse.json({ user })
   } catch (e) {
-    console.error(e)
+    console.error('API /user error:', e)
     return NextResponse.json({ error: 'Request failed' }, { status: 500 })
   }
 }
