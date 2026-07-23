@@ -234,7 +234,7 @@ export default function StartingPage() {
         }}>
           <div className="marquee-content" style={{
             display: 'flex',
-            animation: 'scroll 2s linear infinite', /* faster for more names */
+            animation: 'scroll 15s linear infinite', /* faster for more names */
             whiteSpace: 'nowrap'
           }}>
             {allMessages.map((msg, i) => (
