@@ -13,7 +13,6 @@ const winnerMessages = [
   'Davidma user wins 77.00 USD prize in the task.',
   'Venuezel user wins 88.00 USD prize in the task.',
   'Kennethpa user wins 1,000 USD prize in the task.',
-  // NEW NAMES ADDED BELOW
   'Liam user wins 55.00 USD prize in the task.',
   'Olivia user wins 88.00 USD prize in the task.',
   'Noah user wins 2,100 USD prize in the task.',
