@@ -115,9 +115,9 @@ const winnerMessages = [
   'Leah user wins 73.00 USD prize in the task.'
 ]
 
-const SCROLL_TIME = 1000 // 1.0s to come to center
-const HOLD_TIME = 900 // 0.9s hold while zoomed
-const CYCLE_TIME = SCROLL_TIME + HOLD_TIME // 1.9s per image total
+const SCROLL_TIME = 1000
+const HOLD_TIME = 900
+const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 
 export default function StartingPage() {
   const [products, setProducts] = useState([])
@@ -213,7 +213,7 @@ export default function StartingPage() {
   }, [products])
 
   const allProducts = [...products,...products,...products]
-  const allMessages = [...winnerMessages,...winnerMessages]
+  const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages] // 3x for seamless loop
 
   return (
     <>
@@ -234,15 +234,17 @@ export default function StartingPage() {
         }}>
           <div className="marquee-content" style={{
             display: 'flex',
-            animation: 'scroll 15s linear infinite', /* faster for more names */
-            whiteSpace: 'nowrap'
+            animation: 'scroll 25s linear infinite', /* medium energy, ~5 names visible */
+            whiteSpace: 'nowrap',
+            width: 'max-content'
           }}>
             {allMessages.map((msg, i) => (
               <span key={i} className="marquee-item" style={{
                 padding: '8px 40px 8px 0',
                 fontSize: '13px',
                 fontWeight: '500',
-                color: '#000'
+                color: '#000',
+                flexShrink: 0
               }}>{msg}</span>
             ))}
           </div>
@@ -251,7 +253,7 @@ export default function StartingPage() {
         <style jsx>{`
           @keyframes scroll {
             0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
+            100% { transform: translateX(-100%); } /* -100% so it doesn't bounce */
           }
         `}</style>
 
