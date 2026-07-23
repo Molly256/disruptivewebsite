@@ -234,7 +234,7 @@ export default function StartingPage() {
         }}>
           <div className="marquee-content" style={{
             display: 'flex',
-            animation: 'scroll 200s linear infinite', /* medium energy, ~5 names visible */
+            animation: 'scroll 600s linear infinite', /* medium energy, ~5 names visible */
             whiteSpace: 'nowrap',
             width: 'max-content'
           }}>
