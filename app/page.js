@@ -13,10 +13,12 @@ export default function Home(){
   html, body {overflow-x:hidden;width:100%}
   .down-video{height:20vh}
   @media(min-width:768px){
-    .down-video{height:auto !important;width:100vw !important;margin-left:calc(-50vw + 50%);line-height:0;font-size:0}
-    .down-video video{position:static !important;width:100% !important;height:auto !important;display:block !important}
-    section.hero-desktop{height:auto !important;width:100vw !important;margin-left:calc(-50vw + 50%);line-height:0;font-size:0}
-    section.hero-desktop video{position:static !important;width:100% !important;height:auto !important;display:block !important}
+    /* FORCE FULL BLEED */
+    .down-video{height:auto !important;width:100vw !important;margin-left:calc(-50vw + 50%) !important;margin-right:calc(-50vw + 50%) !important;position:relative !important;line-height:0;font-size:0}
+    .down-video video{position:static !important;width:100vw !important;height:auto !important;display:block !important;top:0 !important;left:0 !important;transform:none !important;min-width:0 !important;min-height:0 !important}
+    
+    section.hero-desktop{height:auto !important;width:100vw !important;margin-left:calc(-50vw + 50%) !important;margin-right:calc(-50vw + 50%) !important;position:relative !important;line-height:0;font-size:0}
+    section.hero-desktop video{position:static !important;width:100vw !important;height:auto !important;display:block !important;top:0 !important;left:0 !important;transform:none !important;min-width:0 !important;min-height:0 !important}
   }
 `}</style>      
 <section className="hero-desktop" style={{position:'relative',height:'calc(100vh - 80px)',width:'100%',overflow:'hidden'}}><video autoPlay muted loop playsInline preload="auto" style={{position:'absolute',top:'50%',left:'50%',minWidth:'100%',minHeight:'100%',transform:'translate(-50%, -50%)',zIndex:0,objectFit:'cover'}}><source src="/videos/hero-video.mp4" type="video/mp4"/></video></section>
