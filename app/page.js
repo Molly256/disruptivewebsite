@@ -14,7 +14,7 @@ export default function Home(){
   .down-video{height:20vh}
   @media(min-width:768px){
     /* FORCE FULL BLEED */
-    .down-video{height:20vh !important;width:100vw !important;margin-left:calc(-50vw + 50%) !important;margin-right:calc(-50vw + 50%) !important;position:relative !important;line-height:0;font-size:0}
+    .down-video{height:50vh !important;width:100vw !important;margin-left:calc(-50vw + 50%) !important;margin-right:calc(-50vw + 50%) !important;position:relative !important;line-height:0;font-size:0}
     .down-video video{position:static !important;width:100vw !important;height:70vh !important;display:block !important;top:0 !important;left:0 !important;transform:none !important;min-width:0 !important;min-height:0 !important;object-fit:cover !important}
     
     section.hero-desktop{height:auto !important;width:100vw !important;margin-left:calc(-50vw + 50%) !important;margin-right:calc(-50vw + 50%) !important;position:relative !important;line-height:0;font-size:0}
