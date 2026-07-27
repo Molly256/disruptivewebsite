@@ -257,7 +257,7 @@ export default function StartingPage() {
           }
         `}</style>
 
-        {/* User Bar */}
+                {/* User Bar */}
         <div className="user-bar" style={{ marginTop: 0, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '300' }}>Hello,</p>
@@ -271,7 +271,8 @@ export default function StartingPage() {
           </div>
         </div>
                                                                  {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
-        <div className="product-carousel" style={{ position: 'relative', width: '100vw', height: '420px', margin: '0 auto', overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {/* FIXED: Changed overflow from 'visible' to 'hidden' and increased height slightly to give zoom elements breathing room inside the dark zone */}
+        <div className="product-carousel" style={{ position: 'relative', width: '100vw', height: '440px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           
           {/* INJECT ANIMATION KEYFRAMES SAFELY WITHOUT NESTED STYLED-JSX */}
           {typeof window !== 'undefined' && !window._carouselTvInjected && (
@@ -285,12 +286,11 @@ export default function StartingPage() {
                 '1.85% { transform: translateX(100vw) scale(0.85); opacity: 0; } ' +
                 '100% { transform: translateX(100vw) scale(0.85); opacity: 0; } ' +
               '} ' +
-              /* DESKTOP FIXED: Force-turns the entire section background container black on desktop screens */
+              /* DESKTOP FIXED: Ensures the rotating track limits are tightly bounded so images can't bleed upward */
               '@media (min-width: 768px) { ' +
                 'main { background: #000000 !important; } ' +
-                '.product-carousel { background: #000000 !important; width: 100vw !important; max-width: 100vw !important; } ' +
-                '.product-track { background: #000000 !important; } ' +
-                /* If there is a parent container element just above your carousel block, this turns it black too */
+                '.product-carousel { background: #000000 !important; width: 100vw !important; max-width: 100vw !important; overflow: hidden !important; } ' +
+                '.product-track { background: #000000 !important; overflow: hidden !important; } ' +
                 '.product-carousel psychopath, .product-carousel, main > div { background-color: #000000 !important; } ' +
               '}';
               document.head.appendChild(style);
@@ -355,5 +355,4 @@ export default function StartingPage() {
     </>
   )
 }
-
 
