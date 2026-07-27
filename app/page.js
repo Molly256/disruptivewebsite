@@ -12,8 +12,8 @@ export default function Home(){
       <style jsx global>{`
   html, body {overflow-x:hidden;width:100%;margin:0;padding:0}
   
-  /* MOBILE DEFAULT: show both */
-  .down-video{height:20vh}
+  /* MOBILE DEFAULT: FIXED gap by changing height from 20vh to auto */
+  .down-video{height:auto; margin:0; padding:0;}
   .desktop-only{display:none}
 
   @media(min-width:768px){
@@ -57,14 +57,14 @@ export default function Home(){
 `}</style>      
 
 {/* ========== MOBILE BLOCKS ========== */}
-{/* FIXED: Removed 'hero-desktop' class so this video never displays on desktop screens */}
-<section className="mobile-only" style={{position:'relative',width:'100%',overflow:'hidden'}}>
+<section className="mobile-only" style={{position:'relative',width:'100%',overflow:'hidden',margin:0,padding:0}}>
   <video autoPlay muted loop playsInline preload="auto" style={{width:'100%',height:'auto',display:'block',objectFit:'cover'}}>
     <source src="/videos/hero-video.mp4" type="video/mp4"/>
   </video>
 </section>
 
-<section className="down-video mobile-only" style={{position:'relative',width:'100%',overflow:'hidden'}}>
+{/* FIXED: Added margin:0 and padding:0 inline to ensure no container boundaries bleed layout space */}
+<section className="down-video mobile-only" style={{position:'relative',width:'100%',overflow:'hidden',margin:0,padding:0}}>
   <video autoPlay muted loop playsInline preload="auto" style={{width:'100%',height:'auto',display:'block',objectFit:'cover'}}>
     <source src="/videos/down-video.mp4" type="video/mp4"/>
   </video>
