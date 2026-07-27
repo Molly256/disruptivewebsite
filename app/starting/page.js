@@ -271,14 +271,35 @@ export default function StartingPage() {
           </div>
         </div>
 
-        {/* Product Carousel - JS CONTROLLED */}
-        <div className="product-carousel" ref={carouselRef}>
-          <div className="product-track" ref={trackRef}>
-            {allProducts.map((src, i) => (
-              <div key={`${src}-${i}`} className="product-item">
-                <img src={src} alt="" />
-              </div>
-            ))}
+                {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
+        <div className="product-carousel">
+          <div className="product-track">
+            {Array.from({ length: 74 }, function(_, index) {
+              var imageIndex = index + 1; 
+              var src = "/image" + imageIndex + ".jpg"; 
+
+              var positionClass = '';
+
+              if (index === currentIndex) {
+                positionClass = 'pos-active'; 
+              } else if (index === (currentIndex - 1 + 74) % 74) {
+                positionClass = 'pos-prev'; 
+              } else {
+                positionClass = 'pos-next'; 
+              }
+
+              var isNeighbor = index === currentIndex || 
+                               index === (currentIndex - 1 + 74) % 74 || 
+                               index === (currentIndex + 1) % 74;
+
+              if (!isNeighbor) return null;
+
+              return (
+                <div key={src} className={"product-item " + positionClass}>
+                  <img src={src} alt="" />
+                </div>
+              );
+            })}
           </div>
         </div>
 
