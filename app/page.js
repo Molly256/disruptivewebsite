@@ -17,9 +17,8 @@ export default function Home(){
   .desktop-only{display:none}
 
   @media(min-width:768px){
-    /* DESKTOP: hide mobile blocks + hide 2nd desktop section */
+    /* DESKTOP: hide mobile blocks */
     .mobile-only{display:none !important}
-    .down-video-desktop{display:none !important} /* KILL THE SECOND VIDEO */
     .desktop-only{display:block !important}
 
     /* FORCE FULL BLEED FOR DESKTOP HERO ONLY */
@@ -43,13 +42,6 @@ export default function Home(){
 
 {/* ========== DESKTOP BLOCK = ONLY 1 VIDEO ========== */}
 <section className="hero-desktop desktop-only" style={{position:'relative',width:'100%',overflow:'hidden'}}>
-  <video autoPlay muted loop playsInline preload="auto" style={{width:'100%',height:'auto',display:'block',objectFit:'cover'}}>
-    <source src="/videos/d-video.mp4" type="video/mp4"/>
-  </video>
-</section>
-
-{/* This section is now hidden on desktop */}
-<section className="down-video-desktop desktop-only" style={{position:'relative',width:'100%',overflow:'hidden'}}>
   <video autoPlay muted loop playsInline preload="auto" style={{width:'100%',height:'auto',display:'block',objectFit:'cover'}}>
     <source src="/videos/d-video.mp4" type="video/mp4"/>
   </video>
