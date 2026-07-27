@@ -270,47 +270,81 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-                {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
+                        {/* Product Carousel - 74 ANIMATED IMAGES */}
         <div className="product-carousel">
           <div className="product-track">
-            {/* Inline dynamic listener forcing updates without state declarations */}
-            {typeof window !== 'undefined' && !window._carouselSyncRegistered && (
-              (window._carouselSyncRegistered = true),
-              (window._carouselUpdateTrigger = window._carouselUpdateTrigger || 0),
-              setInterval(function() {
-                var el = document.querySelector('.product-track');
-                if (el) {
-                  // Safely micro-triggers React elements to re-evaluate system time steps
-                  el.setAttribute('data-tick', Date.now());
-                }
-              }, 1000)
-            )}
-            
-            {Array.from({ length: 74 }, function(_, index) {
-              var imageIndex = index + 1; 
-              var src = "/image" + imageIndex + ".jpg"; 
-
-              var ROTATION_SPEED_MS = 3500; 
-              var now = typeof window !== 'undefined' ? Date.now() : 0;
-              var inlineCurrentIndex = Math.floor(now / ROTATION_SPEED_MS) % 74;
-
-              var positionClass = '';
-
-              if (index === inlineCurrentIndex) {
-                positionClass = 'pos-active'; 
-              } else if (index === (inlineCurrentIndex - 1 + 74) % 74) {
-                positionClass = 'pos-prev'; 
-              } else {
-                positionClass = 'pos-next'; 
+            {/* INLINE INJECTED CSS ANIMATION MATRICES */}
+            <style jsx>{`
+              .product-carousel {
+                position: relative;
+                width: 100%;
+                max-width: 450px;
+                height: 320px;
+                margin: 0 auto;
+                overflow: visible;
+                display: flex;
+                align-items: center;
+                justifyContent: center;
+              }
+              .product-track {
+                position: relative;
+                width: 100%;
+                height: 100%;
+              }
+              .product-item {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justifyContent: center;
+                opacity: 0;
+                pointer-events: none;
+                
+                /* Each image takes 3.5 seconds. 74 images * 3.5s = 259 seconds total duration */
+                animation: infiniteTvRotation 259s linear infinite;
+              }
+              .product-item img {
+                max-width: 90%;
+                max-height: 90%;
+                object-fit: contain;
               }
 
-              var isNeighbor = index === inlineCurrentIndex || 
-                               index === (index - 1 + 74) % 74 || 
-                               index === (index + 1) % 74;
+              /* 
+                THE MOTION TIMELINE FOR A SINGLE SLIDE:
+                Stays hidden -> Glides in from left -> Centers & zooms -> Exits to right -> Hides
+              */
+              @keyframes infiniteTvRotation {
+                0% { transform: translateX(-140%) scale(0.85); opacity: 0; }
+                /* 0.5% of 259s is roughly 1.2s transition entry slide */
+                0.5% { transform: translateX(0%) scale(1.18); opacity: 1; pointer-events: auto; z-index: 5; }
+                /* 1.35% is roughly 3.5s focal stay length */
+                1.35% { transform: translateX(0%) scale(1.18); opacity: 1; pointer-events: auto; z-index: 5; }
+                /* 1.85% is roughly 1.2s exit slide transition out */
+                1.85% { transform: translateX(140%) scale(0.85); opacity: 0; }
+                100% { transform: translateX(140%) scale(0.85); opacity: 0; }
+              }
+            `}</style>
+
+            {Array.from({ length: 74 }, function(_, index) {
+              var imageIndex = index + 1;
+              var src = "/image" + imageIndex + ".jpg";
+              
+              /* 
+                Staggers each of the 74 items sequentially along the 259-second timeline 
+                so they follow each other like a continuous conveyor belt.
+              */
+              var animationDelay = (index * 3.5) + "s";
 
               return (
-                <div key={src} className={"product-item " + positionClass}>
-                  <img src={src} alt="" style={{ display: isNeighbor ? 'block' : 'none' }} />
+                <div 
+                  key={src} 
+                  className="product-item"
+                  style={{ animationDelay: animationDelay }}
+                >
+                  <img src={src} alt="" />
                 </div>
               );
             })}
