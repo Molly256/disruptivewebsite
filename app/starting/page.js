@@ -270,8 +270,8 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-                                                    {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
-        <div className="product-carousel" style={{ position: 'relative', width: '100%', maxWidth: '450px', height: '320px', margin: '0 auto', overflow: 'visible', display: 'flex', alignItems: 'center', justifyAll: 'center' }}>
+                                                                 {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
+        <div className="product-carousel" style={{ position: 'relative', width: '100vw', height: '420px', margin: '0 auto', overflow: 'visible', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           
           {/* INJECT ANIMATION KEYFRAMES SAFELY WITHOUT NESTED STYLED-JSX */}
           {typeof window !== 'undefined' && !window._carouselTvInjected && (
@@ -279,17 +279,19 @@ export default function StartingPage() {
             (function() {
               var style = document.createElement('style');
               style.innerHTML = '@keyframes infiniteTvRotation { ' +
-                '0% { transform: translateX(-140%) scale(0.85); opacity: 0; } ' +
+                '0% { transform: translateX(-100vw) scale(0.85); opacity: 0; } ' +
                 '0.5% { transform: translateX(0%) scale(1.18); opacity: 1; z-index: 5; } ' +
                 '1.35% { transform: translateX(0%) scale(1.18); opacity: 1; z-index: 5; } ' +
-                '1.85% { transform: translateX(140%) scale(0.85); opacity: 0; } ' +
-                '100% { transform: translateX(140%) scale(0.85); opacity: 0; } ' +
+                '1.85% { transform: translateX(100vw) scale(0.85); opacity: 0; } ' +
+                '100% { transform: translateX(100vw) scale(0.85); opacity: 0; } ' +
               '} ' +
-              /* DESKTOP FIXED: Blends the root section backdrop directly into seamless black without drawing extra box layers */
+              /* DESKTOP FIXED: Force-turns the entire section background container black on desktop screens */
               '@media (min-width: 768px) { ' +
                 'main { background: #000000 !important; } ' +
-                '.product-carousel { background: transparent !important; } ' +
-                '.product-track { background: transparent !important; } ' +
+                '.product-carousel { background: #000000 !important; width: 100vw !important; max-width: 100vw !important; } ' +
+                '.product-track { background: #000000 !important; } ' +
+                /* If there is a parent container element just above your carousel block, this turns it black too */
+                '.product-carousel psychopath, .product-carousel, main > div { background-color: #000000 !important; } ' +
               '}';
               document.head.appendChild(style);
             })()
@@ -333,7 +335,7 @@ export default function StartingPage() {
         </div>
 
         {/* Starting Button - RED WITH TEXT */}
-        <div className="starting-btn-container" style={{ padding: '20px' }}>
+        <div className="starting-btn-container" style={{ padding: '20px', position: 'relative', zIndex: 10 }}>
           <button className="starting-btn" style={{
             width: '100%',
             background: '#cc0000',
@@ -353,4 +355,5 @@ export default function StartingPage() {
     </>
   )
 }
+
 
