@@ -25,27 +25,35 @@ export default function Home(){
     section.hero-desktop{
       height:auto !important;
       width:100vw !important;
-      margin:0 0 -2px 0 !important; /* -2px pulls next section up */
+      margin:0 0 -1px 0 !important; /* Pulls next section up 1px to close sub-pixel rendering cracks */
       padding:0 !important;
       margin-left:calc(-50vw + 50%) !important;
       margin-right:calc(-50vw + 50%) !important;
       line-height:0 !important;
       font-size:0 !important;
       display:block !important;
+      background: #fff !important; /* Blends container with background to hide the black line */
     }
     section.hero-desktop video{
       width:100vw !important;
       height:auto !important;
       display:block !important; /* kills black line */
-      vertical-align:top !important; /* changed from bottom */
+      vertical-align:top !important; 
       object-fit:cover !important;
       border:0 !important;
       margin:0 !important;
       padding:0 !important;
     }
-    /* Kill margin on whatever comes after video */
-    section.hero-desktop + * {
-      margin-top:0 !important;
+    
+    /* 
+      FIXED DESKTOP GAP OVERRIDE:
+      Bypasses the hidden mobile nodes to find the next active desktop section 
+      and pulls it up to eliminate the whitespace gap.
+    */
+    section.desktop-only ~ section:not(.mobile-only),
+    section.desktop-only ~ div:not(.mobile-only) {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
     }
   }
 `}</style>      
@@ -64,7 +72,7 @@ export default function Home(){
 </section>
 
 {/* ========== DESKTOP BLOCK = ONLY 1 VIDEO ========== */}
-<section className="hero-desktop desktop-only" style={{position:'relative',width:'100%',overflow:'hidden'}}>
+<section className="hero-desktop desktop-only" style={{position:'relative',width:'100%',overflow:'hidden',background:'#fff'}}>
   <video autoPlay muted loop playsInline preload="auto" style={{width:'100%',height:'auto',display:'block',objectFit:'cover'}}>
     <source src="/videos/d-video.mp4" type="video/mp4"/>
   </video>
