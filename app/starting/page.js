@@ -270,81 +270,56 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-                        {/* Product Carousel - 74 ANIMATED IMAGES */}
-        <div className="product-carousel">
-          <div className="product-track">
-            {/* INLINE INJECTED CSS ANIMATION MATRICES */}
-            <style jsx>{`
-              .product-carousel {
-                position: relative;
-                width: 100%;
-                max-width: 450px;
-                height: 320px;
-                margin: 0 auto;
-                overflow: visible;
-                display: flex;
-                align-items: center;
-                justifyContent: center;
-              }
-              .product-track {
-                position: relative;
-                width: 100%;
-                height: 100%;
-              }
-              .product-item {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justifyContent: center;
-                opacity: 0;
-                pointer-events: none;
-                
-                /* Each image takes 3.5 seconds. 74 images * 3.5s = 259 seconds total duration */
-                animation: infiniteTvRotation 259s linear infinite;
-              }
-              .product-item img {
-                max-width: 90%;
-                max-height: 90%;
-                object-fit: contain;
-              }
+                            {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
+        <div className="product-carousel" style={{ position: 'relative', width: '100%', maxWidth: '450px', height: '320px', margin: '0 auto', overflow: 'visible', display: 'flex', alignItems: 'center', justifyAll: 'center' }}>
+          
+          {/* INJECT ANIMATION KEYFRAMES SAFELY WITHOUT NESTED STYLED-JSX */}
+          {typeof window !== 'undefined' && !window._carouselTvInjected && (
+            (window._carouselTvInjected = true),
+            (function() {
+              var style = document.createElement('style');
+              style.innerHTML = '@keyframes infiniteTvRotation { ' +
+                '0% { transform: translateX(-140%) scale(0.85); opacity: 0; } ' +
+                '0.5% { transform: translateX(0%) scale(1.18); opacity: 1; z-index: 5; } ' +
+                '1.35% { transform: translateX(0%) scale(1.18); opacity: 1; z-index: 5; } ' +
+                '1.85% { transform: translateX(140%) scale(0.85); opacity: 0; } ' +
+                '100% { transform: translateX(140%) scale(0.85); opacity: 0; } ' +
+              '}';
+              document.head.appendChild(style);
+            })()
+          )}
 
-              /* 
-                THE MOTION TIMELINE FOR A SINGLE SLIDE:
-                Stays hidden -> Glides in from left -> Centers & zooms -> Exits to right -> Hides
-              */
-              @keyframes infiniteTvRotation {
-                0% { transform: translateX(-140%) scale(0.85); opacity: 0; }
-                /* 0.5% of 259s is roughly 1.2s transition entry slide */
-                0.5% { transform: translateX(0%) scale(1.18); opacity: 1; pointer-events: auto; z-index: 5; }
-                /* 1.35% is roughly 3.5s focal stay length */
-                1.35% { transform: translateX(0%) scale(1.18); opacity: 1; pointer-events: auto; z-index: 5; }
-                /* 1.85% is roughly 1.2s exit slide transition out */
-                1.85% { transform: translateX(140%) scale(0.85); opacity: 0; }
-                100% { transform: translateX(140%) scale(0.85); opacity: 0; }
-              }
-            `}</style>
-
+          <div className="product-track" style={{ position: 'relative', width: '100%', height: '100%' }}>
             {Array.from({ length: 74 }, function(_, index) {
               var imageIndex = index + 1;
               var src = "/image" + imageIndex + ".jpg";
               
-              /* 
-                Staggers each of the 74 items sequentially along the 259-second timeline 
-                so they follow each other like a continuous conveyor belt.
-              */
+              // Spreads all 74 items sequentially out over the 259-second timeline
               var animationDelay = (index * 3.5) + "s";
 
               return (
                 <div 
                   key={src} 
                   className="product-item"
-                  style={{ animationDelay: animationDelay }}
+                  style={{ 
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0,
+                    animation: 'infiniteTvRotation 259s linear infinite',
+                    animationDelay: animationDelay
+                  }}
                 >
-                  <img src={src} alt="" />
+                  <img 
+                    src={src} 
+                    alt="" 
+                    style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} 
+                  />
                 </div>
               );
             })}
