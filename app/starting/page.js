@@ -270,8 +270,8 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-                                            {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
-        <div className="product-carousel" style={{ position: 'relative', width: '100%', maxWidth: '450px', height: '320px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyAll: 'center' }}>
+                                                    {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
+        <div className="product-carousel" style={{ position: 'relative', width: '100%', maxWidth: '450px', height: '320px', margin: '0 auto', overflow: 'visible', display: 'flex', alignItems: 'center', justifyAll: 'center' }}>
           
           {/* INJECT ANIMATION KEYFRAMES SAFELY WITHOUT NESTED STYLED-JSX */}
           {typeof window !== 'undefined' && !window._carouselTvInjected && (
@@ -285,10 +285,11 @@ export default function StartingPage() {
                 '1.85% { transform: translateX(140%) scale(0.85); opacity: 0; } ' +
                 '100% { transform: translateX(140%) scale(0.85); opacity: 0; } ' +
               '} ' +
-              /* DESKTOP EXCLUSIVE FIXED: Keeps background black but removes the 100vw stretch so images clip within the container limits */
+              /* DESKTOP FIXED: Blends the root section backdrop directly into seamless black without drawing extra box layers */
               '@media (min-width: 768px) { ' +
-                '.product-carousel { background: #000000 !important; } ' +
-                '.product-track { background: #000000 !important; } ' +
+                'main { background: #000000 !important; } ' +
+                '.product-carousel { background: transparent !important; } ' +
+                '.product-track { background: transparent !important; } ' +
               '}';
               document.head.appendChild(style);
             })()
@@ -323,8 +324,7 @@ export default function StartingPage() {
                   <img 
                     src={src} 
                     alt="" 
-                    /* FIXED: Scaled dimensions slightly to 85% to provide safe breathing room for the scale zoom */
-                    style={{ maxWidth: '85%', maxHeight: '85%', objectFit: 'contain' }} 
+                    style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} 
                   />
                 </div>
               );
