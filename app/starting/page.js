@@ -270,7 +270,7 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-                            {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
+                                    {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
         <div className="product-carousel" style={{ position: 'relative', width: '100%', maxWidth: '450px', height: '320px', margin: '0 auto', overflow: 'visible', display: 'flex', alignItems: 'center', justifyAll: 'center' }}>
           
           {/* INJECT ANIMATION KEYFRAMES SAFELY WITHOUT NESTED STYLED-JSX */}
@@ -284,6 +284,11 @@ export default function StartingPage() {
                 '1.35% { transform: translateX(0%) scale(1.18); opacity: 1; z-index: 5; } ' +
                 '1.85% { transform: translateX(140%) scale(0.85); opacity: 0; } ' +
                 '100% { transform: translateX(140%) scale(0.85); opacity: 0; } ' +
+              '} ' +
+              /* DESKTOP EXCLUSIVE FIXED: Turns background black only on desktop (768px wide and above) */
+              '@media (min-width: 768px) { ' +
+                '.product-carousel { background: #000000 !important; width: 100vw !important; max-width: 100vw !important; } ' +
+                '.product-track { background: #000000 !important; } ' +
               '}';
               document.head.appendChild(style);
             })()
