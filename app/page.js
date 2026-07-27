@@ -33,7 +33,7 @@ export default function Home(){
       font-size:0 !important;
       display:block !important;
       background: #fff !important; 
-      overflow: hidden !important; /* FIXED: Clips out the baked-in black border of the video */
+      overflow: hidden !important; 
     }
     section.hero-desktop video{
       width:100vw !important;
@@ -43,20 +43,11 @@ export default function Home(){
       object-fit:cover !important;
       border:0 !important;
       padding:0 !important;
-      
-      /* 
-        FIXED: Pulls the video down slightly and clips the bottom 
-        to crop out the hard-coded black bar present inside d-video.mp4
-      */
       margin: 0 0 -15px 0 !important; 
-      transform: scale(1.02); /* Slight scale keeps the aspect ratio crisp while cropping borders */
+      transform: scale(1.02); 
     }
     
-    /* 
-      FIXED DESKTOP GAP OVERRIDE:
-      Bypasses the hidden mobile nodes to find the next active desktop section 
-      and pulls it up to eliminate the whitespace gap.
-    */
+    /* FIXED DESKTOP GAP OVERRIDE */
     section.desktop-only ~ section:not(.mobile-only),
     section.desktop-only ~ div:not(.mobile-only) {
       margin-top: 0 !important;
@@ -66,7 +57,8 @@ export default function Home(){
 `}</style>      
 
 {/* ========== MOBILE BLOCKS ========== */}
-<section className="hero-desktop mobile-only" style={{position:'relative',width:'100%',overflow:'hidden'}}>
+{/* FIXED: Removed 'hero-desktop' class so this video never displays on desktop screens */}
+<section className="mobile-only" style={{position:'relative',width:'100%',overflow:'hidden'}}>
   <video autoPlay muted loop playsInline preload="auto" style={{width:'100%',height:'auto',display:'block',objectFit:'cover'}}>
     <source src="/videos/hero-video.mp4" type="video/mp4"/>
   </video>
