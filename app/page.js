@@ -25,24 +25,31 @@ export default function Home(){
     section.hero-desktop{
       height:auto !important;
       width:100vw !important;
-      margin:0 0 -1px 0 !important; /* Pulls next section up 1px to close sub-pixel rendering cracks */
+      margin:0 0 -1px 0 !important; 
       padding:0 !important;
       margin-left:calc(-50vw + 50%) !important;
       margin-right:calc(-50vw + 50%) !important;
       line-height:0 !important;
       font-size:0 !important;
       display:block !important;
-      background: #fff !important; /* Blends container with background to hide the black line */
+      background: #fff !important; 
+      overflow: hidden !important; /* FIXED: Clips out the baked-in black border of the video */
     }
     section.hero-desktop video{
       width:100vw !important;
       height:auto !important;
-      display:block !important; /* kills black line */
+      display:block !important; 
       vertical-align:top !important; 
       object-fit:cover !important;
       border:0 !important;
-      margin:0 !important;
       padding:0 !important;
+      
+      /* 
+        FIXED: Pulls the video down slightly and clips the bottom 
+        to crop out the hard-coded black bar present inside d-video.mp4
+      */
+      margin: 0 0 -15px 0 !important; 
+      transform: scale(1.02); /* Slight scale keeps the aspect ratio crisp while cropping borders */
     }
     
     /* 
