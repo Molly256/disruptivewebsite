@@ -10,7 +10,7 @@ export default function Home(){
       <Sidebar />
       <main style={{background:'#fff',color:'#000',minHeight:'100vh',overflowX:'hidden',width:'100%',paddingTop:'80px'}}> 
       <style jsx global>{`
-  html, body {overflow-x:hidden;width:100%}
+  html, body {overflow-x:hidden;width:100%;margin:0;padding:0}
   
   /* MOBILE DEFAULT: show both */
   .down-video{height:20vh}
@@ -21,23 +21,31 @@ export default function Home(){
     .mobile-only{display:none !important}
     .desktop-only{display:block !important}
 
-    /* FORCE FULL BLEED FOR DESKTOP HERO ONLY - FIX GAP + BLACK LINE */
+    /* FORCE FULL BLEED FOR DESKTOP HERO ONLY - NO GAP NO LINE */
     section.hero-desktop{
       height:auto !important;
       width:100vw !important;
-      margin:0 !important;
+      margin:0 0 -2px 0 !important; /* -2px pulls next section up */
       padding:0 !important;
       margin-left:calc(-50vw + 50%) !important;
       margin-right:calc(-50vw + 50%) !important;
       line-height:0 !important;
       font-size:0 !important;
+      display:block !important;
     }
     section.hero-desktop video{
       width:100vw !important;
       height:auto !important;
-      display:block !important;
-      vertical-align:bottom !important;
-      object-fit:cover !important
+      display:block !important; /* kills black line */
+      vertical-align:top !important; /* changed from bottom */
+      object-fit:cover !important;
+      border:0 !important;
+      margin:0 !important;
+      padding:0 !important;
+    }
+    /* Kill margin on whatever comes after video */
+    section.hero-desktop + * {
+      margin-top:0 !important;
     }
   }
 `}</style>      
