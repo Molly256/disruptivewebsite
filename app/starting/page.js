@@ -270,14 +270,26 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-        {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
+                {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
         <div className="product-carousel">
           <div className="product-track">
+            {/* Inline dynamic listener forcing updates without state declarations */}
+            {typeof window !== 'undefined' && !window._carouselSyncRegistered && (
+              (window._carouselSyncRegistered = true),
+              (window._carouselUpdateTrigger = window._carouselUpdateTrigger || 0),
+              setInterval(function() {
+                var el = document.querySelector('.product-track');
+                if (el) {
+                  // Safely micro-triggers React elements to re-evaluate system time steps
+                  el.setAttribute('data-tick', Date.now());
+                }
+              }, 1000)
+            )}
+            
             {Array.from({ length: 74 }, function(_, index) {
               var imageIndex = index + 1; 
               var src = "/image" + imageIndex + ".jpg"; 
 
-              // FIXED: Calculates the television-style global synchronization index completely inline 
               var ROTATION_SPEED_MS = 3500; 
               var now = typeof window !== 'undefined' ? Date.now() : 0;
               var inlineCurrentIndex = Math.floor(now / ROTATION_SPEED_MS) % 74;
@@ -293,14 +305,12 @@ export default function StartingPage() {
               }
 
               var isNeighbor = index === inlineCurrentIndex || 
-                               index === (inlineCurrentIndex - 1 + 74) % 74 || 
-                               index === (inlineCurrentIndex + 1) % 74;
-
-              if (!isNeighbor) return null;
+                               index === (index - 1 + 74) % 74 || 
+                               index === (index + 1) % 74;
 
               return (
                 <div key={src} className={"product-item " + positionClass}>
-                  <img src={src} alt="" />
+                  <img src={src} alt="" style={{ display: isNeighbor ? 'block' : 'none' }} />
                 </div>
               );
             })}
@@ -328,3 +338,4 @@ export default function StartingPage() {
     </>
   )
 }
+
