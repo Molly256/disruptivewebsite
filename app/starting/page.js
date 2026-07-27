@@ -270,27 +270,31 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-
-                {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
+        {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
         <div className="product-carousel">
           <div className="product-track">
             {Array.from({ length: 74 }, function(_, index) {
               var imageIndex = index + 1; 
               var src = "/image" + imageIndex + ".jpg"; 
 
+              // FIXED: Calculates the television-style global synchronization index completely inline 
+              var ROTATION_SPEED_MS = 3500; 
+              var now = typeof window !== 'undefined' ? Date.now() : 0;
+              var inlineCurrentIndex = Math.floor(now / ROTATION_SPEED_MS) % 74;
+
               var positionClass = '';
 
-              if (index === currentIndex) {
+              if (index === inlineCurrentIndex) {
                 positionClass = 'pos-active'; 
-              } else if (index === (currentIndex - 1 + 74) % 74) {
+              } else if (index === (inlineCurrentIndex - 1 + 74) % 74) {
                 positionClass = 'pos-prev'; 
               } else {
                 positionClass = 'pos-next'; 
               }
 
-              var isNeighbor = index === currentIndex || 
-                               index === (currentIndex - 1 + 74) % 74 || 
-                               index === (currentIndex + 1) % 74;
+              var isNeighbor = index === inlineCurrentIndex || 
+                               index === (inlineCurrentIndex - 1 + 74) % 74 || 
+                               index === (inlineCurrentIndex + 1) % 74;
 
               if (!isNeighbor) return null;
 
