@@ -349,6 +349,56 @@ export default function StartingPage() {
             Starting (0 / 45)
           </button>
         </div>
+
+        {/* ===== WHITE INFO SECTION ===== */}
+        <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px' }}>
+          
+          {/* TODAY'S COMMISSION */}
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
+            <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px', letterSpacing: '0.5px' }}>TODAY'S COMMISSION</div>
+            <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>0.00 USD</div>
+            <div style={{ fontSize: '12px', color: '#999' }}>The displayed amount reflects today's earned commissions.</div>
+          </div>
+
+          {/* BALANCE + HOLD */}
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+            <div style={{ flex: 1, textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
+              <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>BALANCE</div>
+              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>0.00 USD</div>
+              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects both the deposited amount and earned commissions.</div>
+            </div>
+
+            <div style={{ flex: 1, textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>🧊</div>
+              <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>HOLD AMOUNT</div>
+              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>0.00 USD</div>
+              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Contact Support for inquiries</div>
+            </div>
+          </div>
+
+          {/* SPECIAL BONUS */}
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Lucky Bonus</div>
+            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>0.00 USD</div>
+          </div>
+
+        </div>
+
+        {/* IMPORTANT NOTICE */}
+        <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '12px', textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Important Notice</div>
+          <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Online Support Hours 09:45 - 23:10</div>
+          <div style={{ fontSize: '13px' }}>Please contact online support for your assistance</div>
+        </div>
+
+        {/* LOGO + FOOTER */}
+        <div style={{ textAlign: 'center', padding: '30px 16px 20px 16px', background: '#000' }}>
+          <img src="/logo.png" alt="logo" style={{ width: '120px', marginBottom: '12px' }} />
+          <div style={{ fontSize: '13px', color: '#FFF' }}>Copyrights 2026 © Disruptive Advertising Agency</div>
+        </div>
+
       </div>
 
       <BottomNav />
