@@ -132,7 +132,7 @@ export default function VipLevels() {
       <AppHeader />
 
       {/* SUB HEADER - HOT RED BUTTON */}
-      <div style={{ padding: '20px 16px 0' }}>
+      <div style={{ padding: '90px 16px 0 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <button
             onClick={() => router.back()}
@@ -156,16 +156,17 @@ export default function VipLevels() {
           </button>
 
           <div style={{
-            background: '#cc0000', // hot red
+            background: '#FF0000', // hot red
             color: '#000',
-            fontSize: '15px',
+            fontSize: '16px',
             fontWeight: '600', // medium bold
             letterSpacing: '1px',
             textTransform: 'uppercase',
-            padding: '10px 18px',
-            borderRadius: '10px',
+            padding: '12px 18px',
+            borderRadius: '12px',
             flex: 1,
-            textAlign: 'center'
+            textAlign: 'center',
+            boxShadow: '0 3px 8px rgba(255,0,0,0.25)'
           }}>
             VIP LEVELS
           </div>
