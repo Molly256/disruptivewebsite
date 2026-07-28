@@ -50,7 +50,7 @@ export default function Dashboard() {
 
   const clicks = [
     { name: 'Event', icon: 'calendar', url: '/event' },
-    { name: 'VIP Level', icon: 'diamond', url: '/vip' },
+    { name: 'Vip Levels', icon: 'diamond', url: '/vip' },
     { name: 'FAQs', icon: 'chat', url: '/faqs' },
     { name: "T&C's", icon: 'terms', url: '/terms' },
     { name: 'Certificate', icon: 'cert', url: '/certificate' },
