@@ -161,7 +161,7 @@ export default function Dashboard() {
 
       {/* 4. FOOTER */}
       <div style={{ background: '#000', padding: '40px 20px 140px', textAlign: 'center' }}>
-        <div style={{ color: '#fff', fontSize: '12px', fontWeight: '300' }}>Copyright 2026 © disruptiveadvertising</div>
+        <div style={{ color: '#fff', fontSize: '12px', fontWeight: '300' }}>Copyright 2026 © Disruptive Advertising Agency</div>
       </div>
 
       <BottomNav />

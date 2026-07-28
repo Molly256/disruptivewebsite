@@ -128,127 +128,137 @@ export default function VipLevels() {
   ]
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh', padding: '20px 16px' }}>
+    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px' }}>
+      <AppHeader />
 
-      {/* 1. BACK BUTTON & TITLE HEADER */}
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px', position: 'relative' }}>
-        <button
-          onClick={() => router.back()}
-          style={{
-            background: '#000',
-            border: 'none',
-            borderRadius: '50%',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            padding: 0
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
-
-        <h1 style={{
-          fontSize: '28px',
-          fontWeight: '600',
-          color: '#000000',
-          margin: '0 auto',
-          transform: 'translateX(-16px)'
-        }}>
-          Vip Levels
-        </h1>
-      </div>
-
-      {/* 2. VIP CARDS CONTAINER */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {vipData.map((vip) => (
-          <div
-            key={vip.id}
+      {/* SUB HEADER - HOT RED BUTTON */}
+      <div style={{ padding: '20px 16px 0' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <button
+            onClick={() => router.back()}
             style={{
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
-              borderRadius: '16px',
-              padding: '24px 20px',
-              position: 'relative',
-              boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)'
+              background: '#000',
+              border: 'none',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              padding: 0,
+              flexShrink: 0
             }}
           >
-            {/* Top Info Area */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ flex: 1 }}>
-                <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#000', margin: '0 0 12px 0' }}>
-                  {vip.title}
-                </h2>
-                <div style={{ fontSize: '16px', fontWeight: '700', color: '#E67E22', marginBottom: '16px' }}>
-                  {vip.price}
-                </div>
-              </div>
-            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
 
-            {/* Main Content Info Flex Row */}
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+          <div style={{
+            background: '#cc0000', // hot red
+            color: '#000',
+            fontSize: '15px',
+            fontWeight: '600', // medium bold
+            letterSpacing: '1px',
+            textTransform: 'uppercase',
+            padding: '10px 18px',
+            borderRadius: '10px',
+            flex: 1,
+            textAlign: 'center'
+          }}>
+            VIP LEVELS
+          </div>
+        </div>
+      </div>
 
-              {/* Custom Ribbon Graphic Medals */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '60px', flexShrink: 0, marginTop: '4px' }}>
-                <div style={{
-                  width: '54px',
-                  height: '54px',
-                  borderRadius: '50%',
-                  background: vip.badgeColor,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                  zIndex: 2
-                }}>
-                  <div style={{
-                    width: '34px',
-                    height: '34px',
-                    background: vip.innerBadgeColor,
-                    clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <span style={{ color: '#FFF', fontSize: '14px', fontWeight: 'bold' }}>★</span>
+      {/* VIP CARDS CONTAINER */}
+      <div style={{ padding: '0 16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {vipData.map((vip) => (
+            <div
+              key={vip.id}
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: '16px',
+                padding: '24px 20px',
+                position: 'relative',
+                boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.04)'
+              }}
+            >
+              {/* Top Info Area */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1 }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#000', margin: '0 0 12px 0' }}>
+                    {vip.title}
+                  </h2>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: '#E67E22', marginBottom: '16px' }}>
+                    {vip.price}
                   </div>
                 </div>
-                {/* Ribbon Tails */}
-                <div style={{ display: 'flex', gap: '8px', marginTop: '-8px', zIndex: 1 }}>
-                  <div style={{ width: '10px', height: '24px', background: vip.badgeColor, transform: 'rotate(5deg)', borderRadius: '2px' }} />
-                  <div style={{ width: '10px', height: '24px', background: vip.badgeColor, transform: 'rotate(-5deg)', borderRadius: '2px' }} />
-                </div>
               </div>
 
-              {/* Bulleted Perk Lists */}
-              <ul style={{ margin: 0, padding: 0, listStyleType: 'none', flex: 1 }}>
-                {vip.perks.map((perk, index) => (
-                  <li
-                    key={index}
-                    style={{
-                      fontSize: '13px',
-                      color: '#333333',
-                      lineHeight: '1.5',
-                      marginBottom: '6px',
-                      position: 'relative',
-                      paddingLeft: '12px',
-                      fontWeight: '500'
-                    }}
-                  >
-                    <span style={{ position: 'absolute', left: 0, color: '#000000' }}>•</span>
-                    {perk}
-                  </li>
-                ))}
-              </ul>
+              {/* Main Content Info Flex Row */}
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
 
+                {/* Custom Ribbon Graphic Medals */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '60px', flexShrink: 0, marginTop: '4px' }}>
+                  <div style={{
+                    width: '54px',
+                    height: '54px',
+                    borderRadius: '50%',
+                    background: vip.badgeColor,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    zIndex: 2
+                  }}>
+                    <div style={{
+                      width: '34px',
+                      height: '34px',
+                      background: vip.innerBadgeColor,
+                      clipPath: 'polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <span style={{ color: '#FFF', fontSize: '14px', fontWeight: 'bold' }}>★</span>
+                    </div>
+                  </div>
+                  {/* Ribbon Tails */}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '-8px', zIndex: 1 }}>
+                    <div style={{ width: '10px', height: '24px', background: vip.badgeColor, transform: 'rotate(5deg)', borderRadius: '2px' }} />
+                    <div style={{ width: '10px', height: '24px', background: vip.badgeColor, transform: 'rotate(-5deg)', borderRadius: '2px' }} />
+                  </div>
+                </div>
+
+                {/* Bulleted Perk Lists */}
+                <ul style={{ margin: 0, padding: 0, listStyleType: 'none', flex: 1 }}>
+                  {vip.perks.map((perk, index) => (
+                    <li
+                      key={index}
+                      style={{
+                        fontSize: '13px',
+                        color: '#333',
+                        lineHeight: '1.5',
+                        marginBottom: '6px',
+                        position: 'relative',
+                        paddingLeft: '12px',
+                        fontWeight: '500'
+                      }}
+                    >
+                      <span style={{ position: 'absolute', left: 0, color: '#000000' }}>•</span>
+                      {perk}
+                    </li>
+                  ))}
+                </ul>
+
+              </div>
             </div>
-
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* FOOTER */}
