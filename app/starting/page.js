@@ -120,7 +120,7 @@ const SCROLL_TIME = 1000
 const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 
-// DETAIL PAGE FOR RED BUTTON ONLY
+// DETAIL PAGE FOR RED BUTTON ONLY - FIXED FOR DESKTOP + BUTTON
 function Vip1StartingDetail({ product, onBack }) {
   const profit = (product.price * 0.01).toFixed(2)
   const taskCode = `20260729${String(product.id).padStart(10, '0')}`
@@ -132,11 +132,15 @@ function Vip1StartingDetail({ product, onBack }) {
         <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24 }}>‹</button>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Starting Detail</h1>
       </div>
-      <div style={{ background: '#FFF', margin: '12px', borderRadius: 12, padding: '16px' }}>
+      {/* FIXED: maxWidth + auto margin for desktop, centered content */}
+      <div style={{ background: '#FFF', margin: '12px auto', borderRadius: 12, padding: '16px', maxWidth: '500px' }}>
         <img src={product.image} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
-        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
-        <div style={{ textAlign: 'center', marginBottom: 4 }}>⭐ {product.rating}</div>
-        <div style={{ textAlign: 'center', fontWeight: 700, marginBottom: 16 }}>{product.price.toFixed(2)} x1 USD</div>
+        {/* FIXED: wrapped in center div so name is always under image */}
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
+          <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
+          <div style={{ fontWeight: 700, marginBottom: 16 }}>{product.price.toFixed(2)} x1 USD</div>
+        </div>
 
         <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
@@ -154,7 +158,8 @@ function Vip1StartingDetail({ product, onBack }) {
           <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Task Code</span><span>{taskCode}</span></div>
         </div>
 
-        <button style={{ width: '100%', background: '#FF6A00', color: '#FFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 700 }}>
+        {/* FIXED: HOT RED BUTTON, BLACK TEXT, MEDIUM BOLD */}
+        <button style={{ width: '100%', background: '#FF0000', color: '#000', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
           Submit
         </button>
       </div>
@@ -340,7 +345,7 @@ export default function StartingPage() {
               /* DESKTOP FIXED: Ensures the rotating track limits are tightly bounded so images can't bleed upward */
               '@media (min-width: 768px) { ' +
                 'main { background: #000000!important; } ' +
-                '.product-carousel { background: #000000!important; width: 100vw!important; max-width: 100vw!important; overflow: hidden!important; } ' +
+                '.product-carousel { background: #000!important; width: 100vw!important; max-width: 100vw!important; overflow: hidden!important; } ' +
                 '.product-track { background: #000!important; overflow: hidden!important; } ' +
                 '.product-carousel psychopath,.product-carousel, main > div { background-color: #000!important; } ' +
               '}';
