@@ -2,6 +2,7 @@
 import { useEffect, useState, useRef } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import { vip1Set1 } from '@/data/vip1Set1'
 
 const useUser = () => {
   return { name: 'Guest', vipLevel: 0 } // Replace with real session
@@ -119,8 +120,53 @@ const SCROLL_TIME = 1000
 const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 
+// DETAIL PAGE FOR RED BUTTON ONLY
+function Vip1StartingDetail({ product, onBack }) {
+  const profit = (product.price * 0.01).toFixed(2)
+  const taskCode = `20260729${String(product.id).padStart(10, '0')}`
+  const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+  return (
+    <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+        <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24 }}>‹</button>
+        <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Starting Detail</h1>
+      </div>
+      <div style={{ background: '#FFF', margin: '12px', borderRadius: 12, padding: '16px' }}>
+        <img src={product.image} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
+        <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
+        <div style={{ textAlign: 'center', marginBottom: 4 }}>⭐ {product.rating}</div>
+        <div style={{ textAlign: 'center', fontWeight: 700, marginBottom: 16 }}>{product.price.toFixed(2)} x1 USD</div>
+
+        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+          <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+            <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>TOTAL AMOUNT</div>
+            <div style={{ fontSize: 16, fontWeight: 800 }}>{product.price.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+          </div>
+          <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+            <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT</div>
+            <div style={{ fontSize: 16, fontWeight: 800 }}>{profit} <span style={{fontSize:12}}>USD</span></div>
+          </div>
+        </div>
+
+        <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Task Code</span><span>{taskCode}</span></div>
+        </div>
+
+        <button style={{ width: '100%', background: '#FF6A00', color: '#FFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 700 }}>
+          Submit
+        </button>
+      </div>
+      <BottomNav />
+    </div>
+  )
+}
+
 export default function StartingPage() {
   const [products, setProducts] = useState([])
+  const [showVip1Detail, setShowVip1Detail] = useState(false) // NEW FOR RED BUTTON
+  const [vip1TaskIndex, setVip1TaskIndex] = useState(0) // NEW FOR RED BUTTON
   const user = useUser()
   const trackRef = useRef(null)
   const carouselRef = useRef(null)
@@ -215,6 +261,11 @@ export default function StartingPage() {
   const allProducts = [...products,...products,...products]
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages] // 3x for seamless loop
 
+  // IF RED BUTTON DETAIL IS OPEN, SHOW IT
+  if (showVip1Detail) {
+    return <Vip1StartingDetail product={vip1Set1[vip1TaskIndex]} onBack={() => setShowVip1Detail(false)} />
+  }
+
   return (
     <>
       <AppHeader />
@@ -273,9 +324,9 @@ export default function StartingPage() {
                                                                  {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
         {/* FIXED: Changed overflow from 'visible' to 'hidden' and increased height slightly to give zoom elements breathing room inside the dark zone */}
         <div className="product-carousel" style={{ position: 'relative', width: '100vw', height: '440px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          
+
           {/* INJECT ANIMATION KEYFRAMES SAFELY WITHOUT NESTED STYLED-JSX */}
-          {typeof window !== 'undefined' && !window._carouselTvInjected && (
+          {typeof window!== 'undefined' &&!window._carouselTvInjected && (
             (window._carouselTvInjected = true),
             (function() {
               var style = document.createElement('style');
@@ -288,10 +339,10 @@ export default function StartingPage() {
               '} ' +
               /* DESKTOP FIXED: Ensures the rotating track limits are tightly bounded so images can't bleed upward */
               '@media (min-width: 768px) { ' +
-                'main { background: #000000 !important; } ' +
-                '.product-carousel { background: #000000 !important; width: 100vw !important; max-width: 100vw !important; overflow: hidden !important; } ' +
-                '.product-track { background: #000000 !important; overflow: hidden !important; } ' +
-                '.product-carousel psychopath, .product-carousel, main > div { background-color: #000000 !important; } ' +
+                'main { background: #000000!important; } ' +
+                '.product-carousel { background: #000000!important; width: 100vw!important; max-width: 100vw!important; overflow: hidden!important; } ' +
+                '.product-track { background: #000!important; overflow: hidden!important; } ' +
+                '.product-carousel psychopath,.product-carousel, main > div { background-color: #000!important; } ' +
               '}';
               document.head.appendChild(style);
             })()
@@ -301,15 +352,15 @@ export default function StartingPage() {
             {Array.from({ length: 74 }, function(_, index) {
               var imageIndex = index + 1;
               var src = "/image" + imageIndex + ".jpg";
-              
+
               // Spreads all 74 items sequentially out over the 259-second timeline
               var animationDelay = (index * 3.5) + "s";
 
               return (
-                <div 
-                  key={src} 
+                <div
+                  key={src}
                   className="product-item"
-                  style={{ 
+                  style={{
                     position: 'absolute',
                     top: 0,
                     left: 0,
@@ -323,10 +374,10 @@ export default function StartingPage() {
                     animationDelay: animationDelay
                   }}
                 >
-                  <img 
-                    src={src} 
-                    alt="" 
-                    style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} 
+                  <img
+                    src={src}
+                    alt=""
+                    style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }}
                   />
                 </div>
               );
@@ -334,25 +385,30 @@ export default function StartingPage() {
           </div>
         </div>
 
-        {/* Starting Button - RED WITH TEXT */}
+        {/* Starting Button - RED WITH TEXT - NOW CONNECTED */}
         <div className="starting-btn-container" style={{ padding: '20px', position: 'relative', zIndex: 10 }}>
-          <button className="starting-btn" style={{
-            width: '100%',
-            background: '#cc0000',
-            color: '#000',
-            border: 'none',
-            borderRadius: '25px',
-            padding: '16px',
-            fontSize: '16px',
-            fontWeight: '600'
-          }}>
-            Starting (0 / 45)
+          <button
+            onClick={() => setShowVip1Detail(true)} // OPENS VIP1 DETAIL
+            className="starting-btn"
+            style={{
+              width: '100%',
+              background: '#cc0000',
+              color: '#FFF', // changed to white
+              border: 'none',
+              borderRadius: '25px',
+              padding: '16px',
+              fontSize: '16px',
+              fontWeight: '600',
+              cursor: 'pointer'
+            }}
+          >
+            Starting ({vip1TaskIndex} / {vip1Set1.length})
           </button>
         </div>
 
         {/* ===== WHITE INFO SECTION ===== */}
         <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px' }}>
-          
+
           {/* TODAY'S COMMISSION */}
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
@@ -405,4 +461,3 @@ export default function StartingPage() {
     </>
   )
 }
-
