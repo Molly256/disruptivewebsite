@@ -199,7 +199,7 @@ export default function Dashboard() {
       <div style={{ background: '#FFFFFF', padding: '40px 20px 140px', textAlign: 'center' }}>
         <img src="/logo.png" alt="Logo" style={{ width: '120px', height: 'auto', marginBottom: '12px' }} />
         <div style={{ color: '#000', fontSize: '12px', fontWeight: '300' }}>
-          Copyrights 2026 © DistruPtive Advertising Agency
+          Copyrights 2026 © Distruptive Advertising Agency
         </div>
       </div>
 
