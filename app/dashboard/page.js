@@ -47,14 +47,14 @@ export default function Dashboard() {
   }, [router])
 
   const clicks = [
-    { name: 'Deposit', emoji: '💰', url: '/deposit' }, // NEW
-    { name: 'Withdraw', emoji: '🏦', url: '/withdraw' }, // NEW
-    { name: 'Event', emoji: '📅', url: '/event' }, // calendar emoji
-    { name: 'VIP Levels', emoji: '💎', url: '/viplevels' }, // diamond emoji
-    { name: 'FAQs', emoji: '❓', url: '/faqs' }, // question emoji
-    { name: "T&C's", emoji: '📄', url: '/terms' }, // document emoji
-    { name: 'Certificate', emoji: '🏆', url: '/certificate' }, // trophy emoji
-    { name: 'About Us', emoji: 'ℹ️', url: '/about' } // info emoji
+    { name: 'Deposit', emoji: '💰', url: '/deposit' },
+    { name: 'Withdraw', emoji: '🏦', url: '/withdraw' },
+    { name: 'Event', emoji: '📅', url: '/event' },
+    { name: 'VIP Levels', emoji: '💎', url: '/viplevels' },
+    { name: 'FAQs', emoji: '❓', url: '/faqs' },
+    { name: "T&C's", emoji: '📄', url: '/terms' },
+    { name: 'Certificate', emoji: '🏆', url: '/certificate' },
+    { name: 'About Us', emoji: 'ℹ️', url: '/about' }
   ]
 
   if (loading ||!user) return null
@@ -76,7 +76,7 @@ export default function Dashboard() {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
-     .notice-marquee {
+.notice-marquee {
           display: flex;
           animation: scroll 15s linear infinite;
           white-space: nowrap;
@@ -102,8 +102,18 @@ export default function Dashboard() {
         </video>
       </div>
 
-      {/* 2. NOTICE BAR ONLY - REMOVED WELCOME TEXT */}
-      <div style={{ padding: '20px 20px 0' }}>
+      {/* 2. TEXT SECTION */}
+      <div style={{ background: '#FFFFFF', padding: '32px 20px 20px' }}>
+        <p style={{ color: '#000', fontSize: '11px', fontWeight: '400', letterSpacing: '1px', marginBottom: '8px' }}>WE WANT YOU TO</p>
+        <h1 style={{ color: '#000', fontSize: '28px', fontWeight: '800', lineHeight: '1.1', margin: 0 }}>
+          DREAM BIG<br/>
+          SCALE FAST<br/>
+          BUILD BOLDLY
+        </h1>
+      </div>
+
+      {/* 3. NOTICE BAR */}
+      <div style={{ padding: '0 20px 20px' }}>
         <div style={{
           background: '#cc0000',
           borderRadius: '8px',
@@ -127,28 +137,43 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 3. SPECIALIZE + SERVICES SECTION */}
-      <div style={{ background: '#000', padding: '40px 20px' }}>
-        <h1 style={{ color: '#FFF', fontSize: '22px', fontWeight: '800', lineHeight: '1.3', marginBottom: '16px' }}>
+      {/* 4. QUICK CLICKS GRID */}
+      <div style={{ background: '#FFFFFF', padding: '0 20px 24px' }}>
+        <h2 style={{ fontSize: '12px', fontWeight: '400', color: '#666', letterSpacing: '1px', marginBottom: '16px' }}>QUICK CLICKS</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {clicks.map((item) => (
+            <button key={item.name} onClick={() => router.push(item.url)} style={{ background: '#cc0000', border: 'none', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <span style={{ fontSize: '24px' }}>{item.emoji}</span>
+              <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', textAlign: 'center' }}>{item.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. WE SPECIALIZE SECTION - NOW WHITE BG */}
+      <div style={{ background: '#FFFFFF', padding: '40px 20px' }}>
+        <h1 style={{ color: '#000', fontSize: '22px', fontWeight: '800', lineHeight: '1.3', marginBottom: '16px', textAlign: 'center' }}>
           WE SPECIALIZE IN HELPING B2B<br/>AND ECOMMERCE BUSINESSES<br/>DOMINATE THE DIGITAL SPACE.
         </h1>
-        <button style={{ background: 'none', border: '1px solid #FFF', color: '#FFF', borderRadius: '20px', padding: '8px 20px', fontSize: '13px', marginBottom: '40px' }}>About us</button>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+          <button style={{ background: 'none', border: '1px solid #000', color: '#000', borderRadius: '20px', padding: '6px 16px', fontSize: '12px' }}>About us</button>
+        </div>
 
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          <h2 style={{ color: '#FFF', fontSize: '28px', fontWeight: '800', margin: 0 }}>OUR<br/>SERVICES<span style={{color:'#FF6A00'}}>.</span></h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ background: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>Web Design</span>
-            <span style={{ background: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>SEO</span>
-            <span style={{ background: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>Social Media Marketing</span>
-            <span style={{ background: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>Shopify Brand Development</span>
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '20px', alignItems: 'flex-start' }}>
+          <h2 style={{ color: '#000', fontSize: '26px', fontWeight: '800', margin: 0, lineHeight: '1.1' }}>OUR<br/>SERVICES<span style={{color:'#FF6A00'}}>.</span></h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', flex: 1 }}>
+            <span style={{ background: '#F1F1F1', color: '#000', padding: '6px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '500' }}>Web Design</span>
+            <span style={{ background: '#F1F1F1', color: '#000', padding: '6px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '500' }}>SEO</span>
+            <span style={{ background: '#F1F1F1', color: '#000', padding: '6px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '500' }}>Social Media Marketing</span>
+            <span style={{ background: '#F1F1F1', color: '#000', padding: '6px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '500' }}>Shopify Brand Development</span>
           </div>
         </div>
 
-        <p style={{ color: '#CCC', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
-          At Disruptive, we don't just offer services—we deliver <span style={{fontWeight:700, color:'#FFF'}}>strategic solutions</span> designed to drive your business forward. Whether you're looking to build a brand from scratch or scale an established one, our expert team is ready to help you spark real growth.
+        <p style={{ color: '#444', fontSize: '13px', lineHeight: '1.6', marginBottom: '24px' }}>
+          At Disruptive, we don't just offer services—we deliver <span style={{fontWeight:700, color:'#000'}}>strategic solutions</span> designed to drive your business forward. Whether you're looking to build a brand from scratch or scale an established one, our expert team is ready to help you spark real growth.
         </p>
 
-        {/* HOT RED ROWS WITH BLACK TEXT - 6 ROWS */}
+        {/* 6. 6 HOT RED ROWS */}
         <div>
           {services.map((s, i) => (
             <div key={i} style={{
@@ -170,24 +195,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 4. LOGO + COPYRIGHT FOOTER */}
-      <div style={{ background: '#000', padding: '40px 20px', textAlign: 'center' }}>
-        <img src="/public/logo.png" alt="Logo" style={{ width: '120px', height: 'auto', marginBottom: '12px' }} />
-        <div style={{ color: '#fff', fontSize: '12px', fontWeight: '300' }}>
+      {/* 7. LOGO + COPYRIGHT FOOTER - NOW WHITE BG */}
+      <div style={{ background: '#FFFFFF', padding: '40px 20px 140px', textAlign: 'center' }}>
+        <img src="/logo.png" alt="Logo" style={{ width: '120px', height: 'auto', marginBottom: '12px' }} />
+        <div style={{ color: '#000', fontSize: '12px', fontWeight: '300' }}>
           Copyrights 2026 © DistruPtive Advertising Agency
-        </div>
-      </div>
-
-      {/* 5. QUICK CLICKS GRID - 2 ROWS X 4 BUTTONS */}
-      <div style={{ padding: '24px 20px' }}>
-        <h2 style={{ fontSize: '12px', fontWeight: '400', color: '#666', letterSpacing: '1px', marginBottom: '16px' }}>QUICK CLICKS</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-          {clicks.map((item) => (
-            <button key={item.name} onClick={() => router.push(item.url)} style={{ background: '#cc0000', border: 'none', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-              <span style={{ fontSize: '24px' }}>{item.emoji}</span>
-              <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', textAlign: 'center' }}>{item.name}</span>
-            </button>
-          ))}
         </div>
       </div>
 
