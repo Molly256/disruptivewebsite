@@ -15,7 +15,6 @@ export default function Dashboard() {
     checkScreen()
     window.addEventListener('resize', checkScreen)
 
-    // Check if user is logged in + fetch fresh data
     const fetchUser = async () => {
       const savedUser = localStorage.getItem('user')
       if (!savedUser) {
@@ -27,17 +26,16 @@ export default function Dashboard() {
       try {
         const res = await fetch(`/api/user?id=${localUser.id}`)
         const data = await res.json()
-        
+
         if (res.ok && data.user) {
           setUser(data.user)
-          localStorage.setItem('user', JSON.stringify(data.user)) // update cache
+          localStorage.setItem('user', JSON.stringify(data.user))
         } else {
           localStorage.removeItem('user')
           router.push('/login')
         }
       } catch (e) {
         console.error(e)
-        // fallback to localStorage if API fails
         setUser(localUser)
       } finally {
         setLoading(false)
@@ -49,35 +47,36 @@ export default function Dashboard() {
   }, [router])
 
   const clicks = [
-    { name: 'Event', icon: 'calendar', url: '/event' },
-    { name: 'viplevels', icon: 'diamond', url: '/viplevels' },
-    { name: 'FAQs', icon: 'chat', url: '/faqs' },
-    { name: "T&C's", icon: 'terms', url: '/terms' },
-    { name: 'Certificate', icon: 'cert', url: '/certificate' },
-    { name: 'About Us', icon: 'globe', url: '/about' }
+    { name: 'Deposit', emoji: '💰', url: '/deposit' }, // NEW
+    { name: 'Withdraw', emoji: '🏦', url: '/withdraw' }, // NEW
+    { name: 'Event', emoji: '📅', url: '/event' }, // calendar emoji
+    { name: 'VIP Levels', emoji: '💎', url: '/viplevels' }, // diamond emoji
+    { name: 'FAQs', emoji: '❓', url: '/faqs' }, // question emoji
+    { name: "T&C's", emoji: '📄', url: '/terms' }, // document emoji
+    { name: 'Certificate', emoji: '🏆', url: '/certificate' }, // trophy emoji
+    { name: 'About Us', emoji: 'ℹ️', url: '/about' } // info emoji
   ]
 
-  const getIcon = (type) => {
-    const props = { width: "32", height: "32", viewBox: "0 0 24 24", fill: "none", stroke: "#000", strokeWidth: "1.5" }
-    if (type === 'calendar') return <svg {...props}><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><text x="12" y="18" textAnchor="middle" fontSize="8" fontWeight="600" fill="#000">30</text></svg>
-    if (type === 'diamond') return <svg {...props}><path d="M6 3h12l4 6-10 12L2 9l4-6zM2 9h20M8.5 9l3.5 12M15.5 9l-3.5 12M6 3l6 6 6-6"/></svg>
-    if (type === 'chat') return <svg {...props}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="13" y2="14"/></svg>
-    if (type === 'terms') return <svg {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-    if (type === 'cert') return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/><circle cx="12" cy="12" r="3"/></svg>
-    if (type === 'globe') return <svg {...props}><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
-  }
+  if (loading ||!user) return null
 
-  if (loading || !user) return null
+  const services = [
+    'eCommerce Website Design',
+    'Search Engine Optimization',
+    'Social Media Marketing',
+    'Pay-Per-Click (PPC)',
+    'Digital Marketing Strategy',
+    'Influencer Marketing'
+  ]
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
-      
+
       <style jsx>{`
         @keyframes scroll {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
-       .notice-marquee {
+     .notice-marquee {
           display: flex;
           animation: scroll 15s linear infinite;
           white-space: nowrap;
@@ -87,14 +86,14 @@ export default function Dashboard() {
       <AppHeader />
 
       {/* 1. HERO VIDEO SECTION */}
-      <div style={{ 
-        position: 'relative', 
-        height: isDesktop? 'calc(100vh - 64px)' : '50vh', 
-        width: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        background: '#000', 
+      <div style={{
+        position: 'relative',
+        height: isDesktop? 'calc(100vh - 64px)' : '50vh',
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#000',
         overflow: 'hidden',
         zIndex: 1
       }}>
@@ -103,42 +102,24 @@ export default function Dashboard() {
         </video>
       </div>
 
-      {/* 2. TEXT INTRO + ROTATING RED NOTICE BAR */}
+      {/* 2. NOTICE BAR ONLY - REMOVED WELCOME TEXT */}
       <div style={{ padding: '20px 20px 0' }}>
-        <p style={{ color: '#000', fontSize: '14px', lineHeight: '1.5', marginBottom: '8px', fontWeight: '300' }}>
-          Welcome back, {user.username}
-        </p>
-        <p style={{ color: '#000', fontSize: '14px', lineHeight: '1.5', marginBottom: '16px', fontWeight: '300' }}>
-          We are a digitally native design agency evolving brands through creative vision & technology.
-        </p>
-        <div style={{ 
-          background: '#cc0000', 
-          borderRadius: '8px', 
-          padding: '12px 16px', 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          background: '#cc0000',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          display: 'flex',
+          alignItems: 'center',
           gap: '12px',
           overflow: 'hidden'
         }}>
           <span style={{ fontSize: '20px', lineHeight: '1', flexShrink: 0 }}>🔔</span>
           <div style={{ overflow: 'hidden', flex: 1 }}>
             <div className="notice-marquee">
-              <p style={{ 
-                color: '#000', 
-                fontSize: '13px', 
-                fontWeight: '500', 
-                margin: 0,
-                paddingRight: '50px'
-              }}>
+              <p style={{ color: '#000', fontSize: '13px', fontWeight: '500', margin: 0, paddingRight: '50px' }}>
                 Thank you for your support on the disruptive advertising platform. kindly read rules and regulations. Thank you.
               </p>
-              <p style={{ 
-                color: '#000', 
-                fontSize: '13px', 
-                fontWeight: '500', 
-                margin: 0,
-                paddingRight: '50px'
-              }}>
+              <p style={{ color: '#000', fontSize: '13px', fontWeight: '500', margin: 0, paddingRight: '50px' }}>
                 Thank you for your support on the disruptive advertising platform. kindly read rules and regulations. Thank you.
               </p>
             </div>
@@ -146,22 +127,68 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 3. QUICK CLICKS GRID */}
-      <div style={{ padding: '24px 20px' }}>
-        <h2 style={{ fontSize: '12px', fontWeight: '400', color: '#666', letterSpacing: '1px', marginBottom: '16px' }}>QUICK CLICKS</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-          {clicks.map((item) => (
-            <button key={item.name} onClick={() => router.push(item.url)} style={{ background: '#cc0000', border: 'none', borderRadius: '12px', padding: '20px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-              {getIcon(item.icon)}
-              <span style={{ fontSize: '13px', fontWeight: '300', color: '#000' }}>{item.name}</span>
-            </button>
+      {/* 3. SPECIALIZE + SERVICES SECTION */}
+      <div style={{ background: '#000', padding: '40px 20px' }}>
+        <h1 style={{ color: '#FFF', fontSize: '22px', fontWeight: '800', lineHeight: '1.3', marginBottom: '16px' }}>
+          WE SPECIALIZE IN HELPING B2B<br/>AND ECOMMERCE BUSINESSES<br/>DOMINATE THE DIGITAL SPACE.
+        </h1>
+        <button style={{ background: 'none', border: '1px solid #FFF', color: '#FFF', borderRadius: '20px', padding: '8px 20px', fontSize: '13px', marginBottom: '40px' }}>About us</button>
+
+        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <h2 style={{ color: '#FFF', fontSize: '28px', fontWeight: '800', margin: 0 }}>OUR<br/>SERVICES<span style={{color:'#FF6A00'}}>.</span></h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <span style={{ background: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>Web Design</span>
+            <span style={{ background: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>SEO</span>
+            <span style={{ background: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>Social Media Marketing</span>
+            <span style={{ background: '#FFF', color: '#000', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '500' }}>Shopify Brand Development</span>
+          </div>
+        </div>
+
+        <p style={{ color: '#CCC', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
+          At Disruptive, we don't just offer services—we deliver <span style={{fontWeight:700, color:'#FFF'}}>strategic solutions</span> designed to drive your business forward. Whether you're looking to build a brand from scratch or scale an established one, our expert team is ready to help you spark real growth.
+        </p>
+
+        {/* HOT RED ROWS WITH BLACK TEXT - 6 ROWS */}
+        <div>
+          {services.map((s, i) => (
+            <div key={i} style={{
+              background: '#FF0000',
+              color: '#000',
+              padding: '14px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '8px',
+              borderRadius: '4px',
+              fontWeight: '600',
+              fontSize: '14px'
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>⚡ {s}</span>
+              <span style={{ fontSize: '18px' }}>↗</span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* 4. FOOTER */}
-      <div style={{ background: '#000', padding: '40px 20px 140px', textAlign: 'center' }}>
-        <div style={{ color: '#fff', fontSize: '12px', fontWeight: '300' }}>Copyright 2026 © Disruptive Advertising Agency</div>
+      {/* 4. LOGO + COPYRIGHT FOOTER */}
+      <div style={{ background: '#000', padding: '40px 20px', textAlign: 'center' }}>
+        <img src="/public/logo.png" alt="Logo" style={{ width: '120px', height: 'auto', marginBottom: '12px' }} />
+        <div style={{ color: '#fff', fontSize: '12px', fontWeight: '300' }}>
+          Copyrights 2026 © DistruPtive Advertising Agency
+        </div>
+      </div>
+
+      {/* 5. QUICK CLICKS GRID - 2 ROWS X 4 BUTTONS */}
+      <div style={{ padding: '24px 20px' }}>
+        <h2 style={{ fontSize: '12px', fontWeight: '400', color: '#666', letterSpacing: '1px', marginBottom: '16px' }}>QUICK CLICKS</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {clicks.map((item) => (
+            <button key={item.name} onClick={() => router.push(item.url)} style={{ background: '#cc0000', border: 'none', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <span style={{ fontSize: '24px' }}>{item.emoji}</span>
+              <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', textAlign: 'center' }}>{item.name}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <BottomNav />
