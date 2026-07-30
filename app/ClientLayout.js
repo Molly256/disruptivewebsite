@@ -33,9 +33,10 @@ export default function ClientLayout({ children }) {
     '/withdraw',
     '/certificate', 
     '/event',
-    '/About Us', 
-    '/terms',    // T&C's
-    '/faq'       // FAQs
+    '/about',      // fixed: was '/About Us'
+    '/terms',      // T&C's
+    '/faqs',       // fixed: was '/faq'
+    '/admin'       // <-- ADDED: so admin panel gets mobile coverage shell
   ]
   
   const isAppPage = appRoutes.some(route => pathname?.startsWith(route))
