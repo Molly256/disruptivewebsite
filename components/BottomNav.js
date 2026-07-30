@@ -8,8 +8,10 @@ export default function BottomNav() {
     <nav style={{ 
       position: 'fixed', 
       bottom: 0, 
-      left: 0, 
-      right: 0, 
+      left: '50%', // CENTER IT
+      transform: 'translateX(-50%)', // CENTER IT
+      width: '100%',
+      maxWidth: '430px', // LOCK TO PHONE WIDTH
       background: '#000', 
       display: 'flex', 
       justifyContent: 'space-around', 

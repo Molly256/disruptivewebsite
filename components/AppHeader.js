@@ -16,8 +16,10 @@ export default function AppHeader() {
       borderBottom: 'none',
       position: 'fixed',
       top: 0,
-      left: 0,
-      right: 0,
+      left: '50%', // CENTER IT
+      transform: 'translateX(-50%)', // CENTER IT
+      width: '100%',
+      maxWidth: '430px', // LOCK TO PHONE WIDTH
       zIndex: 99999
     }}>
       <div style={{ 

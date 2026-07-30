@@ -6,548 +6,199 @@ import BottomNav from '@/components/BottomNav'
 export default function EventPage() {
   const router = useRouter()
 
-  const VIPStar = ({ color1, color2, color3 }) => (
-    <div style={{
-      width: '32px',
-      height: '32px',
-      position: 'relative',
-      filter: 'drop-shadow(0 0 4px rgba(255,255,255,0.3))'
-    }}>
-      <svg width="32" height="32" viewBox="0 0 32 32">
-        <defs>
-          <radialGradient id={`star-${color1}`} cx="50%" cy="50%">
-            <stop offset="0%" stopColor={color3} />
-            <stop offset="100%" stopColor={color1} />
-          </radialGradient>
-        </defs>
-        <path
-          d="M16 2 L20 12 L30 12 L22 18 L26 28 L16 22 L6 28 L10 18 L2 12 L12 12 Z"
-          fill={`url(#star-${color1})`}
-          stroke={color2}
-          strokeWidth="1.5"
-        />
-      </svg>
-    </div>
-  )
+  const rewards = [
+    { tier: 'Basic', amount: 'USD 100', extra: 'USD 10' },
+    { tier: 'Standard', amount: 'USD 500', extra: 'USD 60' },
+    { tier: 'Hot Pick', amount: 'USD 1,000', extra: 'USD 120' },
+    { tier: 'Best Deal', amount: 'USD 1,600', extra: 'USD 200' },
+    { tier: 'Recommended', amount: 'USD 5,500', extra: 'USD 1,200' },
+    { tier: 'Premium', amount: 'USD 10,000', extra: 'USD 2,400' },
+  ]
+
+  const vipLevels = [
+    { level: 'VIP 1', icon: '⭐', profit: '0.5%', work: '40 products/ set', deposit: 'usd 100-499', bg: 'linear-gradient(90deg, #8B5CF6 0%, #EC4899 100%)' },
+    { level: 'VIP 2', icon: '💎', profit: '1.0%', work: '45 products/ set', deposit: 'usd 500-1,599', bg: 'linear-gradient(90deg, #8B5CF6 0%, #EC4899 100%)' },
+    { level: 'VIP 3', icon: '💚', profit: '1.5%', work: '50 products/ set', deposit: 'usd 1,600-5,499', bg: 'linear-gradient(90deg, #8B5CF6 0%, #EC4899 100%)' },
+    { level: 'VIP 4', icon: '💗', profit: '2.0%', work: '55 products/ set', deposit: 'usd 5,500-9,999', bg: 'linear-gradient(90deg, #8B5CF6 0%, #EC4899 100%)' },
+    { level: 'VIP 5', icon: '💠', profit: '2.5%', work: '60 products/ set', deposit: 'usd 10,000-above', bg: 'linear-gradient(90deg, #8B5CF6 0%, #EC4899 100%)' },
+  ]
+
+  const workdays = [
+    { days: 2, salary: 'USD 120' },
+    { days: 5, salary: 'USD 1,000' },
+    { days: 10, salary: 'USD 1,400' },
+    { days: 20, salary: 'USD 1,600' },
+    { days: 30, salary: 'USD 2,000' },
+  ]
 
   return (
-    <div style={{ background: '#E8E8E8', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
+    <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
+      
       <AppHeader />
 
-      {/* SECTION 1: Deposit-Boost */}
-      <div style={{ padding: '0 12px', marginBottom: '16px' }}>
-        <div style={{ background: '#FFFFFF', borderRadius: '8px', overflow: 'hidden' }}>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '8px',
-            paddingTop: '20px',
-            marginBottom: '12px'
-          }}>
-            <div style={{
-              background: '#D9D9D9',
-              borderRadius: '20px',
-              padding: '6px 16px',
-              fontSize: '10px',
-              fontWeight: '400',
-              color: '#000',
-              letterSpacing: '0.5px'
-            }}>
-              DEPOSIT MORE
-            </div>
-            <div style={{
-              background: '#D9D9D9',
-              borderRadius: '20px',
-              padding: '6px 16px',
-              fontSize: '10px',
-              fontWeight: '400',
-              color: '#000',
-              letterSpacing: '0.5px'
-            }}>
-              EARN MORE
-            </div>
-          </div>
+      {/* TITLE */}
+      <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>←</button>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#000', margin: 0, flex: 1, textAlign: 'center' }}>
+          EVENT
+        </h1>
+      </div>
 
-          <h1 style={{
-            fontSize: '42px',
-            fontWeight: '900',
-            lineHeight: '1',
-            textAlign: 'center',
-            margin: '0 0 4px 0',
-            color: '#000',
-            letterSpacing: '-1px'
-          }}>
-            DISRUPTIVE
-          </h1>
-
-          <h2 style={{
-            fontSize: '22px',
-            fontWeight: '700',
-            textAlign: 'center',
-            margin: '0 0 12px 0',
-            color: '#000'
-          }}>
-            Deposit-Boost Reward Campaign
-          </h2>
-
-          <p style={{
-            fontSize: '14px',
-            fontWeight: '600',
-            textAlign: 'center',
-            margin: '0 0 16px 0',
-            color: '#cc0000'
-          }}>
-            Get up to 10% Extra Reward with Every Top-Up
+      {/* LOGO + TITLE SECTION */}
+      <div style={{ padding: '0 20px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+        <img src="/logo.png" alt="Disruptive" style={{ width: '90px', height: 'auto' }} />
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ color: '#FF0000', fontSize: '12px', fontWeight: '600', margin: 0, fontStyle: 'italic' }}>
+            3rd Anniversary<br/>Thanksgiving Feedback
           </p>
-
-          <div style={{
-            background: '#000',
-            borderRadius: '16px',
-            margin: '0 12px 0 12px',
-            padding: '24px 20px'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px'
-            }}>
-              <div>
-                <div style={{ fontSize: '10px', color: '#fff', fontWeight: '300', marginBottom: '4px' }}>
-                  DEPOSIT
-                </div>
-                <div style={{ fontSize: '18px', color: '#fff', fontWeight: '700' }}>
-                  USD 500-1,499
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#fff', fontWeight: '300' }}>earn extra</span>
-                <span style={{ fontSize: '36px', color: '#cc0000', fontWeight: '700' }}>6%</span>
-              </div>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px'
-            }}>
-              <div>
-                <div style={{ fontSize: '10px', color: '#fff', fontWeight: '300', marginBottom: '4px' }}>
-                  DEPOSIT
-                </div>
-                <div style={{ fontSize: '18px', color: '#fff', fontWeight: '700' }}>
-                  USD 1,500-4,999
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#fff', fontWeight: '300' }}>earn extra</span>
-                <span style={{ fontSize: '36px', color: '#cc0000', fontWeight: '700' }}>8%</span>
-              </div>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <div>
-                <div style={{ fontSize: '10px', color: '#fff', fontWeight: '300', marginBottom: '4px' }}>
-                  DEPOSIT
-                </div>
-                <div style={{ fontSize: '18px', color: '#fff', fontWeight: '700' }}>
-                  USD 5,000-9,999
-                </div>
-                <div style={{ fontSize: '10px', color: '#fff', fontWeight: '300', marginTop: '2px' }}>
-                  or above
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#fff', fontWeight: '300' }}>earn extra</span>
-                <span style={{ fontSize: '36px', color: '#cc0000', fontWeight: '700' }}>10%</span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{
-            background: '#cc0000',
-            marginTop: '-8px',
-            padding: '32px 20px 24px',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              position: 'absolute',
-              right: '-20px',
-              bottom: '-20px',
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
-              background: 'repeating-radial-gradient(circle at center, transparent 0px, transparent 3px, rgba(255,255,255,0.15) 3px, rgba(255,255,255,0.15) 4px)'
-            }}/>
-
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: '600',
-                color: '#fff',
-                marginBottom: '12px'
-              }}>
-                Notes for this campaign:
-              </div>
-
-              <div style={{ fontSize: '11px', color: '#fff', fontWeight: '300', lineHeight: '1.6' }}>
-                <div style={{ marginBottom: '6px' }}>01. Deposit to reset your daily missions and unlock extra rewards.</div>
-                <div style={{ marginBottom: '6px' }}>02. All deposits enjoy Deposit-Boost benefits — instantly boosting your balance.</div>
-                <div style={{ marginBottom: '6px' }}>03. Rewards reset daily at 00:00 (EST UTC-5 / EDT UTC-4).</div>
-                <div style={{ marginBottom: '12px' }}>04. Deposit-Boost Campaign available daily — boost your earnings even further!</div>
-                <div style={{ fontSize: '9px', opacity: 0.9 }}>
-                  The platform reserves the right of final interpretation and may modify rules without prior notice.
-                </div>
-              </div>
-            </div>
-          </div>
+          <p style={{ color: '#000', fontSize: '14px', fontWeight: '700', margin: '4px 0 0' }}>
+            Advances Activities.
+          </p>
         </div>
       </div>
 
-      {/* SECTION 2: Earnings-Based Payroll */}
-      <div style={{ padding: '0 12px', marginBottom: '16px' }}>
-        <div style={{ background: '#FFFFFF', borderRadius: '8px', overflow: 'hidden' }}>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '8px',
-            paddingTop: '20px',
-            marginBottom: '12px'
-          }}>
-            <div style={{
-              background: '#D9D9D9',
-              borderRadius: '20px',
-              padding: '6px 16px',
-              fontSize: '10px',
-              fontWeight: '400',
-              color: '#000',
-              letterSpacing: '0.5px'
-            }}>
-              SIGN IN
-            </div>
-            <div style={{
-              background: '#D9D9D9',
-              borderRadius: '20px',
-              padding: '6px 16px',
-              fontSize: '10px',
-              fontWeight: '400',
-              color: '#000',
-              letterSpacing: '0.5px'
-            }}>
-              SHOW UP
-            </div>
-            <div style={{
-              background: '#D9D9D9',
-              borderRadius: '20px',
-              padding: '6px 16px',
-              fontSize: '10px',
-              fontWeight: '400',
-              color: '#000',
-              letterSpacing: '0.5px'
-            }}>
-              GET PAID
-            </div>
-          </div>
-
-          <h1 style={{
-            fontSize: '42px',
-            fontWeight: '900',
-            lineHeight: '1',
-            textAlign: 'center',
-            margin: '0 0 4px 0',
-            color: '#000',
-            letterSpacing: '-1px'
-          }}>
-            DISRUPTIVE
-          </h1>
-
-          <h2 style={{
-            fontSize: '22px',
-            fontWeight: '700',
-            textAlign: 'center',
-            margin: '0 0 16px 0',
-            color: '#000'
-          }}>
-            Earnings-Based Payroll
-          </h2>
-
-          <div style={{
-            background: '#000',
-            borderRadius: '16px',
-            margin: '0 12px 0 12px',
-            padding: '24px 20px'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              marginBottom: '20px',
-              paddingBottom: '8px',
-              borderBottom: '1px solid #333'
-            }}>
-              <div style={{ fontSize: '11px', color: '#fff', fontWeight: '400' }}>DAYS WORKED</div>
-              <div style={{ fontSize: '11px', color: '#fff', fontWeight: '400' }}>SALARY EARNED</div>
-            </div>
-
-            {[
-              { days: '5', amount: '1,000' },
-              { days: '10', amount: '1,200' },
-              { days: '15', amount: '1,500' },
-              { days: '30', amount: '2,000' }
-            ].map((item, idx) => (
-              <div key={idx} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: idx === 3 ? '20px' : '16px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#cc0000">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polygon points="10,8 16,12 10,16" fill="#000"/>
-                  </svg>
-                  <span style={{ fontSize: '13px', color: '#fff', fontWeight: '300' }}>Sign in for</span>
-                  <span style={{ fontSize: '16px', color: '#cc0000', fontWeight: '700' }}>{item.days}</span>
-                  <span style={{ fontSize: '13px', color: '#fff', fontWeight: '300' }}>working days</span>
-                </div>
-                <div style={{ fontSize: '16px', color: '#cc0000', fontWeight: '700' }}>USD {item.amount}</div>
+      {/* 1ST BLOCK: RESET ADVANCE REWARDS */}
+      <div style={{ margin: '0 20px 24px', background: '#000', borderRadius: '12px', padding: '16px' }}>
+        <h2 style={{ color: '#FFF', fontSize: '14px', fontWeight: '700', margin: '0 0 12px' }}>
+          Reset Advance Rewards <span style={{ color: '#FF0000' }}>.</span>
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          {rewards.map((item) => (
+            <div key={item.tier} style={{ background: '#FFF', borderRadius: '6px', overflow: 'hidden' }}>
+              <div style={{ background: '#FF0000', color: '#000', textAlign: 'center', padding: '6px 4px', fontSize: '11px', fontWeight: '700' }}>
+                {item.tier}
               </div>
-            ))}
-
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingTop: '16px',
-              borderTop: '1px solid #333'
-            }}>
-              <div style={{ fontSize: '13px', color: '#fff', fontWeight: '300' }}>Earned a total of</div>
-              <div style={{ fontSize: '18px', color: '#cc0000', fontWeight: '700' }}>USD 5,700</div>
-            </div>
-
-            <div style={{ marginTop: '20px' }}>
-              <div style={{ fontSize: '11px', color: '#fff', fontWeight: '600', marginBottom: '4px' }}>
-                Daily mission Requirement:
-              </div>
-              <div style={{ fontSize: '10px', color: '#cc0000', fontWeight: '300', lineHeight: '1.4' }}>
-                Participants must complete two (3) sets of missions per day to qualify for guaranteed income.
+              <div style={{ padding: '8px 4px', textAlign: 'center' }}>
+                <p style={{ fontSize: '10px', color: '#666', margin: '0 0 2px' }}>Amount</p>
+                <p style={{ fontSize: '12px', fontWeight: '700', color: '#000', margin: '0 0 6px' }}>{item.amount}</p>
+                <p style={{ fontSize: '10px', color: '#666', margin: '0 0 2px' }}>Get Extra</p>
+                <p style={{ fontSize: '12px', fontWeight: '700', color: '#000', margin: 0 }}>{item.extra}</p>
               </div>
             </div>
-          </div>
-
-          <div style={{
-            background: '#cc0000',
-            marginTop: '-8px',
-            padding: '32px 20px 24px',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              position: 'absolute',
-              right: '-20px',
-              bottom: '-20px',
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
-              background: 'repeating-radial-gradient(circle at center, transparent 0px, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px)'
-            }}/>
-
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: '600',
-                color: '#000',
-                marginBottom: '12px'
-              }}>
-                Notes for all users:
-              </div>
-
-              <div style={{ fontSize: '11px', color: '#000', fontWeight: '400', lineHeight: '1.6', marginBottom: '12px' }}>
-                For everyday you sign in and complete your work, you earn guaranteed income!<br/>
-                The more you show up, the more you earn. Simple as that!
-              </div>
-
-              <div style={{ fontSize: '11px', color: '#000', fontWeight: '300', lineHeight: '1.6' }}>
-                <div style={{ marginBottom: '6px' }}>01. Complete two missions per day to qualify for earnings.</div>
-                <div style={{ marginBottom: '6px' }}>02. Perfect attendance unlocks up to USD 5,700/month.</div>
-                <div style={{ marginBottom: '6px' }}>03. Earnings and attendance reset daily at 00:00 (EST UTC-5 / EDT UTC-4).</div>
-                <div style={{ marginBottom: '12px' }}>04. Rewards will be credited within 24 hours after successful daily mission completion.</div>
-                <div style={{ fontSize: '9px', opacity: 0.9 }}>
-                  The platform reserves the right of final interpretation and may modify rules without prior notice.
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* SECTION 3: VIP Level-Tier Advantage */}
-      <div style={{ padding: '0 12px' }}>
-        <div style={{ background: '#FFFFFF', borderRadius: '8px', overflow: 'hidden' }}>
-          
-          <div style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: '8px',
-            paddingTop: '20px',
-            marginBottom: '12px'
-          }}>
-            <div style={{
-              background: '#D9D9D9',
-              borderRadius: '20px',
-              padding: '6px 16px',
-              fontSize: '10px',
-              fontWeight: '400',
-              color: '#000',
-              letterSpacing: '0.5px'
-            }}>
-              THE HIGHER THE LEVEL
-            </div>
-            <div style={{
-              background: '#D9D9D9',
-              borderRadius: '20px',
-              padding: '6px 16px',
-              fontSize: '10px',
-              fontWeight: '400',
-              color: '#000',
-              letterSpacing: '0.5px'
-            }}>
-              THE GREATER THE EARNINGS
-            </div>
-          </div>
-
-          <h1 style={{
-            fontSize: '42px',
-            fontWeight: '900',
-            lineHeight: '1',
-            textAlign: 'center',
-            margin: '0 0 4px 0',
-            color: '#000',
-            letterSpacing: '-1px'
-          }}>
-            DISRUPTIVE
-          </h1>
-
-          <h2 style={{
-            fontSize: '22px',
-            fontWeight: '700',
-            textAlign: 'center',
-            margin: '0 0 16px 0',
-            color: '#000'
-          }}>
-            VIP Level-Tier Advantage
-          </h2>
-
-          <div style={{
-            background: '#000',
-            borderRadius: '16px',
-            margin: '0 12px 0 12px',
-            padding: '20px 16px'
-          }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1.2fr 1fr 1fr 1.2fr',
-              gap: '8px',
-              marginBottom: '16px',
-              paddingBottom: '12px',
-              borderBottom: '1px solid #333'
-            }}>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: '400', lineHeight: '1.2' }}>VIP TIER</div>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: '400', lineHeight: '1.2', textAlign: 'center' }}>
-                PROFIT RATE/<br/>PER DEAL
-              </div>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: '400', lineHeight: '1.2', textAlign: 'center' }}>
-                DAILY WORK<br/>OPPORTUNITIES
-              </div>
-              <div style={{ fontSize: '9px', color: '#fff', fontWeight: '400', lineHeight: '1.2', textAlign: 'right' }}>
-                UNLOCK CONDITION/<br/>1ST DEPOSIT AMOUNT
+      {/* 2ND BLOCK: ACCUMULATED DEPOSIT REWARDS */}
+      <div style={{ padding: '0 20px 20px' }}>
+        <h2 style={{ color: '#000', fontSize: '16px', fontWeight: '700', margin: '0 0 16px', textAlign: 'center' }}>
+          Accumulated Deposit Rewards For The Day <span style={{ color: '#FF0000' }}>.</span>
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px' }}>
+          {[
+            { range: '1,500 - 9,999', percent: '4%', color: '#FF00FF' },
+            { range: '10,000 - 19,999', percent: '8%', color: '#00FF00' },
+            { range: '20,000 - 49,999', percent: '12%', color: '#00FFFF' },
+            { range: '50,000 - above', percent: '20%', color: '#FFFF00' }
+          ].map((item) => (
+            <div key={item.range} style={{ background: '#000', borderRadius: '10px', padding: '12px', position: 'relative' }}>
+              <p style={{ color: '#AAA', fontSize: '9px', margin: '0 0 4px' }}>Advances On Day (USD)</p>
+              <p style={{ color: item.color, fontSize: '12px', fontWeight: '700', margin: '0 0 4px' }}>{item.range}</p>
+              <p style={{ color: '#AAA', fontSize: '9px', margin: '0 0 2px' }}>Will Get (USD)</p>
+              <p style={{ color: '#FFF', fontSize: '9px', margin: 0 }}>Advance Reward</p>
+              <div style={{ position: 'absolute', bottom: '8px', right: '8px', background: '#FFF', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ color: '#000', fontSize: '16px', fontWeight: '800' }}>{item.percent}</span>
               </div>
             </div>
+          ))}
+        </div>
+      </div>
 
-            {[
-              { tier: 'VIP 1', rate: '0.5%', times: '40', deposit: '50-549', c1: '#F4D03F', c2: '#F8C471', c3: '#F7DC6F' },
-              { tier: 'VIP 2', rate: '1.0%', times: '45', deposit: '550-1,999', c1: '#E74C3C', c2: '#EC7063', c3: '#F1948A' },
-              { tier: 'VIP 3', rate: '1.5%', times: '50', deposit: '2,000-4,999', c1: '#3498DB', c2: '#5DADE2', c3: '#85C1E9' },
-              { tier: 'VIP 4', rate: '2.0%', times: '55', deposit: '5,000-8,999', c1: '#E67E22', c2: '#EB984E', c3: '#F0B27A' },
-              { tier: 'VIP 5', rate: '2.5%', times: '60', deposit: '9,000-above', c1: '#5DADE2', c2: '#85C1E9', c3: '#A9CCE3' }
-            ].map((item, idx) => (
-              <div key={idx} style={{
-                display: 'grid',
-                gridTemplateColumns: '1.2fr 1fr 1fr 1.2fr',
-                gap: '8px',
-                alignItems: 'center',
-                marginBottom: idx === 4 ? '0' : '16px'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '13px', color: '#fff', fontWeight: '600' }}>{item.tier}</span>
-                  <VIPStar color1={item.c1} color2={item.c2} color3={item.c3} />
-                </div>
-                <div style={{ fontSize: '14px', color: '#fff', fontWeight: '600', textAlign: 'center' }}>
-                  {item.rate}
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: '14px', color: '#cc0000', fontWeight: '700' }}>{item.times}</span>
-                  <span style={{ fontSize: '11px', color: '#fff', fontWeight: '300' }}> Times/Set</span>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '10px', color: '#fff', fontWeight: '300' }}>USD </span>
-                  <span style={{ fontSize: '13px', color: '#cc0000', fontWeight: '700' }}>{item.deposit}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* FOOTER FOR FIRST 2 BLOCKS */}
+      <div style={{ margin: '0 20px 24px', background: '#000', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '4px' }}>
+        <p style={{ color: '#AAA', fontSize: '9px', margin: 0 }}>Copyrights 2026 © Disruptive</p>
+        <p style={{ color: '#AAA', fontSize: '9px', margin: 0, textAlign: 'right' }}>*The final interpretation right belongs to Disruptive platform</p>
+      </div>
 
-          <div style={{
-            background: '#3D1E6D',
-            marginTop: '-8px',
-            padding: '32px 20px 24px',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              position: 'absolute',
-              right: '-20px',
-              bottom: '-20px',
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
-              background: 'repeating-radial-gradient(circle at center, transparent 0px, transparent 3px, rgba(255,255,255,0.1) 3px, rgba(255,255,255,0.1) 4px)'
-            }}/>
-
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: '600',
-                color: '#fff',
-                marginBottom: '12px'
-              }}>
-                Notice to all users:
-              </div>
-
-              <div style={{ fontSize: '11px', color: '#fff', fontWeight: '300', lineHeight: '1.6', marginBottom: '12px' }}>
-                <div style={{ marginBottom: '6px' }}>01. The higher your VIP level, the greater your daily earning potential.</div>
-                <div style={{ marginBottom: '6px' }}>02. Upgrading VIP increases your daily work opportunities.</div>
-                <div style={{ marginBottom: '6px' }}>03. All upgrade deposits will be credited to your account balance and can be withdrawn upon completing daily works.</div>
-                <div style={{ marginBottom: '12px' }}>04. VIP rewards reset daily at 00:00 (EST UTC-5 / EDT UTC-4).</div>
-              </div>
-
-              <div style={{ fontSize: '11px', color: '#cc0000', fontWeight: '600', marginBottom: '12px' }}>
-                Upgrade today to unlock more exclusive benefits!
-              </div>
-
-              <div style={{ fontSize: '9px', color: '#fff', opacity: 0.9, fontWeight: '300' }}>
-                The platform reserves the right of final interpretation and may modify rules without prior notice.
-              </div>
-            </div>
+      {/* 3RD BLOCK: VIP LEVEL CHART */}
+      <div style={{ padding: '0 20px 20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <img src="/logo.png" alt="Disruptive" style={{ width: '100px', height: 'auto' }} />
+          <div style={{ textAlign: 'right' }}>
+            <h2 style={{ color: '#000', fontSize: '16px', fontWeight: '800', margin: '0 0 4px' }}>VIP Level Chart<span style={{ color: '#FF0000' }}>.</span></h2>
+            <p style={{ color: '#FF0000', fontSize: '10px', fontWeight: '500', margin: 0 }}>The More You Recharge • The Higher You Rise</p>
           </div>
         </div>
+        <div style={{ background: '#000', borderRadius: '12px', padding: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 1.4fr', gap: '4px', padding: '8px 4px', color: '#FFF', fontSize: '10px', fontWeight: '600' }}>
+            <span>VIP Level</span><span>Profit Rate/<br/>Deal</span><span>Daily Work<br/>Opportunities</span><span>Unlock Condition/<br/>First Deposit Amount</span>
+          </div>
+          {vipLevels.map((vip) => (
+            <div key={vip.level} style={{ background: vip.bg, borderRadius: '8px', padding: '10px', marginBottom: '8px', display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 1.4fr', gap: '4px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ fontSize: '18px' }}>{vip.icon}</span><span style={{ color: '#FFF', fontSize: '11px', fontWeight: '700' }}>{vip.level}</span></div>
+              <span style={{ color: '#FFF', fontSize: '11px', fontWeight: '700' }}>{vip.profit}</span>
+              <span style={{ color: '#FFF', fontSize: '11px', fontWeight: '700' }}>{vip.work}</span>
+              <span style={{ color: '#FFF', fontSize: '11px', fontWeight: '700', textTransform: 'lowercase' }}>{vip.deposit}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ marginTop: '16px' }}>
+          <h3 style={{ color: '#000', fontSize: '12px', fontWeight: '700', margin: '0 0 8px' }}>Notice to all users:</h3>
+          <p style={{ color: '#444', fontSize: '10px', lineHeight: '1.5', margin: '0 0 12px' }}>All advance for the above mentioned unlocked VIP levels will be credited to the account and all deposits can be withdrawn by the user after completing the daily works.</p>
+          <h3 style={{ color: '#000', fontSize: '12px', fontWeight: '700', margin: '0 0 6px' }}>Benefits of Upgrading Your VIP Level:</h3>
+          <ul style={{ color: '#444', fontSize: '10px', lineHeight: '1.6', margin: '0 0 12px', paddingLeft: '16px' }}>
+            <li>Higher Daily Profits</li><li>More Work Opportunities</li><li>Priority Access to Special Events</li><li>Bonus Rewards for Top-tier Members</li>
+          </ul>
+          <p style={{ color: '#000', fontSize: '10px', fontWeight: '700', fontStyle: 'italic', margin: 0 }}>Upgrade today and maximize your earning power!</p>
+        </div>
+      </div>
+
+      {/* 4TH BLOCK: WORKDAY REWARDS SCHEME - LAST BLOCK */}
+      <div style={{ padding: '0 20px 20px' }}>
+        {/* LOGO LEFT + TITLE RIGHT */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <img src="/logo.png" alt="Disruptive" style={{ width: '100px', height: 'auto' }} />
+          <div style={{ textAlign: 'right' }}>
+            <h2 style={{ color: '#000', fontSize: '18px', fontWeight: '800', margin: '0 0 4px' }}>Workday Rewards Scheme<span style={{ color: '#FF0000' }}>.</span></h2>
+            <p style={{ color: '#FF0000', fontSize: '10px', fontWeight: '600', margin: 0 }}>Sign In • Show Up • Get Paid</p>
+          </div>
+        </div>
+
+        {/* BLACK TABLE */}
+        <div style={{ background: '#000', borderRadius: '12px', padding: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+            <h3 style={{ color: '#FFF', fontSize: '12px', fontWeight: '700', margin: 0 }}>Days Worked</h3>
+            <h3 style={{ color: '#FFF', fontSize: '12px', fontWeight: '700', margin: 0 }}>Salary Earned</h3>
+          </div>
+          
+          {workdays.map((item) => (
+            <div key={item.days} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
+              {/* LEFT BLUE → HOT RED */}
+              <div style={{ background: '#FF0000', borderRadius: '6px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: '#FFF', fontSize: '10px', fontWeight: '600' }}>Sign in</span>
+                <span style={{ color: '#FFF', fontSize: '16px', fontWeight: '800' }}>{item.days}</span>
+                <span style={{ color: '#FFF', fontSize: '10px', fontWeight: '600' }}>working days</span>
+              </div>
+              
+              {/* LIGHTNING + SALARY */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>⚡</span>
+                <div style={{ background: '#FFF', border: '2px solid #FF0000', borderRadius: '6px', padding: '8px 12px', flex: 1, textAlign: 'center' }}>
+                  <span style={{ color: '#FF0000', fontSize: '11px', fontWeight: '600' }}>USD </span>
+                  <span style={{ color: '#FF0000', fontSize: '14px', fontWeight: '800' }}>{item.salary.replace('USD ', '')}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* HOW IT WORKS */}
+        <div style={{ marginTop: '16px' }}>
+          <h3 style={{ color: '#000', fontSize: '12px', fontWeight: '700', margin: '0 0 6px' }}>How It Works:</h3>
+          <p style={{ color: '#444', fontSize: '10px', lineHeight: '1.5', margin: '0 0 8px' }}>
+            For everyday you sign in and complete your work, you earn guaranteed income!<br/>
+            The more you show up, the more you earn. Simple as that!
+          </p>
+          <p style={{ color: '#FF0000', fontSize: '10px', fontWeight: '700', margin: 0 }}>
+            Perfect attendance will earn up to USD 6,120 per month.
+          </p>
+        </div>
+      </div>
+
+      {/* FINAL FOOTER */}
+      <div style={{ margin: '0 20px 20px', background: '#000', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '4px' }}>
+        <p style={{ color: '#AAA', fontSize: '9px', margin: 0 }}>Copyrights 2026 © Disruptive</p>
+        <p style={{ color: '#AAA', fontSize: '9px', margin: 0, textAlign: 'right' }}>*The final interpretation right belongs to Disruptive platform</p>
       </div>
 
       <BottomNav />

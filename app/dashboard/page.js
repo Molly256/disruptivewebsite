@@ -9,6 +9,7 @@ export default function Dashboard() {
   const [isDesktop, setIsDesktop] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [showDepositPopup, setShowDepositPopup] = useState(false) // <-- ADDED
 
   useEffect(() => {
     const checkScreen = () => setIsDesktop(window.innerWidth >= 768)
@@ -47,7 +48,7 @@ export default function Dashboard() {
   }, [router])
 
   const clicks = [
-    { name: 'Deposit', emoji: '💰', url: '/deposit' },
+    { name: 'Deposit', emoji: '💰', action: 'deposit' }, // <-- CHANGED from url to action
     { name: 'Withdraw', emoji: '🏦', url: '/withdraw' },
     { name: 'Event', emoji: '📅', url: '/event' },
     { name: 'VIP Levels', emoji: '💎', url: '/viplevels' },
@@ -56,6 +57,14 @@ export default function Dashboard() {
     { name: 'Certificate', emoji: '🏆', url: '/certificate' },
     { name: 'About Us', emoji: 'ℹ️', url: '/about' }
   ]
+
+  const handleClick = (item) => { // <-- ADDED
+    if (item.action === 'deposit') {
+      setShowDepositPopup(true)
+    } else {
+      router.push(item.url)
+    }
+  }
 
   if (loading ||!user) return null
 
@@ -76,7 +85,7 @@ export default function Dashboard() {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
-.notice-marquee {
+       .notice-marquee {
           display: flex;
           animation: scroll 15s linear infinite;
           white-space: nowrap;
@@ -142,7 +151,11 @@ export default function Dashboard() {
         <h2 style={{ fontSize: '12px', fontWeight: '400', color: '#666', letterSpacing: '1px', marginBottom: '16px' }}>QUICK CLICKS</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
           {clicks.map((item) => (
-            <button key={item.name} onClick={() => router.push(item.url)} style={{ background: '#cc0000', border: 'none', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <button
+              key={item.name}
+              onClick={() => handleClick(item)} // <-- CHANGED
+              style={{ background: '#cc0000', border: 'none', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+            >
               <span style={{ fontSize: '24px' }}>{item.emoji}</span>
               <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', textAlign: 'center' }}>{item.name}</span>
             </button>
@@ -202,6 +215,32 @@ export default function Dashboard() {
           Copyrights 2026 © Distruptive Advertising Agency
         </div>
       </div>
+
+      {/* DEPOSIT POPUP - ADDED */}
+      {showDepositPopup && (
+        <div
+          onClick={() => setShowDepositPopup(false)}
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#FFF', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '320px', textAlign: 'center' }}
+          >
+            <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '0 0 12px' }}>
+              Contact Customer Service
+            </h2>
+            <p style={{ fontSize: '14px', color: '#666', margin: '0 0 20px' }}>
+              To make a deposit, please contact our customer service team and they will assist you.
+            </p>
+            <button
+              onClick={() => router.push('/contact')}
+              style={{ background: '#FF0000', color: '#000', fontWeight: '800', fontSize: '16px', border: 'none', borderRadius: '10px', padding: '12px', width: '100%', cursor: 'pointer' }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>
