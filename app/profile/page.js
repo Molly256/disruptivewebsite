@@ -73,12 +73,12 @@ export default function ProfilePage() {
   const totalBalance = user.totalBalance || '0.00'
   const creditScore = user.creditScore || 100
 
-  // HOT RED BAR COMPONENT - WITH BLACK BOLD ARROW
+  // HOT RED BAR COMPONENT - WITH WHITE BOLD ARROW
   const MenuItem = ({ icon, title, onClick }) => (
     <div
       onClick={onClick}
       style={{
-        background: '#000',
+        background: '#FF0000', // HOT RED
         borderRadius: '12px',
         padding: '16px 20px',
         display: 'flex',
@@ -89,10 +89,10 @@ export default function ProfilePage() {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '22px', color: '#FF4500' }}>{icon}</span>
+        <span style={{ fontSize: '22px' }}>{icon}</span>
         <span style={{ color: '#FFF', fontSize: '15px', fontWeight: '600' }}>{title}</span>
       </div>
-      <span style={{ color: '#000', fontSize: '18px', fontWeight: '800' }}>▼</span>
+      <span style={{ color: '#FFF', fontSize: '18px', fontWeight: '800' }}>▼</span> {/* WHITE DROP ARROW */}
     </div>
   )
 
@@ -173,7 +173,7 @@ export default function ProfilePage() {
         <MenuItem icon="🔗" title="Bind Wallet" onClick={() => router.push('/bind-wallet')} />
 
         <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>My Financial</h3>
-        <MenuItem icon="🫴" title="Deposit" onClick={() => router.push('/deposit')} />
+        <MenuItem icon="🏦" title="Deposit" onClick={() => router.push('/deposit')} /> {/* BANK EMOJI */}
         <MenuItem icon="💸" title="Withdraw" onClick={() => router.push('/withdraw')} />
 
         <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>Other</h3>
