@@ -4,21 +4,53 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")        // your prisma:// accelerate URL
-  directUrl = env("DIRECT_DATABASE_URL") // your postgresql:// direct URL for migrations
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model User {
-  id                  String   @id @default(cuid())
-  username            String   @unique
-  phone               String   @unique  // full number like +1234567890
-  countryCode         String   // "+1", "+93"
-  countryName         String   // "United States"
-  loginPassword       String   // bcrypt hashed
-  transactionPassword String   // bcrypt hashed
-  gender              String   // "Male" or "Female"
-  inviteCode          String?  // optional
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id String @id @default(cuid())
+  username String @unique
+  phone String @unique
+  countryCode String
+  countryName String
+  loginPassword String
+  transactionPassword String
+  gender String
+  inviteCode String?
+
+  referralCode String @unique
+  vipLevel String @default("VIP1")
+  vipId Int @default(1)
+  totalBalance Float @default(0.00)
+  todayProfit Float @default(0.00)
+  creditScore Int @default(100)
+  isAdmin Boolean @default(false)
+  avatar String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+  merges TaskMerge[]
+}
+
+model Transaction {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  type String // "deposit" | "withdraw"
+  amount Float
+  status String @default("pending") // pending, success, rejected
+  createdAt DateTime @default(now())
+}
+
+model TaskMerge {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  vipSet String // "vip2set1"
+  photoIds String[] // ["photo6","photo7"]
+  createdAt DateTime @default(now())
 }
