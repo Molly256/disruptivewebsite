@@ -32,7 +32,7 @@ export default function ClientLayout({ children }) {
     '/deposit', 
     '/withdraw',
     '/certificate', 
-    '/Event',
+    '/event',
     '/About Us', 
     '/terms',    // T&C's
     '/faq'       // FAQs
