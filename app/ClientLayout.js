@@ -32,8 +32,8 @@ export default function ClientLayout({ children }) {
     '/deposit', 
     '/withdraw',
     '/certificate', 
-    '/events',
-    '/about-us', 
+    '/Event',
+    '/About Us', 
     '/terms',    // T&C's
     '/faq'       // FAQs
   ]
