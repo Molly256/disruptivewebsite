@@ -9,7 +9,7 @@ export default function Dashboard() {
   const [isDesktop, setIsDesktop] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [showDepositPopup, setShowDepositPopup] = useState(false) // <-- ADDED
+  const [showDepositPopup, setShowDepositPopup] = useState(false)
 
   useEffect(() => {
     const checkScreen = () => setIsDesktop(window.innerWidth >= 768)
@@ -47,8 +47,8 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', checkScreen)
   }, [router])
 
-  const clicks = [
-    { name: 'Deposit', emoji: '💰', action: 'deposit' }, // <-- CHANGED from url to action
+  const baseClicks = [
+    { name: 'Deposit', emoji: '💰', action: 'deposit' },
     { name: 'Withdraw', emoji: '🏦', url: '/withdraw' },
     { name: 'Event', emoji: '📅', url: '/event' },
     { name: 'VIP Levels', emoji: '💎', url: '/viplevels' },
@@ -58,7 +58,13 @@ export default function Dashboard() {
     { name: 'About Us', emoji: 'ℹ️', url: '/about' }
   ]
 
-  const handleClick = (item) => { // <-- ADDED
+  // HARD LOCK: ONLY THIS ADMIN SEES THE BUTTON
+  const isSuperAdmin = user?.username === 'Admin256' && user?.phone === '+256712345678'
+
+  const adminButton = { name: 'Admin Panel', emoji: '👑', url: '/admin' }
+  const clicks = isSuperAdmin? [adminButton,...baseClicks] : baseClicks
+
+  const handleClick = (item) => {
     if (item.action === 'deposit') {
       setShowDepositPopup(true)
     } else {
@@ -85,7 +91,7 @@ export default function Dashboard() {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
-       .notice-marquee {
+      .notice-marquee {
           display: flex;
           animation: scroll 15s linear infinite;
           white-space: nowrap;
@@ -153,8 +159,18 @@ export default function Dashboard() {
           {clicks.map((item) => (
             <button
               key={item.name}
-              onClick={() => handleClick(item)} // <-- CHANGED
-              style={{ background: '#cc0000', border: 'none', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+              onClick={() => handleClick(item)}
+              style={{
+                background: item.name === 'Admin Panel'? '#FF1493' : '#cc0000', // HOT PINK FOR ADMIN
+                border: 'none',
+                borderRadius: '12px',
+                padding: '16px 8px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer'
+              }}
             >
               <span style={{ fontSize: '24px' }}>{item.emoji}</span>
               <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', textAlign: 'center' }}>{item.name}</span>
@@ -163,7 +179,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 5. WE SPECIALIZE SECTION - NOW WHITE BG */}
+      {/* 5. WE SPECIALIZE SECTION */}
       <div style={{ background: '#FFFFFF', padding: '40px 20px' }}>
         <h1 style={{ color: '#000', fontSize: '22px', fontWeight: '800', lineHeight: '1.3', marginBottom: '16px', textAlign: 'center' }}>
           WE SPECIALIZE IN HELPING B2B<br/>AND ECOMMERCE BUSINESSES<br/>DOMINATE THE DIGITAL SPACE.
@@ -208,7 +224,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 7. LOGO + COPYRIGHT FOOTER - NOW WHITE BG */}
+      {/* 7. LOGO + COPYRIGHT FOOTER */}
       <div style={{ background: '#FFFFFF', padding: '40px 20px 140px', textAlign: 'center' }}>
         <img src="/logo.png" alt="Logo" style={{ width: '120px', height: 'auto', marginBottom: '12px' }} />
         <div style={{ color: '#000', fontSize: '12px', fontWeight: '300' }}>
@@ -216,7 +232,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* DEPOSIT POPUP - ADDED */}
+      {/* DEPOSIT POPUP */}
       {showDepositPopup && (
         <div
           onClick={() => setShowDepositPopup(false)}

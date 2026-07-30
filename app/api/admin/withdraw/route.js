@@ -17,8 +17,8 @@ export async function POST(req) {
     if(action === 'success') {
       await prisma.user.update({
         where: { id: tx.userId },
-        data: { totalBalance: { decrement: tx.amount }
-      })
+        data: { totalBalance: { decrement: tx.amount } } // <-- ADDED } HERE
+      }) // <-- and this one was already here
     }
 
     return NextResponse.json({ success: true })
