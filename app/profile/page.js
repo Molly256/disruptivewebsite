@@ -183,7 +183,7 @@ export default function ProfilePage() {
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '80px' }}>
-        <p style={{ fontSize: '14px', color: '#666', fontWeight: '400' }}>Copyrights 2026 © Spark Digital</p>
+        <p style={{ fontSize: '14px', color: '#666', fontWeight: '400' }}>Copyrights 2026 © Disruptive Advertising Agency</p>
       </div>
 
       <BottomNav />
