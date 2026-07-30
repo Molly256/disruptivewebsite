@@ -44,25 +44,7 @@ export default function CertificatePage() {
           />
         </div>
 
-        {/* OPTIONAL: Download button */}
-        <a 
-          href="/certificate.jpg" 
-          download="Disruptive-Certificate.jpg"
-          style={{
-            display: 'block',
-            marginTop: '16px',
-            background: '#cc0000',
-            color: '#000',
-            textAlign: 'center',
-            padding: '14px',
-            borderRadius: '10px',
-            fontWeight: '700',
-            fontSize: '14px',
-            textDecoration: 'none'
-          }}
-        >
-          Download Certificate
-        </a>
+        {/* REMOVED DOWNLOAD BUTTON */}
       </div>
 
       <BottomNav />
