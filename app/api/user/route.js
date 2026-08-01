@@ -11,7 +11,7 @@ export async function GET(req) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { id }, // removed parseInt() because your id is String cuid()
+      where: { id }, // cuid string
       select: {
         id: true,
         username: true,
@@ -21,8 +21,22 @@ export async function GET(req) {
         gender: true,
         inviteCode: true,
         createdAt: true,
-        updatedAt: true
-        // loginPassword and transactionPassword excluded for security
+        updatedAt: true,
+        
+        // STARTING PAGE FIELDS
+        vipLevel: true,
+        totalBalance: true,
+        holdAmount: true,
+        bonus: true,
+        specialBonus: true, // ADDED FOR LUCKY BONUS BLOCK
+        taskCompleted: true,
+        currentSet: true,
+        totalTasks: true,
+        setCompleted: true, // ADDED FOR RESET SET BLOCK
+        activeProducts: true,
+        completedProducts: true,
+        currentTaskProducts: true, 
+        mergedTasks: true, // ADDED FOR MERGE BLOCK
       }
     })
 

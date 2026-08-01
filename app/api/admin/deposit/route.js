@@ -3,31 +3,32 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(req) {
   try {
-    const { adminPhone, target, amount } = await req.json()
+    const { userId, amount, adminId } = await req.json()
 
-    const admin = await prisma.user.findUnique({ where: { phone: adminPhone } })
-    if (!admin?.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-
-    const user = await prisma.user.findFirst({ where: { OR: [{ username: target }, { phone: target }] } })
-
-    // 1. Add to balance
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { totalBalance: { increment: parseFloat(amount) } }
+    const user = await prisma.user.update({ 
+      where: { id: userId }, 
+      data: { totalBalance: { increment: parseFloat(amount) } } // FIXED: added ) }
     })
 
-    // 2. Create transaction history
-    await prisma.transaction.create({
-      data: {
-        userId: user.id,
-        type: 'deposit',
-        amount: parseFloat(amount),
-        status: 'success'
+    await prisma.transaction.create({ 
+      data: { 
+        userId, 
+        type: 'deposit', // lowercase to match your schema comment
+        amount: parseFloat(amount), 
+        status: 'success' 
+      } 
+    })
+
+    await prisma.adminLog.create({ 
+      data: { 
+        adminId, 
+        action: `Deposited $${amount} to ${user.username}` 
       }
     })
 
-    return NextResponse.json({ success: true, message: 'Deposit successful' })
-  } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ success: true, newBalance: user.totalBalance })
+  } catch (e) { 
+    console.error('Deposit error:', e)
+    return NextResponse.json({ error: e.message }, { status: 500 }) 
   }
 }

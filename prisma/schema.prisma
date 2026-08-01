@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["dataProxy"]
 }
 
 datasource db {
@@ -19,30 +18,49 @@ model User {
   transactionPassword String
   gender String
   inviteCode String?
-
   referralCode String @unique
-  vipLevel String @default("VIP1")
+  avatar String?
+
+  // VIP & TASK FIELDS
+  vipLevel Int @default(1) // 1 to 5
   vipId Int @default(1)
-  totalBalance Float @default(0.00)
-  todayProfit Float @default(0.00)
+  currentSet Int @default(1) // 1 or 2
+  setCompleted Int @default(0) // which set was completed
+  taskCompleted Int @default(0) // 0 to 40/45/50...
+  totalTasks Int @default(40) // set size for current vip
+
+  // MONEY FIELDS
+  walletBalance Float @default(0.00) // Can withdraw. deposit - withdraw
+  holdAmount Float @default(0.00) // Money locked in active tasks. price + profit
+  bonus Float @default(0.00) // Normal bonus
+  specialBonus Float @default(0.00) // Lucky Bonus given by admin
+  todayProfit Float @default(0.00) // Commission earned today. Resets at 12am USA
+  lastProfitReset DateTime @default(now()) // To check daily reset
   creditScore Int @default(100)
   isAdmin Boolean @default(false)
-  avatar String?
+
+  // TASK DATA - MUST BE JSON
+  currentTaskProducts Json @default("[]") // products in current merged task. ["shoe1.jpg"]
+  activeProducts Json @default("[]") // [{id, price, profit, startedAt}] all tasks user started
+  completedProducts Json @default("[]") // history for commission calc
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   transactions Transaction[]
   merges TaskMerge[]
+  notifications Notification[]
+  adminLogs AdminLog[]
 }
 
 model Transaction {
   id String @id @default(cuid())
   userId String
   user User @relation(fields: [userId], references: [id])
-  type String // "deposit" | "withdraw"
+  type String // "deposit" | "withdraw" | "commission" | "bonus"
   amount Float
   status String @default("pending") // pending, success, rejected
+  account String? // for withdraw display
   createdAt DateTime @default(now())
 }
 
@@ -51,6 +69,23 @@ model TaskMerge {
   userId String
   user User @relation(fields: [userId], references: [id])
   vipSet String // "vip2set1"
-  photoIds String[] // ["photo6","photo7"]
+  photoIds String[] // ["shoe1.jpg","bag1.jpg"]
   createdAt DateTime @default(now())
+}
+
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  message String
+  isRead Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AdminLog {
+  id String @id @default(cuid())
+  adminId String
+  action String
+  createdAt DateTime @default(now())
+  user User? @relation(fields: [adminId], references: [id])
 }

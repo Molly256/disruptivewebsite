@@ -45,13 +45,35 @@ export async function POST(req) {
           loginPassword,
           transactionPassword,
           gender,
-          inviteCode: inviteCode || null
+          inviteCode: inviteCode || null,
+          referralCode: username.toUpperCase(), // auto referral code
+
+          // DEFAULTS FOR NEW USER
+          vipId: 1,
+          vipLevel: 1,
+          currentSet: 1,
+          setCompleted: 0,
+          taskCompleted: 0,
+          totalTasks: 40, // VIP1
+
+          walletBalance: 0,
+          holdAmount: 0,
+          bonus: 0,
+          specialBonus: 0,
+          todayProfit: 0,
+          lastProfitReset: new Date(),
+          creditScore: 100,
+
+          currentTaskProducts: [],
+          activeProducts: [],
+          completedProducts: [],
+          isAdmin: false
         }
       })
 
       return NextResponse.json({
         success: true,
-        user: { id: user.id, username: user.username }
+        user: { id: user.id, username: user.username, inviteCode: user.inviteCode }
       }, { status: 201 })
     }
 
@@ -75,23 +97,29 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
       }
 
-      // Create response and set cookie
       const res = NextResponse.json({
         success: true,
         user: {
           id: user.id,
           username: user.username,
           phone: user.phone,
-          gender: user.gender
+          gender: user.gender,
+          vipLevel: user.vipLevel,
+          walletBalance: user.walletBalance,
+          holdAmount: user.holdAmount,
+          specialBonus: user.specialBonus,
+          todayProfit: user.todayProfit,
+          lastProfitReset: user.lastProfitReset,
+          currentTaskProducts: user.currentTaskProducts,
+          taskCompleted: user.taskCompleted
         }
       })
 
-      // This cookie lets middleware/server know user is logged in
       res.cookies.set('session', String(user.id), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7, // 7 days
+        maxAge: 60 * 60 * 24 * 7,
         path: '/'
       })
 

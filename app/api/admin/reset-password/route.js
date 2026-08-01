@@ -3,18 +3,9 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(req) {
   try {
-    const { adminPhone, target, newPass } = await req.json()
-
-    const admin = await prisma.user.findUnique({ where: { phone: adminPhone } })
-    if (!admin?.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-
-    await prisma.user.updateMany({
-      where: { OR: [{ username: target }, { phone: target }] },
-      data: { loginPassword: newPass } // plain text as you requested
-    })
-
-    return NextResponse.json({ success: true, message: 'Password reset' })
-  } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
-  }
+    const { userId, newPassword, adminId } = await req.json()
+    const user = await prisma.user.update({ where: { id: userId }, data: { password: newPassword } })
+    await prisma.adminLog.create({ data: { adminId, action: `Reset password for ${user.username}` }})
+    return NextResponse.json({ success: true })
+  } catch (e) { return NextResponse.json({ error: e.message }, { status: 500 }) }
 }

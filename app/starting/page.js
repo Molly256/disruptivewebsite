@@ -1,12 +1,11 @@
 'use client'
 import { useEffect, useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 import { vip1Set1 } from '@/data/vip1Set1'
 
-const useUser = () => {
-  return { name: 'Guest', vipLevel: 0 } // Replace with real session
-}
+const VIP_PROFIT = { 1: 0.005, 2: 0.01, 3: 0.015, 4: 0.02, 5: 0.025 } // 0.5% to 2.5%
 
 const winnerMessages = [
   'John56 user wins 102.00 USD prize in the task.',
@@ -120,10 +119,12 @@ const SCROLL_TIME = 1000
 const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 
-// DETAIL PAGE FOR RED BUTTON ONLY - FIXED FOR DESKTOP + BUTTON
-function Vip1StartingDetail({ product, onBack }) {
-  const profit = (product.price * 0.01).toFixed(2)
-  const taskCode = `20260729${String(product.id).padStart(10, '0')}`
+function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
+  const profitRate = VIP_PROFIT[vipLevel]
+  const totalPrice = products.reduce((s, p) => s + p.price, 0)
+  const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
+  const totalReserve = totalPrice + totalProfit
+  const taskCode = `20260729${String(products[0].id).padStart(10, '0')}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
@@ -132,34 +133,40 @@ function Vip1StartingDetail({ product, onBack }) {
         <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24 }}>‹</button>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Starting Detail</h1>
       </div>
-      {/* FIXED: maxWidth + auto margin for desktop, centered content */}
+
+      {products.map(product => (
+        <div key={product.id} style={{ background: '#FFF', margin: '12px auto', borderRadius: 12, padding: '16px', maxWidth: '500px' }}>
+          <img src={product.image} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
+            <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
+            <div style={{ fontWeight: 700, marginBottom: 16 }}>{product.price.toFixed(2)} x1 USD</div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+            <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+              <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>TOTAL AMOUNT</div>
+              <div style={{ fontSize: 16, fontWeight: 800 }}>{product.price.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+            </div>
+            <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+              <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate*100).toFixed(1)}%</div>
+              <div style={{ fontSize: 16, fontWeight: 800 }}>{(product.price * profitRate).toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+            </div>
+          </div>
+        </div>
+      ))}
+
       <div style={{ background: '#FFF', margin: '12px auto', borderRadius: 12, padding: '16px', maxWidth: '500px' }}>
-        <img src={product.image} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
-        {/* FIXED: wrapped in center div so name is always under image */}
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
-          <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
-          <div style={{ fontWeight: 700, marginBottom: 16 }}>{product.price.toFixed(2)} x1 USD</div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-          <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-            <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>TOTAL AMOUNT</div>
-            <div style={{ fontSize: 16, fontWeight: 800 }}>{product.price.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
-          </div>
-          <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-            <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT</div>
-            <div style={{ fontSize: 16, fontWeight: 800 }}>{profit} <span style={{fontSize:12}}>USD</span></div>
-          </div>
-        </div>
-
         <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Task Code</span><span>{taskCode}</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
+          <hr style={{margin: '8px 0'}}/>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{totalPrice.toFixed(2)} USD</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{totalProfit.toFixed(2)} USD</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
         </div>
 
-        {/* FIXED: HOT RED BUTTON, BLACK TEXT, MEDIUM BOLD */}
-        <button style={{ width: '100%', background: '#FF0000', color: '#000', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
+        <button onClick={onSubmit} style={{ width: '100%', background: '#FF0000', color: '#000', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
           Submit
         </button>
       </div>
@@ -169,12 +176,53 @@ function Vip1StartingDetail({ product, onBack }) {
 }
 
 export default function StartingPage() {
+  const router = useRouter()
   const [products, setProducts] = useState([])
-  const [showVip1Detail, setShowVip1Detail] = useState(false) // NEW FOR RED BUTTON
-  const [vip1TaskIndex, setVip1TaskIndex] = useState(0) // NEW FOR RED BUTTON
-  const user = useUser()
+  const [showDetail, setShowDetail] = useState(false)
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [msg, setMsg] = useState('')
   const trackRef = useRef(null)
   const carouselRef = useRef(null)
+
+  const setSize = vip1Set1.length // 40 for VIP1
+  const setFinished = user? user.taskCompleted >= setSize : false
+
+  // LOAD USER FROM DB + RESET TODAY'S COMMISSION AT 00:00 USA TIME
+  useEffect(() => {
+    const fetchUser = async () => {
+      const saved = localStorage.getItem('user')
+      if(!saved) { router.push('/login'); return }
+      const { id } = JSON.parse(saved)
+
+      const res = await fetch(`/api/user?id=${id}`)
+      const data = await res.json()
+      if(res.ok) {
+        let u = data.user
+
+        // Check if new day in USA - America/New_York
+        const lastReset = new Date(u.lastProfitReset)
+        const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
+        const todayNY = new Date(nowNY).toDateString()
+        const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
+        const lastResetDay = new Date(lastResetNY).toDateString()
+
+        if (todayNY!== lastResetDay) {
+          // reset todayProfit in DB
+          await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
+          u.todayProfit = 0
+          u.lastProfitReset = new Date()
+        }
+
+        setUser(u)
+        localStorage.setItem('user', JSON.stringify(u))
+      } else {
+        router.push('/login')
+      }
+      setLoading(false)
+    }
+    fetchUser()
+  }, [router])
 
   useEffect(() => {
     const imageList = []
@@ -263,45 +311,66 @@ export default function StartingPage() {
     return cleanup
   }, [products])
 
-  const allProducts = [...products,...products,...products]
-  const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages] // 3x for seamless loop
+  const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
-  // IF RED BUTTON DETAIL IS OPEN, SHOW IT
-  if (showVip1Detail) {
-    return <Vip1StartingDetail product={vip1Set1[vip1TaskIndex]} onBack={() => setShowVip1Detail(false)} />
+  const handleStart = async () => {
+    if (setFinished) {
+      setMsg('Set completed. Contact Customer Service to reset.')
+      return
+    }
+    setMsg('Starting...')
+    const res = await fetch('/api/start-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id })
+    })
+    const data = await res.json()
+    if(res.ok) {
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      setShowDetail(true)
+      setMsg('')
+    } else {
+      setMsg(data.error)
+    }
   }
+
+  const handleSubmit = async () => {
+    setMsg('Submitting...')
+    const res = await fetch('/api/submit-task', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id })
+    })
+    const data = await res.json()
+    if(res.ok) {
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      setShowDetail(false)
+      setMsg('Task Completed! Payout Received')
+    } else {
+      setMsg(data.error)
+    }
+  }
+
+  if (loading ||!user) return null
+
+  if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
+    return <StartingDetail products={user.currentTaskProducts} onBack={() => setShowDetail(false)} onSubmit={handleSubmit} vipLevel={user.vipLevel} />
+  }
+
+  // CALCULATIONS FOR DISPLAY
+  const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
 
   return (
     <>
       <AppHeader />
 
-      <div className="starting-wrapper" style={{
-        paddingTop: 0,
-        paddingBottom: '90px',
-        marginTop: 0
-      }}>
-        {/* Marquee Bar - ATTACHED TO 64PX HEADER */}
-        <div className="marquee-container" style={{
-          margin: 0,
-          marginTop: '64px',
-          padding: 0,
-          background: '#cc0000',
-          overflow: 'hidden'
-        }}>
-          <div className="marquee-content" style={{
-            display: 'flex',
-            animation: 'scroll 600s linear infinite', /* medium energy, ~5 names visible */
-            whiteSpace: 'nowrap',
-            width: 'max-content'
-          }}>
+      <div className="starting-wrapper" style={{ paddingTop: 0, paddingBottom: '90px', marginTop: 0 }}>
+        <div className="marquee-container" style={{ margin: 0, marginTop: '64px', padding: 0, background: '#cc0000', overflow: 'hidden' }}>
+          <div className="marquee-content" style={{ display: 'flex', animation: 'scroll 600s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
             {allMessages.map((msg, i) => (
-              <span key={i} className="marquee-item" style={{
-                padding: '8px 40px 8px 0',
-                fontSize: '13px',
-                fontWeight: '500',
-                color: '#000',
-                flexShrink: 0
-              }}>{msg}</span>
+              <span key={i} className="marquee-item" style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#000', flexShrink: 0 }}>{msg}</span>
             ))}
           </div>
         </div>
@@ -309,15 +378,14 @@ export default function StartingPage() {
         <style jsx>{`
           @keyframes scroll {
             0% { transform: translateX(0%); }
-            100% { transform: translateX(-100%); } /* -100% so it doesn't bounce */
+            100% { transform: translateX(-100%); }
           }
         `}</style>
 
-                {/* User Bar */}
         <div className="user-bar" style={{ marginTop: 0, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '300' }}>Hello,</p>
-            <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{user.name}</p>
+            <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{user.username}</p>
           </div>
           <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span className="vip-text" style={{ fontSize: '14px', fontWeight: '600' }}>VIP{user.vipLevel}</span>
@@ -326,41 +394,13 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-                                                                 {/* Product Carousel - 74 SYNCHRONIZED IMAGES */}
-        {/* FIXED: Changed overflow from 'visible' to 'hidden' and increased height slightly to give zoom elements breathing room inside the dark zone */}
+
         <div className="product-carousel" style={{ position: 'relative', width: '100vw', height: '440px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-
-          {/* INJECT ANIMATION KEYFRAMES SAFELY WITHOUT NESTED STYLED-JSX */}
-          {typeof window!== 'undefined' &&!window._carouselTvInjected && (
-            (window._carouselTvInjected = true),
-            (function() {
-              var style = document.createElement('style');
-              style.innerHTML = '@keyframes infiniteTvRotation { ' +
-                '0% { transform: translateX(-100vw) scale(0.85); opacity: 0; } ' +
-                '0.5% { transform: translateX(0%) scale(1.18); opacity: 1; z-index: 5; } ' +
-                '1.35% { transform: translateX(0%) scale(1.18); opacity: 1; z-index: 5; } ' +
-                '1.85% { transform: translateX(100vw) scale(0.85); opacity: 0; } ' +
-                '100% { transform: translateX(100vw) scale(0.85); opacity: 0; } ' +
-              '} ' +
-              /* DESKTOP FIXED: Ensures the rotating track limits are tightly bounded so images can't bleed upward */
-              '@media (min-width: 768px) { ' +
-                'main { background: #000000!important; } ' +
-                '.product-carousel { background: #000!important; width: 100vw!important; max-width: 100vw!important; overflow: hidden!important; } ' +
-                '.product-track { background: #000!important; overflow: hidden!important; } ' +
-                '.product-carousel psychopath,.product-carousel, main > div { background-color: #000!important; } ' +
-              '}';
-              document.head.appendChild(style);
-            })()
-          )}
-
           <div className="product-track" style={{ position: 'relative', width: '100%', height: '100%' }}>
             {Array.from({ length: 74 }, function(_, index) {
               var imageIndex = index + 1;
               var src = "/image" + imageIndex + ".jpg";
-
-              // Spreads all 74 items sequentially out over the 259-second timeline
               var animationDelay = (index * 3.5) + "s";
-
               return (
                 <div
                   key={src}
@@ -379,89 +419,77 @@ export default function StartingPage() {
                     animationDelay: animationDelay
                   }}
                 >
-                  <img
-                    src={src}
-                    alt=""
-                    style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }}
-                  />
+                  <img src={src} alt="" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Starting Button - RED WITH TEXT - NOW CONNECTED */}
         <div className="starting-btn-container" style={{ padding: '20px', position: 'relative', zIndex: 10 }}>
           <button
-            onClick={() => setShowVip1Detail(true)} // OPENS VIP1 DETAIL
+            onClick={handleStart}
+            disabled={setFinished}
             className="starting-btn"
             style={{
               width: '100%',
-              background: '#cc0000',
-              color: '#FFF', // changed to white
+              background: setFinished? '#555' : '#cc0000',
+              color: '#FFF',
               border: 'none',
               borderRadius: '25px',
               padding: '16px',
               fontSize: '16px',
               fontWeight: '600',
-              cursor: 'pointer'
+              cursor: setFinished? 'not-allowed' : 'pointer'
             }}
           >
-            Starting ({vip1TaskIndex} / {vip1Set1.length})
+            {setFinished? 'Contact Customer Service to Reset' : `Starting (${user.taskCompleted} / ${setSize})`}
           </button>
+          {msg && <p style={{ textAlign: 'center', color: '#FF6A00', marginTop: 8, fontSize: 13 }}>{msg}</p>}
         </div>
 
-        {/* ===== WHITE INFO SECTION ===== */}
+        {/* UPDATED ACCOUNT DETAILS */}
         <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px' }}>
-
-          {/* TODAY'S COMMISSION */}
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
             <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px', letterSpacing: '0.5px' }}>TODAY'S COMMISSION</div>
-            <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>0.00 USD</div>
+            <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.todayProfit || 0).toFixed(2)} USD</div>
             <div style={{ fontSize: '12px', color: '#999' }}>The displayed amount reflects today's earned commissions.</div>
           </div>
 
-          {/* BALANCE + HOLD */}
           <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
             <div style={{ flex: 1, textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
               <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>BALANCE</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>0.00 USD</div>
-              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects both the deposited amount and earned commissions.</div>
+              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{totalBalance.toFixed(2)} USD</div>
+              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects deposited + hold + special bonus.</div>
             </div>
 
             <div style={{ flex: 1, textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>🧊</div>
               <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>HOLD AMOUNT</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>0.00 USD</div>
-              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Contact Support for inquiries</div>
+              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.holdAmount || 0).toFixed(2)} USD</div>
+              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Money for tasks not yet submitted.</div>
             </div>
           </div>
 
-          {/* SPECIAL BONUS */}
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Lucky Bonus</div>
-            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>0.00 USD</div>
+            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{(user.specialBonus || 0).toFixed(2)} USD</div>
           </div>
-
         </div>
 
-        {/* IMPORTANT NOTICE */}
         <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '12px', textAlign: 'center' }}>
           <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Important Notice</div>
           <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Online Support Hours 09:45 - 23:10</div>
           <div style={{ fontSize: '13px' }}>Please contact online support for your assistance</div>
         </div>
 
-        {/* LOGO + FOOTER */}
         <div style={{ textAlign: 'center', padding: '30px 16px 20px 16px', background: '#000' }}>
           <img src="/logo.png" alt="logo" style={{ width: '120px', marginBottom: '12px' }} />
           <div style={{ fontSize: '13px', color: '#FFF' }}>Copyrights 2026 © Disruptive Advertising Agency</div>
         </div>
-
       </div>
-
       <BottomNav />
     </>
   )

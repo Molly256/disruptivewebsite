@@ -1,215 +1,243 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 
 const vipList = [
+  { id: 1, name: 'VIP1', price: 100, tasks: 40 },
   { id: 2, name: 'VIP2', price: 500, tasks: 45 },
   { id: 3, name: 'VIP3', price: 1600, tasks: 50 },
   { id: 4, name: 'VIP4', price: 5500, tasks: 55 },
   { id: 5, name: 'VIP5', price: 10000, tasks: 60 }
 ]
 
-const vipSets = [
-  'vip1set1','vip1set2',
-  'vip2set1','vip2set2','vip2set3','vip2set4',
-  'vip3set1','vip3set2','vip3set3','vip3set4',
-  'vip4set1','vip4set2','vip4set3','vip4set4',
-  'vip5set1','vip5set2','vip5set3','vip5set4','vip5set5'
-]
-
 export default function AdminPage() {
   const [tab, setTab] = useState('upgrade')
   const admin = typeof window!== 'undefined'? JSON.parse(localStorage.getItem('user') || '{}') : {}
 
-  // 1. UPGRADE STATES
-  const [search, setSearch] = useState('')
-  const [foundUser, setFoundUser] = useState(null)
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [selectedVip, setSelectedVip] = useState(null)
-
-  // 2. PASSWORD RESET STATES
-  const [passSearch, setPassSearch] = useState('')
-  const [passUser, setPassUser] = useState(null)
-  const [showPassInput, setShowPassInput] = useState(false)
-  const [newPass, setNewPass] = useState('')
-
-  // 3. DEPOSIT STATES
-  const [depositAmount, setDepositAmount] = useState('')
-  const [depositTarget, setDepositTarget] = useState('')
-  const [showDepositConfirm, setShowDepositConfirm] = useState(false)
-
-  // 4. WITHDRAW STATES - fake data for UI
-  const [withdrawList] = useState([
-    { id:1, username:'testuser', phone:'+2567...', amount:200, status:'pending', date:new Date() }
-  ])
-
-  // 5. MERGE STATES
-  const [mergeTarget, setMergeTarget] = useState('')
-  const [selectedSet, setSelectedSet] = useState('')
-  const [selectedPhotos, setSelectedPhotos] = useState([])
-  const [showPhotos, setShowPhotos] = useState(false)
+  const [search, setSearch] = useState(''); const [foundUser, setFoundUser] = useState(null); const [showDropdown, setShowDropdown] = useState(false); const [selectedVip, setSelectedVip] = useState(null);
+  const [resetSearch, setResetSearch] = useState(''); const [resetUser, setResetUser] = useState(null);
+  const [passSearch, setPassSearch] = useState(''); const [passUser, setPassUser] = useState(null); const [showPassInput, setShowPassInput] = useState(false); const [newPass, setNewPass] = useState('');
+  const [mergeSearch, setMergeSearch] = useState(''); const [mergeUser, setMergeUser] = useState(null); const [selectedMergeSet, setSelectedMergeSet] = useState(''); const [selectedPhotos, setSelectedPhotos] = useState([]); const [mergePhotos, setMergePhotos] = useState([]);
+  const [editingPhoto, setEditingPhoto] = useState(null) // NEW
+  const [editData, setEditData] = useState({title:'', price:0}) // NEW
+  const [depositSearch, setDepositSearch] = useState(''); const [depositUser, setDepositUser] = useState(null); const [depositAmount, setDepositAmount] = useState(''); const [showDepositInput, setShowDepositInput] = useState(false);
+  const [withdrawList, setWithdrawList] = useState([]);
+  const [notifSearch, setNotifSearch] = useState(''); const [notifUser, setNotifUser] = useState(null); const [showNotifInput, setShowNotifInput] = useState(false); const [notifMessage, setNotifMessage] = useState('');
+  const [bonusSearch, setBonusSearch] = useState(''); const [bonusUser, setBonusUser] = useState(null); const [showBonusInput, setShowBonusInput] = useState(false); const [bonusAmount, setBonusAmount] = useState('');
 
   const TabBtn = ({ id, label }) => (
-    <button onClick={()=>setTab(id)} style={{
-      background: tab===id? '#FF1493':'#F1F1F1',
-      color: tab===id? '#FFF':'#000',
-      border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'800', fontSize:'14px'
-    }}>{label}</button>
+    <button onClick={()=>setTab(id)} style={{ background: tab===id? '#FF1493':'#F1F1F1', color: tab===id? '#FFF':'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'800', fontSize:'14px', whiteSpace:'nowrap', flexShrink:0, cursor:'pointer' }}>{label}</button>
   )
+
+  useEffect(() => { if(tab === 'withdraw') fetchWithdraws() }, [tab])
+  const fetchWithdraws = async () => { const res = await fetch('/api/admin/withdraw/list'); const data = await res.json(); setWithdrawList(data.transactions || []) }
+
+  const searchUser = async (q, setter) => {
+    if(!q) return alert('Enter username or phone')
+    const res = await fetch(`/api/user/search?q=${q}`)
+    const data = await res.json()
+    if(data.error) return alert(data.error)
+    setter(data.user)
+  }
+
+  const loadMergePhotos = async (vipSet) => {
+    const res = await fetch(`/api/admin/merge-products/list?vipSet=${vipSet}`)
+    const data = await res.json()
+    setMergePhotos(data.photos || [])
+  }
+
+  const handleUpgrade = async () => {
+    if(!selectedVip ||!foundUser) return alert('Select VIP')
+    const totalTasks = vipList.find(v => v.id === selectedVip.id).tasks
+    const res = await fetch('/api/admin/upgrade-vip', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: foundUser.id, newVipLevel: selectedVip.id, totalTasks, adminId: admin.id }) })
+    const data = await res.json()
+    if(res.ok) { setFoundUser(data.user); setShowDropdown(false); alert(`Upgraded to VIP${selectedVip.id}`) } else alert(data.error)
+  }
+
+  const handleResetSet = async (setNum) => {
+    const res = await fetch('/api/admin/reset-set', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: resetUser.id, setTo: setNum, adminId: admin.id }) })
+    const data = await res.json()
+    if(res.ok) { setResetUser(data.user); alert(`Reset to Set ${setNum}`) } else alert(data.error)
+  }
+
+  const handlePassReset = async () => {
+    if(!newPass) return alert('Enter new password')
+    const res = await fetch('/api/admin/reset-password', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: passUser.id, newPassword: newPass, adminId: admin.id }) })
+    if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
+  }
+
+  const handleMerge = async () => {
+    if(selectedPhotos.length === 0) return alert('Select at least 1 photo')
+    const res = await fetch('/api/admin/merge-products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, photoIds: selectedPhotos, adminId: admin.id }) })
+    if(res.ok) { alert('Merged. User tasks updated.'); setSelectedPhotos([]); setMergePhotos([]); setSelectedMergeSet('') } else alert('Failed')
+  }
+
+  const editPrice = (photo) => { // NEW
+    setEditingPhoto(photo)
+    setEditData({title: photo.title, price: photo.price})
+  }
+
+  const saveEdit = async () => { // NEW
+    const res = await fetch('/api/admin/merge-products/edit', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ vipSet: selectedMergeSet, imageId: editingPhoto.id, newData: {title: editData.title, price: parseFloat(editData.price)} })
+    })
+    if(res.ok) {
+      alert('Saved');
+      setEditingPhoto(null);
+      loadMergePhotos(selectedMergeSet)
+    } else alert('Failed')
+  }
+
+  const handleDeposit = async () => {
+    if(!depositAmount) return alert('Enter amount')
+    const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) })
+    if(res.ok) { alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed')
+  }
+
+  const handleWithdraw = async (txId, action) => {
+    const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) })
+    if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed')
+  }
+
+  const handleSendNotif = async () => {
+    if(!notifMessage) return alert('Enter message')
+    const res = await fetch('/api/admin/send-notification', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) })
+    if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed')
+  }
+
+  const handleGiveBonus = async () => {
+    if(!bonusAmount) return alert('Enter amount')
+    const res = await fetch('/api/admin/give-bonus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: bonusUser.id, amount: parseFloat(bonusAmount), adminId: admin.id }) })
+    if(res.ok) { alert('Bonus Given'); setShowBonusInput(false); setBonusAmount('') } else alert('Failed')
+  }
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingTop: '90px', paddingBottom: '90px' }}>
       <AppHeader />
-
       <div style={{ padding: '0 16px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#000', marginBottom: '16px' }}>👑 Admin Panel</h1>
-
-        {/* TABS */}
-        <div style={{ display:'flex', gap:'8px', marginBottom:'20px', overflowX:'auto' }}>
-          <TabBtn id='upgrade' label='Upgrade VIP' />
-          <TabBtn id='password' label='Reset Password' />
-          <TabBtn id='deposit' label='Deposits' />
-          <TabBtn id='withdraw' label='Withdraw' />
-          <TabBtn id='merge' label='Merge' />
+        <div style={{ display:'flex', gap:'8px', marginBottom:'20px', overflowX:'auto', paddingBottom:'4px' }}>
+          <TabBtn id='upgrade' label='Upgrade VIP' /><TabBtn id='resetset' label='Reset Set' /><TabBtn id='password' label='Reset Password' /><TabBtn id='merge' label='Merge Tasks' />
+          <TabBtn id='deposit' label='Deposit' /><TabBtn id='withdraw' label='Withdraw' /><TabBtn id='notification' label='Notification' /><TabBtn id='bonus' label='Lucky Bonus' />
         </div>
 
-        {/* ========== 1. UPGRADE VIP ========== */}
+        {/* 1. UPGRADE VIP */}
         {tab === 'upgrade' && (
           <div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px' }} />
-              <button onClick={()=>alert('Search API next')} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px' }}>🔍</button>
-            </div>
-
-            {foundUser && (
-              <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
-                <p><b>{foundUser.username}</b></p>
-                <p>{foundUser.phone}</p>
-                <p>Current VIP: <span style={{ color:'#FF1493', fontWeight:'700' }}>{foundUser.vipLevel || 'VIP1'}</span></p>
-                <button onClick={() => setShowDropdown(!showDropdown)} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'800', width:'100%' }}>Upgrade</button>
-
-                {showDropdown && (
-                  <div style={{ background:'#222', padding:'12px', marginTop:'12px', borderRadius:'12px' }}>
-                    {vipList.map(vip => (
-                      <div key={vip.id} onClick={() => setSelectedVip(vip)} style={{ padding:'12px', cursor:'pointer', background: selectedVip?.id === vip.id? '#FF1493' : 'transparent', borderRadius:'8px' }}>
-                        {vip.name} - ${vip.price} - {vip.tasks} Tasks
-                      </div>
-                    ))}
-                    <button onClick={()=>alert('Upgrade API next')} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', marginTop:'10px', fontWeight:'800' }}>OK</button>
-                  </div>
-                )}
-              </div>
-            )}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(search, setFoundUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
+            {foundUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{foundUser.username}</b></p><p>{foundUser.phone}</p><p>Balance: ${foundUser.totalBalance}</p><div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'12px' }}><p>VIP Level: <span style={{color:'#FF1493', fontWeight:'700'}}>VIP{foundUser.vipLevel}</span></p><button onClick={() => setShowDropdown(!showDropdown)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Upgrade</button></div><p>Set: {foundUser.currentSet} | Tasks: {foundUser.taskCompleted}/{foundUser.totalTasks}</p>{showDropdown && (<div style={{ background:'#222', padding:'12px', marginTop:'12px', borderRadius:'12px' }}>{vipList.filter(v => v.id > 1).map(vip => (<div key={vip.id} onClick={() => setSelectedVip(vip)} style={{ padding:'12px', cursor:'pointer', background: selectedVip?.id === vip.id? '#FF1493' : 'transparent', borderRadius:'8px', marginBottom:'4px' }}>{vip.name} - ${vip.price} - {vip.tasks} Tasks</div>))}{selectedVip && <button onClick={handleUpgrade} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', marginTop:'10px', fontWeight:'800', cursor:'pointer' }}>Confirm Upgrade</button>}</div>)}</div>)}
           </div>
         )}
 
-        {/* ========== 2. PASSWORD RESET ========== */}
+        {/* 2. RESET SET */}
+        {tab === 'resetset' && (
+          <div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={resetSearch} onChange={e => setResetSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(resetSearch, setResetUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
+            {resetUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{resetUser.username}</b></p><p>VIP{resetUser.vipLevel} Set {resetUser.currentSet}</p><p>Tasks: {resetUser.taskCompleted}/{resetUser.totalTasks}</p><button onClick={()=>handleResetSet(resetUser.currentSet === 1? 2 : 1)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700', width:'100%', cursor:'pointer' }}>Reset to Set {resetUser.currentSet === 1? 2 : 1}</button></div>)}
+          </div>
+        )}
+
+        {/* 3. RESET PASSWORD */}
         {tab === 'password' && (
           <div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <input value={passSearch} onChange={e => setPassSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px' }} />
-              <button onClick={()=>alert('Search user API next')} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px' }}>🔍</button>
-            </div>
-
-            {passUser && (
-              <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
-                <p><b>{passUser.username}</b></p>
-                <p>{passUser.phone}</p>
-                <p>{passUser.countryName}</p>
-                <p>Gender: {passUser.gender}</p>
-                <button onClick={()=>setShowPassInput(true)} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'800', width:'100%' }}>Reset</button>
-
-                {showPassInput && (
-                  <div style={{ marginTop:'12px' }}>
-                    <input value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="New Password" style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'8px' }} />
-                    <button onClick={()=>alert('Reset API next')} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', fontWeight:'800' }}>OK</button>
-                  </div>
-                )}
-              </div>
-            )}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={passSearch} onChange={e => setPassSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(passSearch, setPassUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
+            {passUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{passUser.username}</b></p><p>{passUser.phone}</p><div style={{ display:'flex', justifyContent:'space-between' }}><p>Password: *******</p><button onClick={()=>setShowPassInput(true)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Reset Password</button></div>{showPassInput && (<div style={{ marginTop:'12px' }}><input value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="New Password" style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'8px' }} /><button onClick={handlePassReset} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', fontWeight:'800', cursor:'pointer' }}>Confirm</button></div>)}</div>)}
           </div>
         )}
 
-        {/* ========== 3. DEPOSITS ========== */}
-        {tab === 'deposit' && (
-          <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
-            <p style={{ fontWeight:'800', marginBottom:'12px' }}>Confirm Deposit</p>
-            <input value={depositAmount} onChange={e=>setDepositAmount(e.target.value)} placeholder="Amount USD" type="number" style={{ width:'100%', padding:'14px', borderRadius:'12px', marginBottom:'12px' }} />
-            <button onClick={()=>setShowDepositConfirm(true)} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'800', width:'100%' }}>Confirm</button>
-
-            {showDepositConfirm && (
-              <div style={{ background:'#222', padding:'12px', marginTop:'12px', borderRadius:'12px' }}>
-                <input value={depositTarget} onChange={e=>setDepositTarget(e.target.value)} placeholder="Username or Phone" style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'8px' }} />
-                <button onClick={()=>alert('Deposit API next')} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', fontWeight:'800' }}>OK</button>
-              </div>
-            )}
-
-            {/* Transaction History Example */}
-            <div style={{ marginTop:'20px', background:'#111', padding:'12px', borderRadius:'10px' }}>
-              <p style={{ color:'#00C853', fontWeight:'700' }}>deposit</p>
-              <p style={{ fontSize:'18px', fontWeight:'700' }}>$100</p>
-              <p style={{ color:'#00C853', fontWeight:'700' }}>Success</p>
-              <p style={{ fontSize:'12px', color:'#AAA' }}>{new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })}</p>
-            </div>
-          </div>
-        )}
-
-        {/* ========== 4. WITHDRAW ========== */}
-        {tab === 'withdraw' && (
-          <div>
-            {withdrawList.map(tx => (
-              <div key={tx.id} style={{ background:'#000', color:'#FFF', padding:'16px', borderRadius:'16px', marginBottom:'12px' }}>
-                <p><b>{tx.username}</b></p>
-                <p>{tx.phone}</p>
-                <p>Amount: ${tx.amount} USD</p>
-                <p style={{ fontSize:'12px', color:'#AAA' }}>{tx.date.toLocaleString('en-US', { timeZone: 'America/New_York' })}</p>
-                <p style={{ color: tx.status==='pending'? 'red':'#00C853', fontWeight:'700' }}>{tx.status}</p>
-                {tx.status==='pending' && (
-                  <div style={{ display:'flex', gap:'8px', marginTop:'8px' }}>
-                    <button onClick={()=>alert('Confirm API')} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'10px', borderRadius:'10px', flex:1, fontWeight:'800' }}>Confirm</button>
-                    <button onClick={()=>alert('Reject API')} style={{ background:'red', color:'#FFF', border:'none', padding:'10px', borderRadius:'10px', flex:1, fontWeight:'800' }}>Reject</button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ========== 5. MERGE PRODUCTS ========== */}
+        {/* 4. MERGE TASKS */}
         {tab === 'merge' && (
-          <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
-            <p style={{ fontWeight:'800', marginBottom:'12px' }}>Merge Product Images</p>
-
-            <div style={{ display:'flex', gap:'8px', marginBottom:'12px' }}>
-              <input value={mergeTarget} onChange={e=>setMergeTarget(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'12px', borderRadius:'10px', border:'none' }} />
-              <button style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'0 16px', borderRadius:'10px', fontWeight:'800' }}>Merge</button>
-            </div>
-
-            <select value={selectedSet} onChange={e=>setSelectedSet(e.target.value)} style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'12px', background:'#222', color:'#FFF', border:'none' }}>
-              <option value="">Select VIP Set</option>
-              {vipSets.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-
-            <button onClick={()=>setShowPhotos(true)} style={{ background:'#FF1493', border:'none', padding:'12px', borderRadius:'10px', width:'100%', marginBottom:'12px' }}>🔍 Load Photos from /data/{selectedSet}</button>
-
-            {showPhotos && (
-              <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px' }}>
-                {['photo1','photo2','photo3','photo4','photo5','photo6','photo7'].map(p=>(
-                  <div key={p} onClick={()=>setSelectedPhotos(prev=> prev.includes(p)? prev.filter(x=>x!==p): [...prev,p])}
-                    style={{ padding:'8px 12px', border:'2px solid', borderColor:selectedPhotos.includes(p)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer' }}>
-                    {p} {selectedPhotos.includes(p) && '✓'}
+          <div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(mergeSearch, setMergeUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
+            {mergeUser && (
+              <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
+                <p><b>{mergeUser.username}</b> - VIP{mergeUser.vipLevel}</p>
+                {['set1','set2'].map(s => (
+                  <div key={s} style={{ marginTop:'12px' }}>
+                    <button onClick={()=>{const set=`vip${mergeUser.vipLevel}${s}`; setSelectedMergeSet(set); loadMergePhotos(set)}} style={{ background:'#FF0000', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700', width:'100%', cursor:'pointer' }}>
+                      Set {s.slice(-1)} Merge Tasks
+                    </button>
                   </div>
                 ))}
+                {selectedMergeSet && (
+                  <div style={{ marginTop:'12px' }}>
+                    <p>Select Images from {selectedMergeSet}</p>
+                    <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px', maxHeight:'400px', overflowY:'auto' }}>
+                      {mergePhotos.map(p=>(
+                        <div key={p.id} style={{ width:100, background:'#111', padding:6, borderRadius:8 }}>
+                          <img
+                            src={p.url}
+                            onClick={()=>setSelectedPhotos(prev=> prev.includes(p.id)? prev.filter(x=>x!==p.id): [...prev,p.id])}
+                            style={{ width:'100%', height:90, objectFit:'cover', border:'3px solid', borderColor:selectedPhotos.includes(p.id)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer' }}
+                          />
+                          <p style={{fontSize:11, margin:'4px 0'}}><b>${p.price}</b></p>
+                          <p style={{fontSize:10, margin:'2px 0', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{p.title}</p>
+                          <button onClick={()=>editPrice(p)} style={{fontSize:10, background:'#FF1493', border:'none', borderRadius:6, padding:'4px 0', width:'100%', color:'#FFF', cursor:'pointer'}}>Edit</button>
+                        </div>
+                      ))}
+                    </div>
+                    <button onClick={handleMerge} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800', cursor:'pointer' }}>
+                      Merge Selected {selectedPhotos.length}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
+          </div>
+        )}
 
-            <button onClick={()=>alert('Merge API next')} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800' }}>Merge Selected</button>
+        {/* 5. DEPOSIT */}
+        {tab === 'deposit' && (
+          <div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
+            {depositUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{depositUser.username}</b></p><p>Balance: ${depositUser.totalBalance}</p><div style={{ display:'flex', justifyContent:'space-between' }}><p>Deposit: $0</p><button onClick={()=>setShowDepositInput(true)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Deposit</button></div>{showDepositInput && (<div style={{ marginTop:'12px' }}><input value={depositAmount} onChange={e=>setDepositAmount(e.target.value)} placeholder="Amount USD" type="number" style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'8px' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', fontWeight:'800', cursor:'pointer' }}>Confirm Deposit</button></div>)}</div>)}
+          </div>
+        )}
+
+        {/* 6. WITHDRAW */}
+        {tab === 'withdraw' && (
+          <div>
+            {withdrawList.length === 0 && <p style={{textAlign:'center', color:'#999'}}>No pending withdrawals</p>}
+            {withdrawList.map(tx => (<div key={tx.id} style={{ background:'#000', color:'#FFF', padding:'16px', borderRadius:'16px', marginBottom:'12px' }}><p><b>{tx.user?.username}</b></p><p>{tx.user?.phone}</p><p>Withdraw Account: {tx.account}</p><p>Amount: ${tx.amount} USD</p><p style={{ fontSize:'12px', color:'#AAA' }}>{new Date(tx.createdAt).toLocaleString('en-US', {timeZone: 'America/New_York'})}</p><p style={{ color: tx.status==='pending'? 'red':'#00C853', fontWeight:'700' }}>{tx.status}</p>{tx.status==='pending' && (<div style={{ display:'flex', gap:'8px', marginTop:'8px' }}><button onClick={()=>handleWithdraw(tx.id, 'confirm')} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'10px', borderRadius:'10px', flex:1, fontWeight:'800', cursor:'pointer' }}>Confirm</button><button onClick={()=>handleWithdraw(tx.id, 'reject')} style={{ background:'red', color:'#FFF', border:'none', padding:'10px', borderRadius:'10px', flex:1, fontWeight:'800', cursor:'pointer' }}>Reject</button></div>)}</div>))}
+          </div>
+        )}
+
+        {/* 7. NOTIFICATION */}
+        {tab === 'notification' && (
+          <div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={notifSearch} onChange={e => setNotifSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(notifSearch, setNotifUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
+            {notifUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{notifUser.username}</b></p><div style={{ display:'flex', justifyContent:'space-between' }}><p>Notification</p><button onClick={()=>setShowNotifInput(true)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Type</button></div>{showNotifInput && (<div style={{ marginTop:'12px' }}><textarea value={notifMessage} onChange={e=>setNotifMessage(e.target.value)} placeholder="Type message with emoji 😀" style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'8px', minHeight:'80px' }} /><button onClick={handleSendNotif} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', fontWeight:'800', cursor:'pointer' }}>Send</button></div>)}</div>)}
+          </div>
+        )}
+
+        {/* 8. LUCKY BONUS */}
+        {tab === 'bonus' && (
+          <div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={bonusSearch} onChange={e => setBonusSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(bonusSearch, setBonusUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
+            {bonusUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{bonusUser.username}</b></p><p>Special Bonus: ${bonusUser.specialBonus || 0}</p><button onClick={()=>setShowBonusInput(true)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700', width:'100%', cursor:'pointer' }}>Give Bonus</button>{showBonusInput && (<div style={{ marginTop:'12px' }}><input value={bonusAmount} onChange={e=>setBonusAmount(e.target.value)} placeholder="Amount USD" type="number" style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'8px' }} /><button onClick={handleGiveBonus} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', fontWeight:'800', cursor:'pointer' }}>Confirm</button></div>)}</div>)}
           </div>
         )}
 
       </div>
       <BottomNav />
+
+      {/* EDIT POPUP */}
+      {editingPhoto && (
+        <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:999 }}>
+          <div style={{ background:'#222', padding:20, borderRadius:16, width:'90%', maxWidth:400 }}>
+            <h3 style={{color:'#FFF', marginBottom:12}}>Edit {editingPhoto.id}</h3>
+            <input value={editData.title} onChange={e=>setEditData({...editData, title:e.target.value})} placeholder="Title" style={{width:'100%', padding:12, marginBottom:10, borderRadius:8, border:'none'}}/>
+            <input value={editData.price} onChange={e=>setEditData({...editData, price:e.target.value})} placeholder="Price" type="number" style={{width:'100%', padding:12, marginBottom:16, borderRadius:8, border:'none'}}/>
+            <div style={{display:'flex', gap:8}}>
+              <button onClick={saveEdit} style={{flex:1, background:'#00C853', border:'none', padding:12, borderRadius:10, fontWeight:800, color:'#FFF', cursor:'pointer'}}>Save</button>
+              <button onClick={()=>setEditingPhoto(null)} style={{flex:1, background:'red', border:'none', padding:12, borderRadius:10, fontWeight:800, color:'#FFF', cursor:'pointer'}}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
