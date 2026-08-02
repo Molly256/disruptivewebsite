@@ -18,7 +18,7 @@ const countries = [
   { code: '+1', flag: '🇧🇸', name: 'Bahamas' },
   { code: '+973', flag: '🇧🇭', name: 'Bahrain' },
   { code: '+880', flag: '🇧🇩', name: 'Bangladesh' },
-  { code: '+1', flag: '🇧🇧', name: 'Barbados' },
+  { code: '+1', flag: '🇧', name: 'Barbados' },
   { code: '+375', flag: '🇧🇾', name: 'Belarus' },
   { code: '+32', flag: '🇧🇪', name: 'Belgium' },
   { code: '+501', flag: '🇧🇿', name: 'Belize' },
@@ -121,7 +121,7 @@ const countries = [
   { code: '+382', flag: '🇲🇪', name: 'Montenegro' },
   { code: '+212', flag: '🇲🇦', name: 'Morocco' },
   { code: '+258', flag: '🇲🇿', name: 'Mozambique' },
-  { code: '+95', flag: '🇲🇲', name: 'Myanmar' },
+  { code: '+95', flag: '🇲', name: 'Myanmar' },
   { code: '+264', flag: '🇳🇦', name: 'Namibia' },
   { code: '+674', flag: '🇳🇷', name: 'Nauru' },
   { code: '+977', flag: '🇳🇵', name: 'Nepal' },
@@ -166,7 +166,7 @@ const countries = [
   { code: '+252', flag: '🇸🇴', name: 'Somalia' },
   { code: '+27', flag: '🇿🇦', name: 'South Africa' },
   { code: '+82', flag: '🇰🇷', name: 'South Korea' },
-  { code: '+211', flag: '🇸🇸', name: 'South Sudan' },
+  { code: '+211', flag: '🇸', name: 'South Sudan' },
   { code: '+34', flag: '🇪🇸', name: 'Spain' },
   { code: '+94', flag: '🇱🇰', name: 'Sri Lanka' },
   { code: '+249', flag: '🇸🇩', name: 'Sudan' },
@@ -181,7 +181,7 @@ const countries = [
   { code: '+670', flag: '🇹🇱', name: 'Timor-Leste' },
   { code: '+228', flag: '🇹🇬', name: 'Togo' },
   { code: '+676', flag: '🇹🇴', name: 'Tonga' },
-  { code: '+1', flag: '🇹🇹', name: 'Trinidad and Tobago' },
+  { code: '+1', flag: '🇹', name: 'Trinidad and Tobago' },
   { code: '+216', flag: '🇹🇳', name: 'Tunisia' },
   { code: '+90', flag: '🇹🇷', name: 'Turkey' },
   { code: '+993', flag: '🇹🇲', name: 'Turkmenistan' },
@@ -233,11 +233,12 @@ export default function Login() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ...form,
-        countryCode,
-        fullPhone,
         action: 'login',
-        loginType
+        loginType,
+        username: loginType === 'username' ? form.username : undefined,
+        password: form.password,
+        phone: loginType === 'phone' ? fullPhone : undefined,
+        countryCode
       })
     })
     const data = await res.json()

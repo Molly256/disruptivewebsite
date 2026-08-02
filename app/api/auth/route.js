@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-function generateInviteCode() {
-  const letters = Math.random().toString(36).substring(2, 6).toUpperCase()
-  const numbers = Math.floor(100 + Math.random() * 900)
-  return `${letters}${numbers}`
+function generateInviteCode(phone) {
+  const last6 = phone.slice(-6).padStart(6, '0') // take last 6 digits
+  return `${last6}DI`
 }
 
 export async function POST(req) {
@@ -62,7 +61,7 @@ export async function POST(req) {
           loginPassword,
           transactionPassword,
           gender,
-          inviteCode: generateInviteCode(), // THEIR OWN CODE
+          inviteCode: generateInviteCode(phone), // NOW = last6 + DI
           referredBy: invitedBy, // WHO INVITED THEM
 
           vipId: 1,
@@ -150,6 +149,9 @@ export async function POST(req) {
 
   } catch (e) {
     console.error("AUTH ERROR:", e)
+    if (e.code === 'P2002') {
+      return NextResponse.json({ error: 'Invite code already exists. Please contact support.' }, { status: 400 })
+    }
     return NextResponse.json({ error: e.message || 'Request failed' }, { status: 500 })
   }
 }
