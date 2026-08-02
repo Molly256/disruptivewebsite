@@ -46,15 +46,14 @@ export async function POST(req) {
           transactionPassword,
           gender,
           inviteCode: inviteCode || null,
-          referralCode: username.toUpperCase(), // auto referral code
+          referralCode: username.toUpperCase(),
 
-          // DEFAULTS FOR NEW USER
+          // DEFAULTS FOR NEW USER - REMOVED totalTasks
           vipId: 1,
           vipLevel: 1,
           currentSet: 1,
           setCompleted: 0,
           taskCompleted: 0,
-          totalTasks: 40, // VIP1
 
           walletBalance: 0,
           holdAmount: 0,
@@ -90,10 +89,15 @@ export async function POST(req) {
         if (!phone && !fullPhone) return NextResponse.json({ error: 'Phone required' }, { status: 400 })
         
         const phoneToCheck = fullPhone || (countryCode + phone)
-        user = await prisma.user.findUnique({ where: { phone: phoneToCheck } })
+        // CHANGED: use findFirst because phone may not be @unique
+        user = await prisma.user.findFirst({ where: { phone: phoneToCheck } })
       }
 
-      if (!user || user.loginPassword !== password) {
+      if (!user) {
+        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+      }
+
+      if (user.loginPassword !== password) {
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
       }
 
@@ -111,7 +115,8 @@ export async function POST(req) {
           todayProfit: user.todayProfit,
           lastProfitReset: user.lastProfitReset,
           currentTaskProducts: user.currentTaskProducts,
-          taskCompleted: user.taskCompleted
+          taskCompleted: user.taskCompleted,
+          currentSet: user.currentSet // ADD THIS
         }
       })
 
@@ -129,7 +134,7 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 
   } catch (e) {
-    console.error(e)
-    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+    console.error("AUTH ERROR:", e) // This will show in Vercel logs
+    return NextResponse.json({ error: e.message || 'Request failed' }, { status: 500 })
   }
 }

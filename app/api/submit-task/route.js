@@ -21,20 +21,24 @@ export async function POST(req) {
     }
 
     const payout = totalRequiredHold // capital + profit for all merged products
+    const totalProfit = taskProducts.reduce((sum, p) => sum + p.profit, 0)
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        totalBalance: { increment: payout }, // pay capital + profit
+        walletBalance: { increment: payout }, // CHANGED: was totalBalance
         holdAmount: 0, // clear hold
+        todayProfit: { increment: totalProfit }, // ADD: track daily profit
         currentTaskProducts: [], // clear current task
         completedProducts: [...user.completedProducts,...taskProducts], // move to history
-        activeProducts: [] // clear because we submitted
+        activeProducts: [], // clear because we submitted
+        taskCompleted: { increment: 1 } // ADD: count this task as done
       }
     })
 
     return NextResponse.json({ success: true, user: updatedUser })
   } catch (err) {
+    console.error(err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

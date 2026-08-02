@@ -122,8 +122,8 @@ const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
   const profitRate = VIP_PROFIT[vipLevel]
   const totalPrice = products.reduce((s, p) => s + p.price, 0)
-  const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
-  const totalReserve = totalPrice + totalProfit
+  const totalProfit = products.reduce((s, p) => s + p.profit, 0) // use profit from API
+  const totalReserve = products.reduce((s, p) => s + p.reserveAmount, 0)
   const taskCode = `20260729${String(products[0].id).padStart(10, '0')}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
@@ -150,9 +150,15 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
             </div>
             <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
               <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate*100).toFixed(1)}%</div>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>{(product.price * profitRate).toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+              <div style={{ fontSize: 16, fontWeight: 800 }}>{product.profit.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
             </div>
           </div>
+
+          {product.stillOwed > 0 &&
+            <div style={{ background: '#FFF3CD', color: '#856404', padding: 8, borderRadius: 8, textAlign: 'center', fontSize: 12 }}>
+              Still need: ${product.stillOwed.toFixed(2)} to start this product
+            </div>
+          }
         </div>
       ))}
 
@@ -166,7 +172,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
         </div>
 
-        <button onClick={onSubmit} style={{ width: '100%', background: '#FF0000', color: '#000', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
+        <button onClick={onSubmit} style={{ width: '100%', background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
           Submit
         </button>
       </div>
@@ -216,6 +222,11 @@ export default function StartingPage() {
 
         setUser(u)
         localStorage.setItem('user', JSON.stringify(u))
+
+        // If user has active task, show detail page
+        if(u.currentTaskProducts && u.currentTaskProducts.length > 0) {
+          setShowDetail(true)
+        }
       } else {
         router.push('/login')
       }
@@ -359,7 +370,7 @@ export default function StartingPage() {
     return <StartingDetail products={user.currentTaskProducts} onBack={() => setShowDetail(false)} onSubmit={handleSubmit} vipLevel={user.vipLevel} />
   }
 
-  // CALCULATIONS FOR DISPLAY
+  // CALCULATIONS FOR DISPLAY - FIXED
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
 
   return (
