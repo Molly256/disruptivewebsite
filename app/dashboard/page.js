@@ -17,27 +17,33 @@ export default function Dashboard() {
     window.addEventListener('resize', checkScreen)
 
     const fetchUser = async () => {
-      const savedUser = localStorage.getItem('user')
-      if (!savedUser) {
-        router.push('/login')
-        return
-      }
-
-      const localUser = JSON.parse(savedUser)
       try {
-        const res = await fetch(`/api/user?id=${localUser.id}`)
+        // Check cookie first instead of only localStorage
+        const res = await fetch(`/api/user/me`, {
+          credentials: 'include'
+        })
         const data = await res.json()
 
         if (res.ok && data.user) {
           setUser(data.user)
-          localStorage.setItem('user', JSON.stringify(data.user))
+          localStorage.setItem('user', JSON.stringify(data.user)) // keep cache
         } else {
-          localStorage.removeItem('user')
-          router.push('/login')
+          // fallback to localStorage if cookie fails
+          const savedUser = localStorage.getItem('user')
+          if (!savedUser) {
+            router.push('/login')
+            return
+          }
+          setUser(JSON.parse(savedUser))
         }
       } catch (e) {
         console.error(e)
-        setUser(localUser)
+        const savedUser = localStorage.getItem('user')
+        if (!savedUser) {
+          router.push('/login')
+          return
+        }
+        setUser(JSON.parse(savedUser))
       } finally {
         setLoading(false)
       }
@@ -91,7 +97,7 @@ export default function Dashboard() {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
         }
-      .notice-marquee {
+     .notice-marquee {
           display: flex;
           animation: scroll 15s linear infinite;
           white-space: nowrap;
