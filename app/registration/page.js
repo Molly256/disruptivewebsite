@@ -232,7 +232,7 @@ export default function Registration() {
   const router = useRouter()
   const [form, setForm] = useState({
     username: '',
-    selectedCountryName: 'United States',
+    selectedCountry: { code: '+1', flag: '🇺🇸', name: 'United States' }, // FIXED: store whole object
     phone: '',
     loginPassword: '',
     confirmPassword: '',
@@ -264,8 +264,8 @@ export default function Registration() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (validate()) {
-      const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
-      const countryCode = selectedCountry?.code || '+1'
+      const countryCode = form.selectedCountry.code // FIXED: direct access
+      const countryName = form.selectedCountry.name
       const fullPhone = countryCode + form.phone
 
       // AUTO GENERATE INVITE CODE: last 6 digits of phone + DI
@@ -281,8 +281,8 @@ export default function Registration() {
           loginPassword: form.loginPassword,
           transactionPassword: form.transactionPassword,
           gender: form.gender,
-          countryCode,
-          countryName: form.selectedCountryName,
+          countryCode, // FIXED: guaranteed to exist
+          countryName,
           inviteCode: autoInviteCode,
           action: 'register'
         })
@@ -341,7 +341,7 @@ export default function Registration() {
     userSelect: 'none'
   }
 
-  const selectedCountry = countries.find(c => c.name === form.selectedCountryName)
+  const selectedCountry = form.selectedCountry // FIXED: no find()
   const filteredCountries = countries.filter(c =>
     c.name.toLowerCase().includes(searchCountry.toLowerCase()) ||
     c.code.includes(searchCountry)
@@ -416,7 +416,7 @@ export default function Registration() {
           <div style={{ position: 'relative' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <div onClick={() => setShowCountries(!showCountries)} style={{...selectBoxStyle, width: '120px', marginBottom: 0}}>
-                <span>{selectedCountry?.flag} {selectedCountry?.code}</span>
+                <span>{selectedCountry.flag} {selectedCountry.code}</span> {/* FIXED */}
                 <span>▼</span>
               </div>
               <input
@@ -454,7 +454,7 @@ export default function Registration() {
                   <div
                     key={`${c.name}-${c.code}-${idx}`}
                     onClick={() => {
-                      setForm({...form, selectedCountryName: c.name})
+                      setForm({...form, selectedCountry: c}) // FIXED: save whole object
                       setShowCountries(false)
                       setSearchCountry('')
                     }}
