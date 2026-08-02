@@ -10,10 +10,9 @@ export async function POST(req) {
     if (action === 'register') {
       const {
         username,
-        selectedCountryName,
+        countryName,
         countryCode,
-        fullPhone,
-        phone,
+        phone, // FIXED: accept phone not fullPhone
         loginPassword,
         transactionPassword,
         gender,
@@ -24,12 +23,12 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
       }
 
-      if (!countryCode || !fullPhone) {
+      if (!countryCode) {
         return NextResponse.json({ error: 'Country code missing' }, { status: 400 })
       }
 
       const existingUser = await prisma.user.findFirst({
-        where: { OR: [{ username }, { phone: fullPhone }] }
+        where: { OR: [{ username }, { phone }] }
       })
 
       if (existingUser) {
@@ -39,16 +38,15 @@ export async function POST(req) {
       const user = await prisma.user.create({
         data: {
           username,
-          phone: fullPhone,
+          phone, // FIXED: save phone directly
           countryCode,
-          countryName: selectedCountryName,
+          countryName,
           loginPassword,
           transactionPassword,
           gender,
           inviteCode: inviteCode || null,
           referralCode: username.toUpperCase(),
 
-          // DEFAULTS FOR NEW USER - REMOVED totalTasks
           vipId: 1,
           vipLevel: 1,
           currentSet: 1,
@@ -78,7 +76,7 @@ export async function POST(req) {
 
     // LOGIN
     if (action === 'login') {
-      const { loginType, username, phone, countryCode, fullPhone, password } = body
+      const { loginType, username, phone, countryCode, password } = body
 
       let user = null
 
@@ -86,11 +84,10 @@ export async function POST(req) {
         if (!username) return NextResponse.json({ error: 'Username required' }, { status: 400 })
         user = await prisma.user.findUnique({ where: { username } })
       } else {
-        if (!phone && !fullPhone) return NextResponse.json({ error: 'Phone required' }, { status: 400 })
+        if (!phone) return NextResponse.json({ error: 'Phone required' }, { status: 400 })
         
-        const phoneToCheck = fullPhone || (countryCode + phone)
         // CHANGED: use findFirst because phone may not be @unique
-        user = await prisma.user.findFirst({ where: { phone: phoneToCheck } })
+        user = await prisma.user.findFirst({ where: { phone } })
       }
 
       if (!user) {
@@ -116,7 +113,7 @@ export async function POST(req) {
           lastProfitReset: user.lastProfitReset,
           currentTaskProducts: user.currentTaskProducts,
           taskCompleted: user.taskCompleted,
-          currentSet: user.currentSet // ADD THIS
+          currentSet: user.currentSet
         }
       })
 
@@ -134,7 +131,7 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 
   } catch (e) {
-    console.error("AUTH ERROR:", e) // This will show in Vercel logs
+    console.error("AUTH ERROR:", e)
     return NextResponse.json({ error: e.message || 'Request failed' }, { status: 500 })
   }
 }
