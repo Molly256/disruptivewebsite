@@ -17,32 +17,33 @@ model User {
   loginPassword String
   transactionPassword String
   gender String
-  inviteCode String?
+  inviteCode String? // who invited them
+  myInviteCode String? @unique // THEIR OWN AUTO GENERATED CODE
   referralCode String @unique
   avatar String?
 
   // VIP & TASK FIELDS
-  vipLevel Int @default(1) // 1 to 5
+  vipLevel Int @default(1)
   vipId Int @default(1)
-  currentSet Int @default(1) // 1 or 2
-  setCompleted Int @default(0) // which set was completed
-  taskCompleted Int @default(0) // 0 to 40/45/50...
-  totalTasks Int @default(40) // set size for current vip
+  currentSet Int @default(1)
+  setCompleted Int @default(0)
+  taskCompleted Int @default(0)
+  totalTasks Int @default(40)
 
   // MONEY FIELDS
-  walletBalance Float @default(0.00) // Can withdraw. deposit - withdraw
-  holdAmount Float @default(0.00) // Money locked in active tasks. price + profit
-  bonus Float @default(0.00) // Normal bonus
-  specialBonus Float @default(0.00) // Lucky Bonus given by admin
-  todayProfit Float @default(0.00) // Commission earned today. Resets at 12am USA
-  lastProfitReset DateTime @default(now()) // To check daily reset
+  walletBalance Float @default(0.00)
+  holdAmount Float @default(0.00)
+  bonus Float @default(0.00)
+  specialBonus Float @default(0.00)
+  todayProfit Float @default(0.00)
+  lastProfitReset DateTime @default(now()) // REMOVED DUPLICATE
   creditScore Int @default(100)
   isAdmin Boolean @default(false)
 
-  // TASK DATA - MUST BE JSON
-  currentTaskProducts Json @default("[]") // products in current merged task. ["shoe1.jpg"]
-  activeProducts Json @default("[]") // [{id, price, profit, startedAt}] all tasks user started
-  completedProducts Json @default("[]") // history for commission calc
+  // TASK DATA
+  currentTaskProducts Json @default("[]")
+  activeProducts Json @default("[]")
+  completedProducts Json @default("[]")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -57,10 +58,10 @@ model Transaction {
   id String @id @default(cuid())
   userId String
   user User @relation(fields: [userId], references: [id])
-  type String // "deposit" | "withdraw" | "commission" | "bonus"
+  type String
   amount Float
-  status String @default("pending") // pending, success, rejected
-  account String? // for withdraw display
+  status String @default("pending")
+  account String?
   createdAt DateTime @default(now())
 }
 
@@ -68,8 +69,8 @@ model TaskMerge {
   id String @id @default(cuid())
   userId String
   user User @relation(fields: [userId], references: [id])
-  vipSet String // "vip2set1"
-  photoIds String[] // ["shoe1.jpg","bag1.jpg"]
+  vipSet String
+  photoIds String[]
   createdAt DateTime @default(now())
 }
 

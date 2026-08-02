@@ -12,11 +12,12 @@ export async function POST(req) {
         username,
         countryName,
         countryCode,
-        phone, // FIXED: accept phone not fullPhone
+        phone,
         loginPassword,
         transactionPassword,
         gender,
-        inviteCode
+        inviteCode, // CODE THEY TYPED - WHO INVITED THEM
+        myInviteCode // CODE WE GENERATED FOR THEM
       } = body
 
       if (!username || !phone || !loginPassword || !transactionPassword || !gender) {
@@ -27,6 +28,10 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Country code missing' }, { status: 400 })
       }
 
+      if (!inviteCode) {
+        return NextResponse.json({ error: 'Invite code is required' }, { status: 400 })
+      }
+
       const existingUser = await prisma.user.findFirst({
         where: { OR: [{ username }, { phone }] }
       })
@@ -35,16 +40,25 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Username or phone already exists' }, { status: 400 })
       }
 
+      // OPTIONAL: check if inviteCode exists in DB
+      const inviter = await prisma.user.findFirst({
+        where: { myInviteCode: inviteCode }
+      })
+      if (!inviter) {
+        return NextResponse.json({ error: 'Invalid Invite Code' }, { status: 400 })
+      }
+
       const user = await prisma.user.create({
         data: {
           username,
-          phone, // FIXED: save phone directly
+          phone,
           countryCode,
           countryName,
           loginPassword,
           transactionPassword,
           gender,
-          inviteCode: inviteCode || null,
+          inviteCode, // who invited them
+          myInviteCode, // their own auto generated code
           referralCode: username.toUpperCase(),
 
           vipId: 1,
@@ -70,7 +84,7 @@ export async function POST(req) {
 
       return NextResponse.json({
         success: true,
-        user: { id: user.id, username: user.username, inviteCode: user.inviteCode }
+        user: { id: user.id, username: user.username, myInviteCode: user.myInviteCode }
       }, { status: 201 })
     }
 
@@ -86,7 +100,6 @@ export async function POST(req) {
       } else {
         if (!phone) return NextResponse.json({ error: 'Phone required' }, { status: 400 })
         
-        // CHANGED: use findFirst because phone may not be @unique
         user = await prisma.user.findFirst({ where: { phone } })
       }
 
@@ -113,7 +126,8 @@ export async function POST(req) {
           lastProfitReset: user.lastProfitReset,
           currentTaskProducts: user.currentTaskProducts,
           taskCompleted: user.taskCompleted,
-          currentSet: user.currentSet
+          currentSet: user.currentSet,
+          myInviteCode: user.myInviteCode // send to profile
         }
       })
 

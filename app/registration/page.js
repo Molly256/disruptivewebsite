@@ -232,8 +232,9 @@ export default function Registration() {
   const router = useRouter()
   const [form, setForm] = useState({
     username: '',
-    selectedCountry: { code: '+1', flag: '🇺🇸', name: 'United States' }, // FIXED: store whole object
+    selectedCountry: { code: '+1', flag: '🇺🇸', name: 'United States' },
     phone: '',
+    inviteCode: '', // USER TYPES THIS MANUALLY
     loginPassword: '',
     confirmPassword: '',
     transactionPassword: '',
@@ -252,6 +253,7 @@ export default function Registration() {
     const newErrors = {}
     if (!form.username.trim()) newErrors.username = 'Username is required'
     if (!form.phone || !/^\d{7,15}$/.test(form.phone)) newErrors.phone = 'Enter valid phone number'
+    if (!form.inviteCode.trim()) newErrors.inviteCode = 'Invite code is required' // MUST ENTER INVITER CODE
     if (!form.loginPassword) newErrors.loginPassword = 'Password is required'
     if (form.loginPassword !== form.confirmPassword) newErrors.confirmPassword = 'Passwords do not match'
     if (!form.transactionPassword) newErrors.transactionPassword = 'Transaction password is required'
@@ -264,13 +266,13 @@ export default function Registration() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (validate()) {
-      const countryCode = form.selectedCountry.code // FIXED: direct access
+      const countryCode = form.selectedCountry.code
       const countryName = form.selectedCountry.name
       const fullPhone = countryCode + form.phone
 
-      // AUTO GENERATE INVITE CODE: last 6 digits of phone + DI
+      // AUTO GENERATE THIS USER'S OWN INVITE CODE: last 6 digits of phone + DI
       const last6 = form.phone.slice(-6).padStart(6, '0')
-      const autoInviteCode = `${last6}DI`
+      const myInviteCode = `${last6}DI`
 
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -281,9 +283,10 @@ export default function Registration() {
           loginPassword: form.loginPassword,
           transactionPassword: form.transactionPassword,
           gender: form.gender,
-          countryCode, // FIXED: guaranteed to exist
+          countryCode,
           countryName,
-          inviteCode: autoInviteCode,
+          inviteCode: form.inviteCode, // THE CODE THEY TYPED = WHO INVITED THEM
+          myInviteCode: myInviteCode, // THE CODE WE GENERATED FOR THEM
           action: 'register'
         })
       })
@@ -341,7 +344,7 @@ export default function Registration() {
     userSelect: 'none'
   }
 
-  const selectedCountry = form.selectedCountry // FIXED: no find()
+  const selectedCountry = form.selectedCountry
   const filteredCountries = countries.filter(c =>
     c.name.toLowerCase().includes(searchCountry.toLowerCase()) ||
     c.code.includes(searchCountry)
@@ -416,7 +419,7 @@ export default function Registration() {
           <div style={{ position: 'relative' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <div onClick={() => setShowCountries(!showCountries)} style={{...selectBoxStyle, width: '120px', marginBottom: 0}}>
-                <span>{selectedCountry.flag} {selectedCountry.code}</span> {/* FIXED */}
+                <span>{selectedCountry.flag} {selectedCountry.code}</span>
                 <span>▼</span>
               </div>
               <input
@@ -454,7 +457,7 @@ export default function Registration() {
                   <div
                     key={`${c.name}-${c.code}-${idx}`}
                     onClick={() => {
-                      setForm({...form, selectedCountry: c}) // FIXED: save whole object
+                      setForm({...form, selectedCountry: c})
                       setShowCountries(false)
                       setSearchCountry('')
                     }}
@@ -469,6 +472,16 @@ export default function Registration() {
             )}
             {errors.phone && <div style={errorStyle}>{errors.phone}</div>}
           </div>
+
+          {/* INVITE CODE INPUT - USER TYPES MANUALLY */}
+          <input
+            type="text"
+            placeholder="Invite Code"
+            value={form.inviteCode}
+            onChange={(e) => setForm({...form, inviteCode: e.target.value.toUpperCase()})}
+            style={inputStyle}
+          />
+          {errors.inviteCode && <div style={errorStyle}>{errors.inviteCode}</div>}
 
           <div style={passwordWrapper}>
             <input
