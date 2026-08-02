@@ -270,10 +270,6 @@ export default function Registration() {
       const countryName = form.selectedCountry.name
       const fullPhone = countryCode + form.phone
 
-      // AUTO GENERATE THIS USER'S OWN INVITE CODE: last 6 digits of phone + DI
-      const last6 = form.phone.slice(-6).padStart(6, '0')
-      const myInviteCode = `${last6}DI`
-
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -285,8 +281,7 @@ export default function Registration() {
           gender: form.gender,
           countryCode,
           countryName,
-          inviteCode: form.inviteCode, // THE CODE THEY TYPED = WHO INVITED THEM
-          myInviteCode: myInviteCode, // THE CODE WE GENERATED FOR THEM
+          invitedBy: form.inviteCode, // THE CODE THEY TYPED = WHO INVITED THEM
           action: 'register'
         })
       })

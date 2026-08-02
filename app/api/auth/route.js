@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+function generateInviteCode() {
+  const letters = Math.random().toString(36).substring(2, 6).toUpperCase()
+  const numbers = Math.floor(100 + Math.random() * 900)
+  return `${letters}${numbers}`
+}
+
 export async function POST(req) {
   try {
     const body = await req.json()
@@ -16,8 +22,7 @@ export async function POST(req) {
         loginPassword,
         transactionPassword,
         gender,
-        inviteCode, // CODE THEY TYPED - WHO INVITED THEM
-        myInviteCode // CODE WE GENERATED FOR THEM
+        invitedBy // CODE THEY TYPED - WHO INVITED THEM
       } = body
 
       if (!username || !phone || !loginPassword || !transactionPassword || !gender) {
@@ -28,7 +33,7 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Country code missing' }, { status: 400 })
       }
 
-      if (!inviteCode) {
+      if (!invitedBy) {
         return NextResponse.json({ error: 'Invite code is required' }, { status: 400 })
       }
 
@@ -40,9 +45,9 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Username or phone already exists' }, { status: 400 })
       }
 
-      // OPTIONAL: check if inviteCode exists in DB
+      // check if inviteCode exists in DB
       const inviter = await prisma.user.findFirst({
-        where: { myInviteCode: inviteCode }
+        where: { inviteCode: invitedBy }
       })
       if (!inviter) {
         return NextResponse.json({ error: 'Invalid Invite Code' }, { status: 400 })
@@ -57,9 +62,8 @@ export async function POST(req) {
           loginPassword,
           transactionPassword,
           gender,
-          inviteCode, // who invited them
-          myInviteCode, // their own auto generated code
-          referralCode: username.toUpperCase(),
+          inviteCode: generateInviteCode(), // THEIR OWN CODE
+          referredBy: invitedBy, // WHO INVITED THEM
 
           vipId: 1,
           vipLevel: 1,
@@ -84,7 +88,7 @@ export async function POST(req) {
 
       return NextResponse.json({
         success: true,
-        user: { id: user.id, username: user.username, myInviteCode: user.myInviteCode }
+        user: { id: user.id, username: user.username, inviteCode: user.inviteCode }
       }, { status: 201 })
     }
 
@@ -127,7 +131,7 @@ export async function POST(req) {
           currentTaskProducts: user.currentTaskProducts,
           taskCompleted: user.taskCompleted,
           currentSet: user.currentSet,
-          myInviteCode: user.myInviteCode // send to profile
+          inviteCode: user.inviteCode // send to profile for sharing
         }
       })
 
