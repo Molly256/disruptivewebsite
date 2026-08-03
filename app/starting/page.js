@@ -409,9 +409,6 @@ export default function StartingPage() {
             </svg>
           </div>
         </div>
-
-       
-              >
               {/* FIXED CAROUSEL */}
 <div 
   ref={carouselRef} 
