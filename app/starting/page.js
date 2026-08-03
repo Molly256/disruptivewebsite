@@ -194,43 +194,47 @@ export default function StartingPage() {
   const setSize = vip1Set1.length // 40 for VIP1
   const setFinished = user? user.taskCompleted >= setSize : false
 
-  // LOAD USER FROM DB + RESET TODAY'S COMMISSION AT 00:00 USA TIME
+  // LOAD USER FROM DB + RESET TODAY'S COMMISSION AT 00:00 USA TIME - FIXED NO BOUNCE
   useEffect(() => {
     const fetchUser = async () => {
       const saved = localStorage.getItem('user')
       if(!saved) { router.push('/login'); return }
-      const { id } = JSON.parse(saved)
+      const localUser = JSON.parse(saved)
 
-      const res = await fetch(`/api/user?id=${id}`)
-      const data = await res.json()
-      if(res.ok) {
-        let u = data.user
-
-        // Check if new day in USA - America/New_York
-        const lastReset = new Date(u.lastProfitReset)
-        const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
-        const todayNY = new Date(nowNY).toDateString()
-        const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
-        const lastResetDay = new Date(lastResetNY).toDateString()
-
-        if (todayNY!== lastResetDay) {
-          // reset todayProfit in DB
-          await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
-          u.todayProfit = 0
-          u.lastProfitReset = new Date()
-        }
-
-        setUser(u)
-        localStorage.setItem('user', JSON.stringify(u))
-
-        // If user has active task, show detail page
-        if(u.currentTaskProducts && u.currentTaskProducts.length > 0) {
-          setShowDetail(true)
-        }
-      } else {
-        router.push('/login')
-      }
+      setUser(localUser) // show immediately
       setLoading(false)
+
+      try {
+        const res = await fetch(`/api/user?id=${localUser.id}`)
+        const data = await res.json()
+        if(res.ok && data.user) {
+          let u = data.user
+
+          // Check if new day in USA - America/New_York
+          const lastReset = new Date(u.lastProfitReset)
+          const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
+          const todayNY = new Date(nowNY).toDateString()
+          const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
+          const lastResetDay = new Date(lastResetNY).toDateString()
+
+          if (todayNY!== lastResetDay) {
+            // reset todayProfit in DB
+            await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
+            u.todayProfit = 0
+            u.lastProfitReset = new Date()
+          }
+
+          setUser(u)
+          localStorage.setItem('user', JSON.stringify(u))
+
+          // If user has active task, show detail page
+          if(u.currentTaskProducts && u.currentTaskProducts.length > 0) {
+            setShowDetail(true)
+          }
+        }
+      } catch(e) {
+        console.error(e)
+      }
     }
     fetchUser()
   }, [router])

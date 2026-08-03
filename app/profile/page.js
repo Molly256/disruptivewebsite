@@ -49,9 +49,7 @@ export default function ProfilePage() {
 
   const copyReferral = () => {
     if (!user) return
-    const phone = user.phone || ''
-    const last3 = phone.slice(-3)
-    const referralCode = `${last3}DI`
+    const referralCode = user.inviteCode || '' // FIXED: use DB field
     navigator.clipboard.writeText(referralCode)
     alert('Referral Code Copied!')
   }
@@ -64,8 +62,7 @@ export default function ProfilePage() {
   if (!user) return null
 
   const phone = user.phone || ''
-  const last3 = phone.slice(-3)
-  const referralCode = `${last3}DI`
+  const referralCode = user.inviteCode || '' // FIXED: use DB field
   const vipLevel = user.vipLevel || 'VIP1'
   const vipId = user.vipId || 1
   const currentVip = vipData.find(v => v.id === vipId) || vipData[0]
