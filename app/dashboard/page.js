@@ -18,32 +18,27 @@ export default function Dashboard() {
 
     const fetchUser = async () => {
       try {
-        // Check cookie first instead of only localStorage
-        const res = await fetch(`/api/user/me`, {
-          credentials: 'include'
-        })
-        const data = await res.json()
-
-        if (res.ok && data.user) {
-          setUser(data.user)
-          localStorage.setItem('user', JSON.stringify(data.user)) // keep cache
-        } else {
-          // fallback to localStorage if cookie fails
-          const savedUser = localStorage.getItem('user')
-          if (!savedUser) {
-            router.push('/login')
-            return
-          }
-          setUser(JSON.parse(savedUser))
-        }
-      } catch (e) {
-        console.error(e)
         const savedUser = localStorage.getItem('user')
         if (!savedUser) {
           router.push('/login')
           return
         }
-        setUser(JSON.parse(savedUser))
+
+        const localUser = JSON.parse(savedUser)
+        setUser(localUser) // show user immediately so no bounce
+
+        // Call your existing /api/user?id= to get fresh data
+        const res = await fetch(`/api/user?id=${localUser.id}`)
+        const data = await res.json()
+
+        if (res.ok && data.user) {
+          setUser(data.user) // update with fresh data
+          localStorage.setItem('user', JSON.stringify(data.user)) // update cache
+        }
+        // IMPORTANT: if API fails, we still keep localUser. No logout.
+      } catch (e) {
+        console.error(e)
+        // if network fails, still keep localUser
       } finally {
         setLoading(false)
       }

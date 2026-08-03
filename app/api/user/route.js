@@ -11,8 +11,9 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
+    // Prisma cuid is string, so don't parseInt
     const user = await prisma.user.findUnique({
-      where: { id }, // cuid string
+      where: { id: String(id) }, // force to string
       select: {
         id: true,
         username: true,
@@ -23,21 +24,19 @@ export async function GET(req) {
         inviteCode: true,
         createdAt: true,
         updatedAt: true,
-        
-        // STARTING PAGE FIELDS
         vipLevel: true,
         totalBalance: true,
         holdAmount: true,
         bonus: true,
-        specialBonus: true, // ADDED FOR LUCKY BONUS BLOCK
+        specialBonus: true,
         taskCompleted: true,
         currentSet: true,
         totalTasks: true,
-        setCompleted: true, // ADDED FOR RESET SET BLOCK
+        setCompleted: true,
         activeProducts: true,
         completedProducts: true,
         currentTaskProducts: true, 
-        mergedTasks: true, // ADDED FOR MERGE BLOCK
+        mergedTasks: true,
       }
     })
 
