@@ -5,7 +5,13 @@ import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 import { vip1Set1 } from '@/data/vip1Set1'
 
-const VIP_PROFIT = { 1: 0.005, 2: 0.01, 3: 0.015, 4: 0.02, 5: 0.025 } // 0.5% to 2.5%
+const VIP_CONFIG = {
+ 1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
+ 2: { tasksPerSet: 60, totalSets: 2, profit: 0.01 },
+ 3: { tasksPerSet: 80, totalSets: 2, profit: 0.015 },
+ 4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
+ 5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 },
+}
 
 const winnerMessages = [
   'John56 user wins 102.00 USD prize in the task.',
@@ -120,10 +126,11 @@ const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 
 function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
-  const profitRate = VIP_PROFIT[vipLevel]
+  const config = VIP_CONFIG[vipLevel]
+  const profitRate = config.profit
   const totalPrice = products.reduce((s, p) => s + p.price, 0)
-  const totalProfit = products.reduce((s, p) => s + p.profit, 0) // use profit from API
-  const totalReserve = products.reduce((s, p) => s + p.reserveAmount, 0)
+  const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
+  const totalReserve = products.reduce((s, p) => s + p.price, 0)
   const taskCode = `20260729${String(products[0].id).padStart(10, '0')}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
@@ -136,7 +143,11 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
 
       {products.map(product => (
         <div key={product.id} style={{ background: '#FFF', margin: '12px auto', borderRadius: 12, padding: '16px', maxWidth: '500px' }}>
-          <img src={product.image} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
+          <img
+  src={`/vip${vipLevel}/set${product.setNumber}/photo${product.id}.jpg`}
+  alt=""
+  style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }}
+/>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
             <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
@@ -150,15 +161,9 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
             </div>
             <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
               <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate*100).toFixed(1)}%</div>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>{product.profit.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+              <div style={{ fontSize: 16, fontWeight: 800 }}>{(product.price * profitRate).toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
             </div>
           </div>
-
-          {product.stillOwed > 0 &&
-            <div style={{ background: '#FFF3CD', color: '#856404', padding: 8, borderRadius: 8, textAlign: 'center', fontSize: 12 }}>
-              Still need: ${product.stillOwed.toFixed(2)} to start this product
-            </div>
-          }
         </div>
       ))}
 
@@ -171,7 +176,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{totalProfit.toFixed(2)} USD</span></div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
         </div>
-
         <button onClick={onSubmit} style={{ width: '100%', background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
           Submit
         </button>
@@ -191,17 +195,20 @@ export default function StartingPage() {
   const trackRef = useRef(null)
   const carouselRef = useRef(null)
 
-  const setSize = vip1Set1.length // 40 for VIP1
-  const setFinished = user? user.taskCompleted >= setSize : false
+  const config = VIP_CONFIG[user?.vipLevel || 1]
+  const tasksPerSet = config.tasksPerSet
+  const totalSets = config.totalSets
 
-  // LOAD USER FROM DB + RESET TODAY'S COMMISSION AT 00:00 USA TIME - FIXED NO BOUNCE
+  const tasksInSet = user?.tasksInCurrentSet || 0
+  const setsCompleted = user?.setsCompleted || 0
+  const allSetsDone = setsCompleted >= totalSets
+
   useEffect(() => {
     const fetchUser = async () => {
       const saved = localStorage.getItem('user')
       if(!saved) { router.push('/login'); return }
       const localUser = JSON.parse(saved)
-
-      setUser(localUser) // show immediately
+      setUser(localUser)
       setLoading(false)
 
       try {
@@ -210,7 +217,6 @@ export default function StartingPage() {
         if(res.ok && data.user) {
           let u = data.user
 
-          // Check if new day in USA - America/New_York
           const lastReset = new Date(u.lastProfitReset)
           const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
           const todayNY = new Date(nowNY).toDateString()
@@ -218,36 +224,33 @@ export default function StartingPage() {
           const lastResetDay = new Date(lastResetNY).toDateString()
 
           if (todayNY!== lastResetDay) {
-            // reset todayProfit in DB
             await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
             u.todayProfit = 0
             u.lastProfitReset = new Date()
           }
 
-          setUser(u)
-          localStorage.setItem('user', JSON.stringify(u))
-
-          // If user has active task, show detail page
           if(u.currentTaskProducts && u.currentTaskProducts.length > 0) {
+            const vipSet = require(`@/data/vip${u.vipLevel}Set1`).default
+            u.currentTaskProducts = u.currentTaskProducts.map(p => vipSet.find(v => v.id === p.id) || p)
             setShowDetail(true)
           }
+
+          setUser(u)
+          localStorage.setItem('user', JSON.stringify(u))
         }
-      } catch(e) {
-        console.error(e)
-      }
+      } catch(e) { console.error(e) }
     }
     fetchUser()
   }, [router])
 
   useEffect(() => {
     const imageList = []
-    for (let i = 1; i <= 74; i++) {
-      imageList.push(`/image${i}.jpg`)
-    }
+    for (let i = 1; i <= 74; i++) { imageList.push(`/image${i}.jpg`) }
     const shuffled = imageList.sort(() => Math.random() - 0.5)
-    setProducts(shuffled)
+    setProducts([...shuffled,...shuffled]) // duplicate for infinite loop
   }, [])
 
+  // FULL CAROUSEL LOGIC WITH CENTER ZOOM + SLIDE
   useEffect(() => {
     if (products.length === 0) return
     const track = trackRef.current
@@ -260,68 +263,55 @@ export default function StartingPage() {
         requestAnimationFrame(init)
         return
       }
-
       const gap = 20
       const itemWidth = items[0].offsetWidth + gap
       const containerWidth = carousel.offsetWidth
       const centerOffset = containerWidth / 2 - items[0].offsetWidth / 2
-
       let animationFrameId
 
       const getCurrentIndexFromTime = () => {
-        const elapsed = Date.now() % (products.length * CYCLE_TIME)
+        const elapsed = Date.now() % (74 * CYCLE_TIME)
         return Math.floor(elapsed / CYCLE_TIME)
       }
-
       const getProgressInCycle = () => {
         const elapsed = Date.now() % CYCLE_TIME
         return elapsed
       }
-
       const updateActive = (index, progressMs) => {
-        const centerIndex = products.length + (index % products.length)
+        const centerIndex = 74 + (index % 74)
         const isInHoldPhase = progressMs >= SCROLL_TIME
         items.forEach((item, i) => {
           if (i === centerIndex && isInHoldPhase) {
-            item.classList.add('active')
+            item.style.transform = 'scale(1.1)'
           } else {
-            item.classList.remove('active')
+            item.style.transform = 'scale(1)'
           }
         })
       }
-
       const setPosition = (index, progressMs) => {
-        const realIndex = products.length + (index % products.length)
+        const realIndex = 74 + (index % 74)
         const basePos = realIndex * itemWidth - centerOffset
-
         let currentPos = basePos
         if (progressMs < SCROLL_TIME) {
-          const prevIndex = (index - 1 + products.length) % products.length
-          const prevRealIndex = products.length + prevIndex
+          const prevIndex = (index - 1 + 74) % 74
+          const prevRealIndex = 74 + prevIndex
           const prevPos = prevRealIndex * itemWidth - centerOffset
           const slideProgress = progressMs / SCROLL_TIME
           currentPos = prevPos + (basePos - prevPos) * slideProgress
         }
-
         track.style.transition = 'none'
         track.style.transform = `translateX(-${currentPos}px)`
         updateActive(index, progressMs)
       }
-
       const tick = () => {
         const currentIndex = getCurrentIndexFromTime()
         const progress = getProgressInCycle()
         setPosition(currentIndex, progress)
         animationFrameId = requestAnimationFrame(tick)
       }
-
       tick()
-
-      return () => {
-        cancelAnimationFrame(animationFrameId)
-      }
+      return () => { cancelAnimationFrame(animationFrameId) }
     }
-
     const cleanup = init()
     return cleanup
   }, [products])
@@ -329,8 +319,12 @@ export default function StartingPage() {
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
   const handleStart = async () => {
-    if (setFinished) {
-      setMsg('Set completed. Contact Customer Service to reset.')
+    if (allSetsDone) {
+      setMsg('All sets completed. Contact Customer Service to reset.')
+      return
+    }
+    if(tasksInSet >= tasksPerSet) {
+      setMsg('Set completed. Waiting for admin reset.')
       return
     }
     setMsg('Starting...')
@@ -341,13 +335,14 @@ export default function StartingPage() {
     })
     const data = await res.json()
     if(res.ok) {
-      setUser(data.user)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      const vipSet = require(`@/data/vip${data.user.vipLevel}Set1`).default
+      const mapped = data.user.currentTaskProducts.map(p => vipSet.find(v => v.id === p.id) || p)
+      const updatedUser = {...data.user, currentTaskProducts: mapped}
+      setUser(updatedUser)
+      localStorage.setItem('user', JSON.stringify(updatedUser))
       setShowDetail(true)
       setMsg('')
-    } else {
-      setMsg(data.error)
-    }
+    } else { setMsg(data.error) }
   }
 
   const handleSubmit = async () => {
@@ -363,146 +358,71 @@ export default function StartingPage() {
       localStorage.setItem('user', JSON.stringify(data.user))
       setShowDetail(false)
       setMsg('Task Completed! Payout Received')
-    } else {
-      setMsg(data.error)
-    }
+    } else { setMsg(data.error) }
   }
 
   if (loading ||!user) return null
-
   if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
     return <StartingDetail products={user.currentTaskProducts} onBack={() => setShowDetail(false)} onSubmit={handleSubmit} vipLevel={user.vipLevel} />
   }
 
-  // CALCULATIONS FOR DISPLAY - FIXED
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
 
   return (
     <>
       <AppHeader />
-
       <div className="starting-wrapper" style={{ paddingTop: 0, paddingBottom: '90px', marginTop: 0 }}>
         <div className="marquee-container" style={{ margin: 0, marginTop: '64px', padding: 0, background: '#cc0000', overflow: 'hidden' }}>
           <div className="marquee-content" style={{ display: 'flex', animation: 'scroll 600s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
-            {allMessages.map((msg, i) => (
-              <span key={i} className="marquee-item" style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#000', flexShrink: 0 }}>{msg}</span>
-            ))}
+            {allMessages.map((msg, i) => (<span key={i} style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#000', flexShrink: 0 }}>{msg}</span>))}
           </div>
         </div>
-
-        <style jsx>{`
-          @keyframes scroll {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-100%); }
-          }
-        `}</style>
-
+        <style jsx>{`@keyframes scroll {0% { transform: translateX(0%); }100% { transform: translateX(-100%); }}`}</style>
         <div className="user-bar" style={{ marginTop: 0, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '300' }}>Hello,</p>
-            <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{user.username}</p>
-          </div>
-          <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="vip-text" style={{ fontSize: '14px', fontWeight: '600' }}>VIP{user.vipLevel}</span>
-            <svg style={{ width: '32px', height: '32px', color: '#3b82f6' }} fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </div>
+          <div><p style={{ margin: 0, fontSize: '14px', fontWeight: '300' }}>Hello,</p><p style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{user.username}</p></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ fontSize: '14px', fontWeight: '600' }}>VIP{user.vipLevel}</span></div>
         </div>
 
-        <div className="product-carousel" style={{ position: 'relative', width: '100vw', height: '440px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="product-track" style={{ position: 'relative', width: '100%', height: '100%' }}>
-            {Array.from({ length: 74 }, function(_, index) {
-              var imageIndex = index + 1;
-              var src = "/image" + imageIndex + ".jpg";
-              var animationDelay = (index * 3.5) + "s";
-              return (
-                <div
-                  key={src}
-                  className="product-item"
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    opacity: 0,
-                    animation: 'infiniteTvRotation 259s linear infinite',
-                    animationDelay: animationDelay
-                  }}
-                >
-                  <img src={src} alt="" style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
-                </div>
-              );
-            })}
+        <div ref={carouselRef} className="product-carousel" style={{ position: 'relative', width: '100vw', height: '440px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div ref={trackRef} className="product-track" style={{ display: 'flex', gap: '20px', position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)' }}>
+            {products.map((src, index) => (<div key={src + index} style={{ width: '300px', height: '400px', flexShrink: 0, borderRadius: '12px', overflow: 'hidden', transition: 'transform 0.3s' }}><img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>))}
           </div>
         </div>
 
         <div className="starting-btn-container" style={{ padding: '20px', position: 'relative', zIndex: 10 }}>
           <button
             onClick={handleStart}
-            disabled={setFinished}
-            className="starting-btn"
+            disabled={allSetsDone || tasksInSet >= tasksPerSet}
             style={{
               width: '100%',
-              background: setFinished? '#555' : '#cc0000',
-              color: '#FFF',
-              border: 'none',
-              borderRadius: '25px',
-              padding: '16px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: setFinished? 'not-allowed' : 'pointer'
+              background: (allSetsDone || tasksInSet >= tasksPerSet)? '#555' : '#cc0000',
+              color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '600',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center'
             }}
           >
-            {setFinished? 'Contact Customer Service to Reset' : `Starting (${user.taskCompleted} / ${setSize})`}
+            <span>
+              {allSetsDone
+              ? 'Contact Customer Service to Reset'
+                : tasksInSet >= tasksPerSet
+                ? 'Waiting for Admin Reset'
+                  : `Starting (${tasksInSet} / ${tasksPerSet})`}
+            </span>
+            <span style={{fontSize: 12, opacity: 0.9}}>{setsCompleted} / {totalSets} Sets</span>
           </button>
           {msg && <p style={{ textAlign: 'center', color: '#FF6A00', marginTop: 8, fontSize: 13 }}>{msg}</p>}
         </div>
 
-        {/* UPDATED ACCOUNT DETAILS */}
         <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px' }}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
-            <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px', letterSpacing: '0.5px' }}>TODAY'S COMMISSION</div>
-            <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.todayProfit || 0).toFixed(2)} USD</div>
-            <div style={{ fontSize: '12px', color: '#999' }}>The displayed amount reflects today's earned commissions.</div>
+            <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>TODAY'S COMMISSION</div>
+            <div style={{ fontSize: '24px', fontWeight: '800' }}>{(user.todayProfit || 0).toFixed(2)} USD</div>
           </div>
-
           <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
-            <div style={{ flex: 1, textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
-              <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>BALANCE</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{totalBalance.toFixed(2)} USD</div>
-              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects deposited + hold + special bonus.</div>
-            </div>
-
-            <div style={{ flex: 1, textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>🧊</div>
-              <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>HOLD AMOUNT</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.holdAmount || 0).toFixed(2)} USD</div>
-              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Money for tasks not yet submitted.</div>
-            </div>
+            <div style={{ flex: 1, textAlign: 'center' }}><div style={{ fontSize: '32px', color: '#FF6A00' }}>👛</div><div style={{ color: '#FF6A00', fontWeight: '700' }}>BALANCE</div><div style={{ fontSize: '18px', fontWeight: '800' }}>{totalBalance.toFixed(2)} USD</div></div>
+            <div style={{ flex: 1, textAlign: 'center' }}><div style={{ fontSize: '32px', color: '#FF6A00' }}>🧊</div><div style={{ color: '#FF6A00', fontWeight: '700' }}>HOLD AMOUNT</div><div style={{ fontSize: '18px', fontWeight: '800' }}>{(user.holdAmount || 0).toFixed(2)} USD</div></div>
           </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Lucky Bonus</div>
-            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{(user.specialBonus || 0).toFixed(2)} USD</div>
-          </div>
-        </div>
-
-        <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '12px', textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Important Notice</div>
-          <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Online Support Hours 09:45 - 23:10</div>
-          <div style={{ fontSize: '13px' }}>Please contact online support for your assistance</div>
-        </div>
-
-        <div style={{ textAlign: 'center', padding: '30px 16px 20px 16px', background: '#000' }}>
-          <img src="/logo.png" alt="logo" style={{ width: '120px', marginBottom: '12px' }} />
-          <div style={{ fontSize: '13px', color: '#FFF' }}>Copyrights 2026 © Disruptive Advertising Agency</div>
+          <div style={{ textAlign: 'center' }}><div style={{ fontWeight: '700' }}>Special Lucky Bonus</div><div style={{ fontSize: '18px', fontWeight: '800' }}>{(user.specialBonus || 0).toFixed(2)} USD</div></div>
         </div>
       </div>
       <BottomNav />

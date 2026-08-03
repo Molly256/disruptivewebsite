@@ -23,13 +23,15 @@ model User {
 
   avatar String?
 
-  // VIP & TASK FIELDS
+  // VIP & TASK FIELDS - NEW SYSTEM
   vipLevel Int @default(1)
   vipId Int @default(1)
-  currentSet Int @default(1)
-  setCompleted Int @default(0)
-  taskCompleted Int @default(0)
-  totalTasks Int @default(40)
+
+  setsCompleted Int @default(0) // 0 = Set1, 1 = Set2 done. Only admin changes this
+  tasksInCurrentSet Int @default(0) // 0-40. This is what moves 0/40 on button
+
+  taskCompleted Int @default(0) // total tasks done ever. for history
+  totalTasks Int @default(40) // for display
 
   // MONEY FIELDS
   walletBalance Float @default(0.00)
