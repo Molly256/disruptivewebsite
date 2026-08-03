@@ -128,7 +128,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px' }}>
+    <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
         <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24 }}>‹</button>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Starting Detail</h1>
@@ -434,10 +434,12 @@ export default function StartingPage() {
       display: 'flex', 
       gap: '20px', 
       position: 'absolute', 
-      left: 0, 
+      left: '50%', 
       top: '50%', 
-      transform: 'translateY(-50%)', 
+      transform: 'translate(-50%, -50%)', 
       width: 'max-content',
+      padding: '0 20px',      // ADDED: prevents edge cutoff
+      boxSizing: 'border-box', // ADDED
       zIndex: 2
     }}
   >
