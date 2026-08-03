@@ -412,22 +412,22 @@ export default function StartingPage() {
 
        
               >
-               {/* FIXED CAROUSEL */}
+              {/* FIXED CAROUSEL */}
 <div 
   ref={carouselRef} 
   className="product-carousel" 
   style={{ 
     position: 'relative', 
-    width: '100%',           // CHANGED: was 100vw
-    maxWidth: '1200px',      // ADDED: keep it centered
+    width: '100%',           
+    maxWidth: '1200px',      
     height: '440px', 
     margin: '0 auto', 
     overflow: 'hidden', 
     display: 'flex', 
     alignItems: 'center', 
     justifyContent: 'center', 
-    backgroundColor: '#000', // CHANGED: was transparent. Use your bg color
-    zIndex: 1                // ADDED: make sure it's above any overlay
+    backgroundColor: '#000', 
+    zIndex: 1                
   }}
 >
   <div 
@@ -455,18 +455,18 @@ export default function StartingPage() {
           borderRadius: '12px',
           overflow: 'hidden',
           transition: 'transform 0.3s',
-          backgroundColor: '#000', // CHANGED: was transparent
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)' // ADDED: makes it pop
+          backgroundColor: '#000', 
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
         }}
       >
         <img 
           src={src} 
-          alt="" 
+          alt={`product ${index + 1}`} 
           style={{ 
             width: '100%', 
             height: '100%', 
             objectFit: 'contain', 
-            backgroundColor: '#000', // CHANGED: was transparent
+            backgroundColor: '#000', 
             display: 'block'
           }} 
         />
