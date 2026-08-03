@@ -410,29 +410,70 @@ export default function StartingPage() {
           </div>
         </div>
 
-        {/* FIXED CAROUSEL */}
-        <div ref={carouselRef} className="product-carousel" style={{ position: 'relative', width: '100vw', height: '440px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }}>
-          <div ref={trackRef} className="product-track" style={{ display: 'flex', gap: '20px', position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 'max-content' }}>
-            {products.map((src, index) => (
-              <div
-                key={src + index}
-                className="product-item"
-                style={{
-                  width: '300px',
-                  height: '400px',
-                  flexShrink: 0,
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  transition: 'transform 0.3s',
-                  backgroundColor: 'transparent',
-                }}
+       
               >
-                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'transparent' }} />
-              </div>
-            ))}
-          </div>
-        </div>
-
+               {/* FIXED CAROUSEL */}
+<div 
+  ref={carouselRef} 
+  className="product-carousel" 
+  style={{ 
+    position: 'relative', 
+    width: '100%',           // CHANGED: was 100vw
+    maxWidth: '1200px',      // ADDED: keep it centered
+    height: '440px', 
+    margin: '0 auto', 
+    overflow: 'hidden', 
+    display: 'flex', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    backgroundColor: '#000', // CHANGED: was transparent. Use your bg color
+    zIndex: 1                // ADDED: make sure it's above any overlay
+  }}
+>
+  <div 
+    ref={trackRef} 
+    className="product-track" 
+    style={{ 
+      display: 'flex', 
+      gap: '20px', 
+      position: 'absolute', 
+      left: 0, 
+      top: '50%', 
+      transform: 'translateY(-50%)', 
+      width: 'max-content',
+      zIndex: 2
+    }}
+  >
+    {products.map((src, index) => (
+      <div
+        key={src + index}
+        className="product-item"
+        style={{
+          width: '300px',
+          height: '400px',
+          flexShrink: 0,
+          borderRadius: '12px',
+          overflow: 'hidden',
+          transition: 'transform 0.3s',
+          backgroundColor: '#000', // CHANGED: was transparent
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)' // ADDED: makes it pop
+        }}
+      >
+        <img 
+          src={src} 
+          alt="" 
+          style={{ 
+            width: '100%', 
+            height: '100%', 
+            objectFit: 'contain', 
+            backgroundColor: '#000', // CHANGED: was transparent
+            display: 'block'
+          }} 
+        />
+      </div>
+    ))}
+  </div>
+</div>
 
         <div className="starting-btn-container" style={{ padding: '20px', position: 'relative', zIndex: 10 }}>
           <button
