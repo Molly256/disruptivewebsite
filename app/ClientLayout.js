@@ -4,25 +4,24 @@ import { useEffect } from 'react'
 
 export default function ClientLayout({ children }) {
   const pathname = usePathname()
-  
+
   // PAGES WITH MOBILE APP SHELL
   const appRoutes = [
-    '/dashboard', 
-    '/profile', 
-    '/viplevels', 
-    '/deposit', 
+    '/dashboard',
+    '/profile',
+    '/viplevels',
+    '/deposit',
     '/withdraw',
-    '/certificate', 
+    '/certificate',
     '/event',
-    '/about',      
-    '/terms',      
-    '/faqs',       
-    '/admin'       
+    '/about',
+    '/terms',
+    '/faqs',
+    '/admin'
   ]
-  
+
   const isAppPage = appRoutes.some(route => pathname?.startsWith(route))
 
-  // Dynamically toggles layout state flags on the DOM body root element
   useEffect(() => {
     if (isAppPage) {
       document.body.setAttribute('data-app-page', 'true')
@@ -31,6 +30,12 @@ export default function ClientLayout({ children }) {
     }
   }, [isAppPage])
 
-  // Returns a simple semantic wrapper node so styles target it flawlessly
-  return isAppPage ? <div class="app-shell-main">{children}</div> : <>{children}</>
+  // FIX: full width on desktop, centered card on mobile
+  return isAppPage? (
+    <div className="w-full min-h-screen bg-[#0b0b0b] flex justify-center">
+      <div className="w-full max-w-[480px] md:max-w-full md:w-full">
+        {children}
+      </div>
+    </div>
+  ) : <>{children}</>
 }
