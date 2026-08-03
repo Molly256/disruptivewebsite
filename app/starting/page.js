@@ -411,8 +411,8 @@ export default function StartingPage() {
         </div>
 
         {/* FIXED CAROUSEL */}
-        <div ref={carouselRef} className="product-carousel" style={{ position: 'relative', width: '100vw', height: '440px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div ref={trackRef} className="product-track" style={{ display: 'flex', gap: '20px', position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)' }}>
+        <div ref={carouselRef} className="product-carousel" style={{ position: 'relative', width: '100vw', height: '440px', margin: '0 auto', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' }}>
+          <div ref={trackRef} className="product-track" style={{ display: 'flex', gap: '20px', position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: 'max-content' }}>
             {products.map((src, index) => (
               <div
                 key={src + index}
@@ -424,13 +424,15 @@ export default function StartingPage() {
                   borderRadius: '12px',
                   overflow: 'hidden',
                   transition: 'transform 0.3s',
+                  backgroundColor: 'transparent',
                 }}
               >
-                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: 'transparent' }} />
               </div>
             ))}
           </div>
         </div>
+
 
         <div className="starting-btn-container" style={{ padding: '20px', position: 'relative', zIndex: 10 }}>
           <button
