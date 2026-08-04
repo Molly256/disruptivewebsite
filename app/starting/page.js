@@ -378,16 +378,15 @@ export default function StartingPage() {
   </div>
 </div>
 
-        {/* FIXED CAROUSEL - CENTERED */}
+        {/* FIXED CAROUSEL - CENTERED ON BLACK */}
 <div
   ref={carouselRef}
   className="product-carousel"
   style={{
     position: 'relative',
     width: '100%',
-    maxWidth: '1600px',
-    height: 'min(500px, 60vh)',
-    margin: '0 auto',
+    height: 'min(550px, 70vh)',
+    margin: '0',
     overflow: 'hidden',
     display: 'flex',
     alignItems: 'center',
@@ -403,9 +402,8 @@ export default function StartingPage() {
       display: 'flex',
       gap: '20px',
       position: 'absolute',
-      left: '50%',
       top: '50%',
-      transform: 'translateX(-50%) translateY(-50%)',
+      transform: 'translateY(-50%)', // FIXED: removed left + translateX
       width: 'max-content',
       padding: '20px 0',
       boxSizing: 'border-box',
@@ -433,35 +431,36 @@ export default function StartingPage() {
   </div>
 </div>
 
-{/* BUTTON WITH BACKGROUND SO IT DOESNT OVERLAP */}
+{/* BUTTON ON BLACK BG LIKE VIDEO - NO BOX */}
 <div className="starting-btn-container" style={{
-  padding: '20px',
+  padding: '24px 20px 40px 20px',
   position: 'relative',
   zIndex: 10,
-  background: '#F2F2F2',
-  width: 'min(320px, 85vw)',
-  margin: '-10px auto 0 auto'
+  background: '#000', // FIXED: was #F2F2F2
+  width: '100%',
+  margin: '0 auto',
+  textAlign: 'center'
 }}>
   <button
     onClick={handleStart}
     disabled={setFinished}
     className="starting-btn"
     style={{
-      width: '100%',
-      background: setFinished? '#555' : '#FF7A00', // FIXED: orange like video
+      width: 'min(320px, 85vw)',
+      background: setFinished? '#555' : '#FF0000', // FIXED: HOT RED
       color: '#FFF',
       border: 'none',
       borderRadius: '25px',
       padding: '16px',
       fontSize: '16px',
-      fontWeight: '600',
+      fontWeight: '700',
       cursor: setFinished? 'not-allowed' : 'pointer',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+      boxShadow: '0 4px 20px rgba(255,0,0,0.4)'
     }}
   >
-    {setFinished? 'Contact Customer Service to Reset' : `Starting (${user.tasksInCurrentSet || 0} / ${user.totalTasks || setSize})`}
+    {setFinished? 'Contact Customer Service to Reset' : `Starting (${user.tasksInCurrentSet || 0} / ${setSize})`}
   </button>
-  {msg && <p style={{ textAlign: 'center', color: '#FF6A00', marginTop: 8, fontSize: 13 }}>{msg}</p>}
+  {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
 </div>
 
 <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px', maxWidth: '1200px', margin: '8px auto 0 auto' }}>
