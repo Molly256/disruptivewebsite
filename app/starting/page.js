@@ -328,7 +328,7 @@ export default function StartingPage() {
           </div>
         </div>
 
-        <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } `}</style>
+        <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }`}</style> {/* FIXED: closed } */}
 
         <div className="user-bar" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', maxWidth: '1400px', margin: '0 auto' }}>
           <div>
@@ -372,7 +372,7 @@ export default function StartingPage() {
       top: '50%',
       transform: 'translateX(-50%) translateY(-50%)', // FIX: split transform so we can slide X only
       width: 'max-content',
-      padding: '20px 0', 
+      padding: '20px 0',
       boxSizing: 'border-box',
       zIndex: 2
     }}
@@ -472,3 +472,4 @@ export default function StartingPage() {
 <BottomNav />
 </>
 )
+} // FIXED: added closing brace for export default function
