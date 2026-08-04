@@ -185,13 +185,10 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
 
 export default function StartingPage() {
   const router = useRouter()
-  const [products, setProducts] = useState([])
   const [showDetail, setShowDetail] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
-  const trackRef = useRef(null)
-  const carouselRef = useRef(null)
 
   const setSize = vip1Set1.length
   const setFinished = user? user.taskCompleted >= setSize : false
@@ -228,91 +225,6 @@ export default function StartingPage() {
     }
     fetchUser()
   }, [router])
-
-  // FIX: LOAD IMAGES SO CAROUSEL IS NOT BLACK
-  useEffect(() => {
-    const imageList = []
-    for (let i = 1; i <= 74; i++) { imageList.push(`/image${i}.jpg`) }
-    const shuffled = imageList.sort(() => Math.random() - 0.5)
-    setProducts([...shuffled,...shuffled])
-  }, [])
-
-  useEffect(() => {
-  if (products.length === 0) return
-  const track = trackRef.current
-  const carousel = carouselRef.current
-  if (!track ||!carousel) return
-
-  const init = () => {
-    const items = Array.from(track.children)
-    if (items.length === 0 || items[0].offsetWidth === 0) { requestAnimationFrame(init); return }
-
-    const gap = 20
-    const itemWidth = items[0].offsetWidth + gap
-    const containerWidth = carousel.offsetWidth
-    const centerOffset = containerWidth / 2 - items[0].offsetWidth / 2
-    let animationFrameId
-
-    const getCurrentIndexFromTime = () => {
-      const elapsed = Date.now() % (Math.floor(products.length/2) * CYCLE_TIME);
-      return Math.floor(elapsed / CYCLE_TIME)
-    }
-    const getProgressInCycle = () => {
-      const elapsed = Date.now() % CYCLE_TIME;
-      return elapsed
-    }
-
-    const setPosition = (index, progressMs) => {
-      const half = Math.floor(products.length/2)
-      const realIndex = half + (index % half)
-      const basePos = realIndex * itemWidth - centerOffset
-      let currentPos = basePos
-
-      // 1. SLIDE
-      if (progressMs < SCROLL_TIME) {
-        const prevIndex = (index - 1 + half) % half
-        const prevRealIndex = half + prevIndex
-        const prevPos = prevRealIndex * itemWidth - centerOffset
-        const slideProgress = progressMs / SCROLL_TIME
-        currentPos = prevPos + (basePos - prevPos) * slideProgress
-
-        // Scale during slide
-        items.forEach((item, i) => {
-          const scale = i === realIndex? 1 + (0.1 * slideProgress) : 1
-          item.style.transform = `scale(${scale})`
-          item.style.zIndex = i === realIndex? 3 : 1
-        })
-      }
-      // 2. HOLD
-      else {
-        currentPos = basePos
-        items.forEach((item, i) => {
-          if(i === realIndex){
-            item.style.transform = 'scale(1.1)'
-            item.style.zIndex = 3
-          } else {
-            item.style.transform = 'scale(1)'
-            item.style.zIndex = 1
-          }
-        })
-      }
-
-      track.style.transition = 'none'
-      track.style.transform = `translateX(-${currentPos}px) translateY(-50%)`
-    }
-
-    const tick = () => {
-      const currentIndex = getCurrentIndexFromTime();
-      const progress = getProgressInCycle();
-      setPosition(currentIndex, progress);
-      animationFrameId = requestAnimationFrame(tick)
-    }
-    tick()
-    return () => { cancelAnimationFrame(animationFrameId) }
-  }
-  const cleanup = init()
-  return cleanup
-}, [products])
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
@@ -353,9 +265,9 @@ export default function StartingPage() {
           </div>
         </div>
 
-        <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }`}</style>
+        <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); }`}</style>
 
-       {/* FULL WIDTH USER BAR LIKE SCREENSHOT */}
+       {/* FULL WIDTH USER BAR */}
 <div className="user-bar" style={{
   width: '100%',
   padding: '10px 16px',
@@ -378,65 +290,35 @@ export default function StartingPage() {
   </div>
 </div>
 
-        {/* FIXED CAROUSEL - CENTERED ON BLACK */}
-<div
-  ref={carouselRef}
-  className="product-carousel"
-  style={{
-    position: 'relative',
-    width: '100%',
-    height: 'min(550px, 70vh)',
-    margin: '0',
-    overflow: 'hidden',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000',
-    zIndex: 1
-  }}
->
-  <div
-    ref={trackRef}
-    className="product-track"
+        {/* VIDEO ONLY - NO CAROUSEL */}
+<div style={{
+  width: '100%',
+  background: '#000',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center'
+}}>
+  <video
+    src="/product-video.mp4"
+    autoPlay
+    loop
+    muted
+    playsInline
     style={{
-      display: 'flex',
-      gap: '20px',
-      position: 'absolute',
-      top: '50%',
-      transform: 'translateY(-50%)', // FIXED: removed left + translateX
-      width: 'max-content',
-      padding: '20px 0',
-      boxSizing: 'border-box',
-      zIndex: 2
+      width: '100%',
+      maxWidth: '800px',
+      height: 'auto',
+      display: 'block'
     }}
-  >
-    {products.map((src, index) => (
-      <div
-        key={src + index}
-        className="product-item"
-        style={{
-          width: 'min(320px, 85vw)',
-          height: 'min(450px, 55vh)',
-          flexShrink: 0,
-          borderRadius: '12px',
-          overflow: 'hidden',
-          transition: 'transform 300ms ease',
-          backgroundColor: '#000',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-        }}
-      >
-        <img src={src} alt={`product ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000', display: 'block' }} />
-      </div>
-    ))}
-  </div>
+  />
 </div>
 
-{/* BUTTON ON BLACK BG LIKE VIDEO - NO BOX */}
+{/* BUTTON ON BLACK BG */}
 <div className="starting-btn-container" style={{
   padding: '24px 20px 40px 20px',
   position: 'relative',
   zIndex: 10,
-  background: '#000', // FIXED: was #F2F2F2
+  background: '#000',
   width: '100%',
   margin: '0 auto',
   textAlign: 'center'
@@ -447,7 +329,7 @@ export default function StartingPage() {
     className="starting-btn"
     style={{
       width: 'min(320px, 85vw)',
-      background: setFinished? '#555' : '#FF0000', // FIXED: HOT RED
+      background: setFinished? '#555' : '#FF0000',
       color: '#FFF',
       border: 'none',
       borderRadius: '25px',
