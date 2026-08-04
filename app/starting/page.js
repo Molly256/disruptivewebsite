@@ -229,18 +229,11 @@ export default function StartingPage() {
     fetchUser()
   }, [router])
 
-  useEffect(() => {
-    const imageList = []
-    for (let i = 1; i <= 74; i++) { imageList.push(`/image${i}.jpg`) }
-    const shuffled = imageList.sort(() => Math.random() - 0.5)
-    setProducts([...shuffled,...shuffled])
-  }, [])
-
-  useEffect(() => {
+    useEffect(() => {
     if (products.length === 0) return
     const track = trackRef.current
     const carousel = carouselRef.current
-    if (!track ||!carousel) return
+    if (!track || !carousel) return
     const init = () => {
       const items = Array.from(track.children)
       if (items.length === 0 || items[0].offsetWidth === 0) { requestAnimationFrame(init); return }
@@ -252,12 +245,32 @@ export default function StartingPage() {
       const getCurrentIndexFromTime = () => { const elapsed = Date.now() % (products.length/2 * CYCLE_TIME); return Math.floor(elapsed / CYCLE_TIME) }
       const getProgressInCycle = () => { const elapsed = Date.now() % CYCLE_TIME; return elapsed }
 
-      const updateActive = (centerIndex) => {
+      // FIXED: Separated from the sliding block so scaling transitions smoothly
+      const updateScaleProgress = (centerIndex, progressMs) => {
         items.forEach((item, i) => {
-          if(i === centerIndex){
-            item.style.transform = 'scale(1.1)'
+          if (i === centerIndex) {
+            if (progressMs < SCROLL_TIME) {
+              // Smoothly scale up from 1.0 to 1.1 during the slide-in phase
+              const progress = progressMs / SCROLL_TIME
+              const scale = 1 + (0.1 * progress)
+              item.style.transform = `scale(${scale})`
+            } else {
+              // Lock at full zoom during the hold phase
+              item.style.transform = 'scale(1.1)'
+            }
             item.style.zIndex = 3
+          } else if (i === (centerIndex - 1 + items.length) % items.length) {
+            // Smoothly scale down the exiting image from 1.1 to 1.0
+            if (progressMs < SCROLL_TIME) {
+              const progress = progressMs / SCROLL_TIME
+              const scale = 1.1 - (0.1 * progress)
+              item.style.transform = `scale(${scale})`
+            } else {
+              item.style.transform = 'scale(1)'
+            }
+            item.style.zIndex = 1
           } else {
+            // All other background items stay flat
             item.style.transform = 'scale(1)'
             item.style.zIndex = 1
           }
@@ -268,18 +281,20 @@ export default function StartingPage() {
         const realIndex = Math.floor(products.length/2) + (index % Math.floor(products.length/2))
         const basePos = realIndex * itemWidth - centerOffset
         let currentPos = basePos
+        
         if (progressMs < SCROLL_TIME) {
           const prevIndex = (index - 1 + Math.floor(products.length/2)) % Math.floor(products.length/2)
           const prevRealIndex = Math.floor(products.length/2) + prevIndex
           const prevPos = prevRealIndex * itemWidth - centerOffset
           const slideProgress = progressMs / SCROLL_TIME
           currentPos = prevPos + (basePos - prevPos) * slideProgress
-          // reset all to scale 1 during slide
-          items.forEach(item => { item.style.transform = 'scale(1)'; item.style.zIndex = 1 })
         } else {
           currentPos = basePos
-          updateActive(realIndex) // zoom only during hold
         }
+        
+        // FIXED: Apply the progressive scale alignment alongside the position
+        updateScaleProgress(realIndex, progressMs)
+        
         track.style.transition = 'none'
         track.style.transform = `translateX(-${currentPos}px) translateY(-50%)`
       }
@@ -290,6 +305,7 @@ export default function StartingPage() {
     const cleanup = init()
     return cleanup
   }, [products])
+
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
@@ -332,17 +348,28 @@ export default function StartingPage() {
 
         <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }`}</style>
 
-        {/* FIXED USER BAR LIKE VIDEO */}
-        <div className="user-bar" style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', maxWidth: '1400px', margin: '0 auto', borderBottom: '1px solid #F0F0F0' }}>
-          <div>
-            <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '400', color: '#000' }}>Hello,</p>
-            <p className="user-name" style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#000' }}>{user.username}</p>
-          </div>
-          <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="vip-text" style={{ fontSize: '14px', fontWeight: '700', color: '#FF6A00' }}>VIP{user.vipLevel}</span>
-            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #FFD700, #FFA500)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>👑</div>
-          </div>
-        </div>
+       {/* FULL WIDTH USER BAR LIKE SCREENSHOT */}
+<div className="user-bar" style={{ 
+  width: '100%', 
+  padding: '10px 16px', 
+  display: 'flex', 
+  justifyContent: 'space-between', 
+  alignItems: 'center', 
+  background: '#FFF', 
+  borderBottom: '1px solid #F0F0F0',
+  boxSizing: 'border-box'
+}}>
+  <div>
+    <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '400', color: '#666' }}>Hello,</p>
+    <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#CC0000' }}>{user.username}</p>
+  </div>
+  <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+    <span className="vip-text" style={{ fontSize: '15px', fontWeight: '700', color: '#FF7A00' }}>VIP{user.vipLevel}</span>
+    <svg style={{ width: '22px', height: '22px', color: '#3B82F6' }} fill="currentColor" viewBox="0 0 20 20">
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+    </svg>
+  </div>
+</div>
 
         {/* FIXED CAROUSEL - CENTERED */}
 <div
