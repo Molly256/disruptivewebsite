@@ -23,39 +23,18 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel]
     if(!config) return NextResponse.json({ error: 'VIP not configured' }, { status: 400 })
 
-    const { tasksPerSet } = config
-    const tasksInSet = user.tasksInCurrentSet || 0
-    const setsCompleted = user.setsCompleted || 0
-
-    // LOCK: set already full, waiting admin
-    if(tasksInSet >= tasksPerSet) {
-      return NextResponse.json({ error: 'Set completed. Waiting for admin reset.' }, { status: 400 })
-    }
-
-    const totalRequiredHold = taskProducts.reduce((sum, p) => sum + p.reserveAmount, 0)
-
-    // LOCK: must deposit until hold is 100% full
-    if (Math.abs(user.holdAmount - totalRequiredHold) > 0.01) {
-      const stillNeed = (totalRequiredHold - user.holdAmount).toFixed(2)
-      return NextResponse.json({ error: `Hold amount not complete. Deposit $${stillNeed} more.` }, { status: 400 })
-    }
-
-    const payout = totalRequiredHold // capital + profit for all merged products
+    const totalReserve = taskProducts.reduce((sum, p) => sum + p.reserveAmount, 0) // price + profit
     const totalProfit = taskProducts.reduce((sum, p) => sum + p.profit, 0)
-    const newTasksInSet = tasksInSet + 1
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        walletBalance: { increment: payout }, 
-        holdAmount: 0, // clear hold
+        walletBalance: { increment: totalReserve }, // return capital + profit
+        holdAmount: { decrement: totalReserve }, // remove from hold
         todayProfit: { increment: totalProfit },
-        currentTaskProducts: [], // clear current task
-        completedProducts: [...user.completedProducts,...taskProducts], // move to history
-        activeProducts: [], // clear because we submitted
-        taskCompleted: { increment: 1 }, // keep for total history
-        tasksInCurrentSet: newTasksInSet // KEY: this moves 0/40 -> 1/40
-        // NOTE: setsCompleted does NOT change here. Only admin changes it
+        currentTaskProducts: [],
+        completedProducts: [...user.completedProducts,...taskProducts],
+        activeProducts: [],
       }
     })
 

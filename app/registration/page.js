@@ -297,7 +297,7 @@ export default function Registration() {
     }
   }
 
-  const inputStyle = {
+ const inputStyle = {
     width: '100%',
     height: '56px',
     padding: '0 16px',
@@ -388,176 +388,178 @@ export default function Registration() {
         </div>
       )}
 
-      <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 12px', color: '#000' }}>
-            DISRUPTIVE WELCOMES YOU
-          </h1>
-          <p style={{ fontSize: '14px', color: '#666', margin: '0 0 24px', lineHeight: '1.5' }}>
-            We specialize in helping B2B and e-commerce businesses dominate the digital space.
-          </p>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0, color: '#000' }}>
-            SIGN UP
-          </h2>
-        </div>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}> {/* FIXED: was 400px */}
+        <div style={{ maxWidth: '500px', margin: '0 auto' }}> {/* keeps form centered */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 12px', color: '#000' }}>
+              DISRUPTIVE WELCOMES YOU
+            </h1>
+            <p style={{ fontSize: '14px', color: '#666', margin: '0 0 24px', lineHeight: '1.5' }}>
+              We specialize in helping B2B and e-commerce businesses dominate the digital space.
+            </p>
+            <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0, color: '#000' }}>
+              SIGN UP
+            </h2>
+          </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={form.username}
-            onChange={(e) => setForm({...form, username: e.target.value})}
-            style={inputStyle}
-          />
-          {errors.username && <div style={errorStyle}>{errors.username}</div>}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <input
+              type="text"
+              placeholder="Username"
+              value={form.username}
+              onChange={(e) => setForm({...form, username: e.target.value})}
+              style={inputStyle}
+            />
+            {errors.username && <div style={errorStyle}>{errors.username}</div>}
 
-          <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <div onClick={() => setShowCountries(!showCountries)} style={{...selectBoxStyle, width: '120px', marginBottom: 0}}>
-                <span>{selectedCountry.flag} {selectedCountry.code}</span>
-                <span>▼</span>
-              </div>
-              <input
-                type="tel"
-                placeholder="Enter a phone number"
-                value={form.phone}
-                onChange={(e) => setForm({...form, phone: e.target.value})}
-                inputMode="numeric"
-                style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
-              />
-            </div>
-            {showCountries && (
-              <div style={{
-                position: 'absolute',
-                top: '60px',
-                left: 0,
-                right: 0,
-                background: '#fff',
-                border: '1px solid #ddd',
-                borderRadius: '8px',
-                maxHeight: '250px',
-                overflowY: 'auto',
-                zIndex: 10,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-              }}>
+            <div style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div onClick={() => setShowCountries(!showCountries)} style={{...selectBoxStyle, width: '120px', marginBottom: 0}}>
+                  <span>{selectedCountry.flag} {selectedCountry.code}</span>
+                  <span>▼</span>
+                </div>
                 <input
-                  type="text"
-                  placeholder="Search country..."
-                  value={searchCountry}
-                  onChange={(e) => setSearchCountry(e.target.value)}
-                  style={{ width: '100%', padding: '12px', border: 'none', borderBottom: '1px solid #eee', boxSizing: 'border-box', fontSize: '14px' }}
-                  onClick={(e) => e.stopPropagation()}
+                  type="tel"
+                  placeholder="Enter a phone number"
+                  value={form.phone}
+                  onChange={(e) => setForm({...form, phone: e.target.value})}
+                  inputMode="numeric"
+                  style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
                 />
-                {filteredCountries.map((c, idx) => (
-                  <div
-                    key={`${c.name}-${c.code}-${idx}`}
-                    onClick={() => {
-                      setForm({...form, selectedCountry: c})
-                      setShowCountries(false)
-                      setSearchCountry('')
-                    }}
-                    style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '16px' }}
-                    onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
-                    onMouseLeave={(e) => e.target.style.background = '#fff'}
-                  >
-                    {c.flag} {c.name} {c.code}
-                  </div>
-                ))}
               </div>
-            )}
-            {errors.phone && <div style={errorStyle}>{errors.phone}</div>}
-          </div>
-
-          {/* INVITE CODE INPUT - USER TYPES MANUALLY */}
-          <input
-            type="text"
-            placeholder="Invite Code"
-            value={form.inviteCode}
-            onChange={(e) => setForm({...form, inviteCode: e.target.value.toUpperCase()})}
-            style={inputStyle}
-          />
-          {errors.inviteCode && <div style={errorStyle}>{errors.inviteCode}</div>}
-
-          <div style={passwordWrapper}>
-            <input
-              type={showLoginPass? 'text' : 'password'}
-              placeholder="Login Password"
-              value={form.loginPassword}
-              onChange={(e) => setForm({...form, loginPassword: e.target.value})}
-              style={inputStyle}
-            />
-            <span onClick={() => setShowLoginPass(!showLoginPass)} style={eyeStyle}>
-              {showLoginPass? '👁️' : '👁️‍🗨️'}
-            </span>
-          </div>
-          {errors.loginPassword && <div style={errorStyle}>{errors.loginPassword}</div>}
-
-          <div style={passwordWrapper}>
-            <input
-              type={showConfirmPass? 'text' : 'password'}
-              placeholder="Confirm Login Password"
-              value={form.confirmPassword}
-              onChange={(e) => setForm({...form, confirmPassword: e.target.value})}
-              style={inputStyle}
-            />
-            <span onClick={() => setShowConfirmPass(!showConfirmPass)} style={eyeStyle}>
-              {showConfirmPass? '👁️' : '👁️‍🗨️'}
-            </span>
-          </div>
-          {errors.confirmPassword && <div style={errorStyle}>{errors.confirmPassword}</div>}
-
-          <div style={passwordWrapper}>
-            <input
-              type={showTxnPass? 'text' : 'password'}
-              placeholder="Transaction Password"
-              value={form.transactionPassword}
-              onChange={(e) => setForm({...form, transactionPassword: e.target.value})}
-              style={inputStyle}
-            />
-            <span onClick={() => setShowTxnPass(!showTxnPass)} style={eyeStyle}>
-              {showTxnPass? '👁️' : '👁️‍🗨️'}
-            </span>
-          </div>
-          {errors.transactionPassword && <div style={errorStyle}>{errors.transactionPassword}</div>}
-
-          <div style={{...inputStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <span style={{ color: '#666' }}>Gender</span>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                <input type="radio" name="gender" value="Male" checked={form.gender === 'Male'} onChange={(e) => setForm({...form, gender: e.target.value})} style={{ accentColor: '#cc0000' }} />
-                Male
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                <input type="radio" name="gender" value="Female" checked={form.gender === 'Female'} onChange={(e) => setForm({...form, gender: e.target.value})} style={{ accentColor: '#cc0000' }} />
-                Female
-              </label>
+              {showCountries && (
+                <div style={{
+                  position: 'absolute',
+                  top: '60px',
+                  left: 0,
+                  right: 0,
+                  background: '#fff',
+                  border: '1px solid #ddd',
+                  borderRadius: '8px',
+                  maxHeight: '250px',
+                  overflowY: 'auto',
+                  zIndex: 10,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}>
+                  <input
+                    type="text"
+                    placeholder="Search country..."
+                    value={searchCountry}
+                    onChange={(e) => setSearchCountry(e.target.value)}
+                    style={{ width: '100%', padding: '12px', border: 'none', borderBottom: '1px solid #eee', boxSizing: 'border-box', fontSize: '14px' }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  {filteredCountries.map((c, idx) => (
+                    <div
+                      key={`${c.name}-${c.code}-${idx}`}
+                      onClick={() => {
+                        setForm({...form, selectedCountry: c})
+                        setShowCountries(false)
+                        setSearchCountry('')
+                      }}
+                      style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '16px' }}
+                      onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                      onMouseLeave={(e) => e.target.style.background = '#fff'}
+                    >
+                      {c.flag} {c.name} {c.code}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {errors.phone && <div style={errorStyle}>{errors.phone}</div>}
             </div>
-          </div>
-          {errors.gender && <div style={errorStyle}>{errors.gender}</div>}
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
-            <input type="checkbox" checked={form.acceptTerms} onChange={(e) => setForm({...form, acceptTerms: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: '#cc0000', cursor: 'pointer' }} />
-            <span style={{ color: '#000' }}>Accept ours <Link href="/terms" style={{ color: '#000', textDecoration: 'underline' }}>Terms and Conditions</Link></span>
-          </label>
-          {errors.acceptTerms && <div style={errorStyle}>{errors.acceptTerms}</div>}
+            {/* INVITE CODE INPUT - USER TYPES MANUALLY */}
+            <input
+              type="text"
+              placeholder="Invite Code"
+              value={form.inviteCode}
+              onChange={(e) => setForm({...form, inviteCode: e.target.value.toUpperCase()})}
+              style={inputStyle}
+            />
+            {errors.inviteCode && <div style={errorStyle}>{errors.inviteCode}</div>}
 
-          {errors.submit && <div style={errorStyle}>{errors.submit}</div>}
+            <div style={passwordWrapper}>
+              <input
+                type={showLoginPass? 'text' : 'password'}
+                placeholder="Login Password"
+                value={form.loginPassword}
+                onChange={(e) => setForm({...form, loginPassword: e.target.value})}
+                style={inputStyle}
+              />
+              <span onClick={() => setShowLoginPass(!showLoginPass)} style={eyeStyle}>
+                {showLoginPass? '👁️' : '👁️‍🗨️'}
+              </span>
+            </div>
+            {errors.loginPassword && <div style={errorStyle}>{errors.loginPassword}</div>}
 
-          <button type="submit" style={{ width: '100%', height: '56px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>
-            Submit
-          </button>
+            <div style={passwordWrapper}>
+              <input
+                type={showConfirmPass? 'text' : 'password'}
+                placeholder="Confirm Login Password"
+                value={form.confirmPassword}
+                onChange={(e) => setForm({...form, confirmPassword: e.target.value})}
+                style={inputStyle}
+              />
+              <span onClick={() => setShowConfirmPass(!showConfirmPass)} style={eyeStyle}>
+                {showConfirmPass? '👁️' : '👁️‍🗨️'}
+              </span>
+            </div>
+            {errors.confirmPassword && <div style={errorStyle}>{errors.confirmPassword}</div>}
 
-          <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
-            Already have an account? <Link href="/login" style={{ color: '#0066cc', fontWeight: '500' }}>Sign In</Link>
-          </div>
+            <div style={passwordWrapper}>
+              <input
+                type={showTxnPass? 'text' : 'password'}
+                placeholder="Transaction Password"
+                value={form.transactionPassword}
+                onChange={(e) => setForm({...form, transactionPassword: e.target.value})}
+                style={inputStyle}
+              />
+              <span onClick={() => setShowTxnPass(!showTxnPass)} style={eyeStyle}>
+                {showTxnPass? '👁️' : '👁️‍🗨️'}
+              </span>
+            </div>
+            {errors.transactionPassword && <div style={errorStyle}>{errors.transactionPassword}</div>}
 
-          <div style={{ textAlign: 'center', fontSize: '12px', color: '#666', marginTop: '8px' }}>
-            By signing up, you agree to our <Link href="/terms" style={{ color: '#0066cc' }}>Terms and Conditions</Link></div>
+            <div style={{...inputStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+              <span style={{ color: '#666' }}>Gender</span>
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="radio" name="gender" value="Male" checked={form.gender === 'Male'} onChange={(e) => setForm({...form, gender: e.target.value})} style={{ accentColor: '#cc0000' }} />
+                  Male
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                  <input type="radio" name="gender" value="Female" checked={form.gender === 'Female'} onChange={(e) => setForm({...form, gender: e.target.value})} style={{ accentColor: '#cc0000' }} />
+                  Female
+                </label>
+              </div>
+            </div>
+            {errors.gender && <div style={errorStyle}>{errors.gender}</div>}
 
-          <div style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '40px' }}>
-            Copyrights 2026 © Disruptive Advertisng Agency
-          </div>
-        </form>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
+              <input type="checkbox" checked={form.acceptTerms} onChange={(e) => setForm({...form, acceptTerms: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: '#cc0000', cursor: 'pointer' }} />
+              <span style={{ color: '#000' }}>Accept ours <Link href="/terms" style={{ color: '#000', textDecoration: 'underline' }}>Terms and Conditions</Link></span>
+            </label>
+            {errors.acceptTerms && <div style={errorStyle}>{errors.acceptTerms}</div>}
+
+            {errors.submit && <div style={errorStyle}>{errors.submit}</div>}
+
+            <button type="submit" style={{ width: '100%', height: '56px', background: '#000', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '18px', fontWeight: '600', cursor: 'pointer', marginTop: '8px' }}>
+              Submit
+            </button>
+
+            <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
+              Already have an account? <Link href="/login" style={{ color: '#0066cc', fontWeight: '500' }}>Sign In</Link>
+            </div>
+
+            <div style={{ textAlign: 'center', fontSize: '12px', color: '#666', marginTop: '8px' }}>
+              By signing up, you agree to our <Link href="/terms" style={{ color: '#0066cc' }}>Terms and Conditions</Link></div>
+
+            <div style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '40px' }}>
+              Copyrights 2026 © Disruptive Advertisng Agency
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )

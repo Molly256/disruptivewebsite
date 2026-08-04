@@ -339,179 +339,181 @@ export default function Login() {
         </div>
       )}
 
-      <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 12px', color: '#000' }}>
-            DISRUPTIVE WELCOMES YOU
-          </h1>
-          <p style={{ fontSize: '14px', color: '#666', margin: '0 0 24px', lineHeight: '1.5' }}>
-            We specialize in helping B2B and e-commerce businesses dominate the digital space.
-          </p>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0, color: '#000' }}>
-            SIGN IN
-          </h2>
-        </div>
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
-            <button
-              type="button"
-              onClick={() => setLoginType('username')}
-              style={{
-                flex: 1,
-                height: '40px',
-                background: loginType === 'username' ? '#cc0000' : '#f5f5f5',
-                color: loginType === 'username' ? '#fff' : '#000',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              Username
-            </button>
-            <button
-              type="button"
-              onClick={() => setLoginType('phone')}
-              style={{
-                flex: 1,
-                height: '40px',
-                background: loginType === 'phone' ? '#cc0000' : '#f5f5f5',
-                color: loginType === 'phone' ? '#fff' : '#000',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '500',
-                cursor: 'pointer'
-              }}
-            >
-              Phone
-            </button>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}> {/* FIXED: was 400px */}
+        <div style={{ maxWidth: '500px', margin: '0 auto' }}> {/* keeps form centered */}
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 12px', color: '#000' }}>
+              DISRUPTIVE WELCOMES YOU
+            </h1>
+            <p style={{ fontSize: '14px', color: '#666', margin: '0 0 24px', lineHeight: '1.5' }}>
+              We specialize in helping B2B and e-commerce businesses dominate the digital space.
+            </p>
+            <h2 style={{ fontSize: '20px', fontWeight: '600', margin: 0, color: '#000' }}>
+              SIGN IN
+            </h2>
           </div>
 
-          {loginType === 'username' ? (
-            <input
-              type="text"
-              name="username"
-              placeholder="Username"
-              autoComplete="username"
-              value={form.username}
-              onChange={(e) => setForm({...form, username: e.target.value})}
-              style={inputStyle}
-            />
-          ) : (
-            <div style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
-                <div onClick={() => setShowCountries(!showCountries)} style={{...selectBoxStyle, width: '120px', marginBottom: 0}}>
-                  <span>{selectedCountry.flag} {selectedCountry.code}</span>
-                  <span>▼</span>
-                </div>
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Enter a phone number"
-                  autoComplete="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm({...form, phone: e.target.value})}
-                  inputMode="numeric"
-                  style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
-                />
-              </div>
-              {showCountries && (
-                <div style={{
-                  position: 'absolute',
-                  top: '60px',
-                  left: 0,
-                  right: 0,
-                  background: '#fff',
-                  border: '1px solid #ddd',
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setLoginType('username')}
+                style={{
+                  flex: 1,
+                  height: '40px',
+                  background: loginType === 'username' ? '#cc0000' : '#f5f5f5',
+                  color: loginType === 'username' ? '#fff' : '#000',
+                  border: 'none',
                   borderRadius: '8px',
-                  maxHeight: '250px',
-                  overflowY: 'auto',
-                  zIndex: 10,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                }}>
-                  <input
-                    type="text"
-                    placeholder="Search country..."
-                    value={searchCountry}
-                    onChange={(e) => setSearchCountry(e.target.value)}
-                    style={{ width: '100%', padding: '12px', border: 'none', borderBottom: '1px solid #eee', boxSizing: 'border-box', fontSize: '14px' }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  {filteredCountries.map((c, idx) => (
-                    <div
-                      key={`${c.name}-${c.code}-${idx}`}
-                      onClick={() => {
-                        setForm({...form, selectedCountryName: c.name})
-                        setShowCountries(false)
-                        setSearchCountry('')
-                      }}
-                      style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '16px' }}
-                      onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
-                      onMouseLeave={(e) => e.target.style.background = '#fff'}
-                    >
-                      {c.flag} {c.name} {c.code}
-                    </div>
-                  ))}
-                </div>
-              )}
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Username
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoginType('phone')}
+                style={{
+                  flex: 1,
+                  height: '40px',
+                  background: loginType === 'phone' ? '#cc0000' : '#f5f5f5',
+                  color: loginType === 'phone' ? '#fff' : '#000',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Phone
+              </button>
             </div>
-          )}
 
-          <div style={passwordWrapper}>
-            <input
-              type={showPassword? 'text' : 'password'}
-              name="password"
-              placeholder="Login Password"
-              autoComplete="current-password"
-              value={form.password}
-              onChange={(e) => setForm({...form, password: e.target.value})}
-              style={inputStyle}
-            />
-            <span onClick={() => setShowPassword(!showPassword)} style={eyeStyle}>
-              {showPassword? '👁️' : '👁️‍🗨️'}
-            </span>
-          </div>
+            {loginType === 'username' ? (
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                autoComplete="username"
+                value={form.username}
+                onChange={(e) => setForm({...form, username: e.target.value})}
+                style={inputStyle}
+              />
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '4px' }}>
+                  <div onClick={() => setShowCountries(!showCountries)} style={{...selectBoxStyle, width: '120px', marginBottom: 0}}>
+                    <span>{selectedCountry.flag} {selectedCountry.code}</span>
+                    <span>▼</span>
+                  </div>
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Enter a phone number"
+                    autoComplete="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({...form, phone: e.target.value})}
+                    inputMode="numeric"
+                    style={{ ...inputStyle, marginBottom: 0, flex: 1 }}
+                  />
+                </div>
+                {showCountries && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '60px',
+                    left: 0,
+                    right: 0,
+                    background: '#fff',
+                    border: '1px solid #ddd',
+                    borderRadius: '8px',
+                    maxHeight: '250px',
+                    overflowY: 'auto',
+                    zIndex: 10,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                  }}>
+                    <input
+                      type="text"
+                      placeholder="Search country..."
+                      value={searchCountry}
+                      onChange={(e) => setSearchCountry(e.target.value)}
+                      style={{ width: '100%', padding: '12px', border: 'none', borderBottom: '1px solid #eee', boxSizing: 'border-box', fontSize: '14px' }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    {filteredCountries.map((c, idx) => (
+                      <div
+                        key={`${c.name}-${c.code}-${idx}`}
+                        onClick={() => {
+                          setForm({...form, selectedCountryName: c.name})
+                          setShowCountries(false)
+                          setSearchCountry('')
+                        }}
+                        style={{ padding: '12px 14px', cursor: 'pointer', borderBottom: '1px solid #eee', fontSize: '16px' }}
+                        onMouseEnter={(e) => e.target.style.background = '#f5f5f5'}
+                        onMouseLeave={(e) => e.target.style.background = '#fff'}
+                      >
+                        {c.flag} {c.name} {c.code}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '-8px' }}>
-            <span style={{ fontSize: '14px', color: '#0066cc', cursor: 'pointer' }}>
-              Forgot your password?
-            </span>
-          </div>
+            <div style={passwordWrapper}>
+              <input
+                type={showPassword? 'text' : 'password'}
+                name="password"
+                placeholder="Login Password"
+                autoComplete="current-password"
+                value={form.password}
+                onChange={(e) => setForm({...form, password: e.target.value})}
+                style={inputStyle}
+              />
+              <span onClick={() => setShowPassword(!showPassword)} style={eyeStyle}>
+                {showPassword? '👁️' : '👁️‍🗨️'}
+              </span>
+            </div>
 
-          {error && <div style={{ color: '#cc0000', fontSize: '14px', marginTop: '-8px' }}>{error}</div>}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '-8px' }}>
+              <span style={{ fontSize: '14px', color: '#0066cc', cursor: 'pointer' }}>
+                Forgot your password?
+              </span>
+            </div>
 
-          <button
-            type="submit"
-            style={{
-              width: '100%',
-              height: '56px',
-              background: '#000',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '18px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              marginTop: '8px'
-            }}
-          >
-            Submit
-          </button>
+            {error && <div style={{ color: '#cc0000', fontSize: '14px', marginTop: '-8px' }}>{error}</div>}
 
-          <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
-            Don't have an account yet? <Link href="/registration" style={{ color: '#0066cc', fontWeight: '500' }}>Sign Up</Link>
-          </div>
+            <button
+              type="submit"
+              style={{
+                width: '100%',
+                height: '56px',
+                background: '#000',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '18px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginTop: '8px'
+              }}
+            >
+              Submit
+            </button>
 
-          <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
-            Can't sign in? <Link href="/support" style={{ color: '#0066cc', fontWeight: '500' }}>Contact our user support</Link>
-          </div>
+            <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
+              Don't have an account yet? <Link href="/registration" style={{ color: '#0066cc', fontWeight: '500' }}>Sign Up</Link>
+            </div>
 
-          <div style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '40px' }}>
-            Copyrights 2026 © Disruptive
-          </div>
-        </form>
+            <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
+              Can't sign in? <Link href="/support" style={{ color: '#0066cc', fontWeight: '500' }}>Contact our user support</Link>
+            </div>
+
+            <div style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '40px' }}>
+              Copyrights 2026 © Disruptive
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )
