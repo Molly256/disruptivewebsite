@@ -129,52 +129,54 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '1200px', margin: '0 auto' }}>
         <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24 }}>‹</button>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Starting Detail</h1>
       </div>
 
-      {products.map(product => (
-        <div key={product.id} style={{ background: '#FFF', margin: '12px auto', borderRadius: 12, padding: '16px', maxWidth: '500px' }}>
-          <img src={product.image} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
-            <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
-            <div style={{ fontWeight: 700, marginBottom: 16 }}>{product.price.toFixed(2)} x1 USD</div>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
+        {products.map(product => (
+          <div key={product.id} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
+            <img src={product.image} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
+              <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
+              <div style={{ fontWeight: 700, marginBottom: 16 }}>{product.price.toFixed(2)} x1 USD</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '140px', border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>TOTAL AMOUNT</div>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>{product.price.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+              </div>
+              <div style={{ flex: 1, minWidth: '140px', border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate*100).toFixed(1)}%</div>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>{product.profit.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+              </div>
+            </div>
+
+            {product.stillOwed > 0 &&
+              <div style={{ background: '#FFF3CD', color: '#856404', padding: 8, borderRadius: 8, textAlign: 'center', fontSize: 12 }}>
+                Still need: ${product.stillOwed.toFixed(2)} to start this product
+              </div>
+            }
+          </div>
+        ))}
+
+        <div style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
+          <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
+            <hr style={{margin: '8px 0'}}/>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{totalPrice.toFixed(2)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{totalProfit.toFixed(2)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
           </div>
 
-          <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-            <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-              <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>TOTAL AMOUNT</div>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>{product.price.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
-            </div>
-            <div style={{ flex: 1, border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-              <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate*100).toFixed(1)}%</div>
-              <div style={{ fontSize: 16, fontWeight: 800 }}>{product.profit.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
-            </div>
-          </div>
-
-          {product.stillOwed > 0 &&
-            <div style={{ background: '#FFF3CD', color: '#856404', padding: 8, borderRadius: 8, textAlign: 'center', fontSize: 12 }}>
-              Still need: ${product.stillOwed.toFixed(2)} to start this product
-            </div>
-          }
+          <button onClick={onSubmit} style={{ width: '100%', background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
+            Submit
+          </button>
         </div>
-      ))}
-
-      <div style={{ background: '#FFF', margin: '12px auto', borderRadius: 12, padding: '16px', maxWidth: '500px' }}>
-        <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
-          <hr style={{margin: '8px 0'}}/>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{totalPrice.toFixed(2)} USD</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{totalProfit.toFixed(2)} USD</span></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
-        </div>
-
-        <button onClick={onSubmit} style={{ width: '100%', background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
-          Submit
-        </button>
       </div>
       <BottomNav />
     </div>
@@ -235,6 +237,13 @@ export default function StartingPage() {
   }, [])
 
   useEffect(() => {
+    const imageList = []
+    for (let i = 1; i <= 74; i++) { imageList.push(`/image${i}.jpg`) }
+    const shuffled = imageList.sort(() => Math.random() - 0.5)
+    setProducts([...shuffled,...shuffled])
+  }, [])
+
+  useEffect(() => {
     if (products.length === 0) return
     const track = trackRef.current
     const carousel = carouselRef.current
@@ -252,7 +261,10 @@ export default function StartingPage() {
       const updateActive = (index, progressMs) => {
         const centerIndex = Math.floor(products.length/2) + (index % Math.floor(products.length/2))
         const isInHoldPhase = progressMs >= SCROLL_TIME
-        items.forEach((item, i) => { item.style.transform = (i === centerIndex && isInHoldPhase)? 'scale(1.1)' : 'scale(1)' })
+        items.forEach((item, i) => {
+          item.style.transform = (i === centerIndex && isInHoldPhase)? 'scale(1.1)' : 'scale(1)'
+          item.style.zIndex = (i === centerIndex && isInHoldPhase)? 3 : 1 // keep zoomed on top
+        })
       }
       const setPosition = (index, progressMs) => {
         const realIndex = Math.floor(products.length/2) + (index % Math.floor(products.length/2))
@@ -266,7 +278,7 @@ export default function StartingPage() {
           currentPos = prevPos + (basePos - prevPos) * slideProgress
         }
         track.style.transition = 'none'
-        track.style.transform = `translateX(-${currentPos}px)`
+        track.style.transform = `translateX(-${currentPos}px) translateY(-50%)` // FIX: add translateY back
         updateActive(index, progressMs)
       }
       const tick = () => { const currentIndex = getCurrentIndexFromTime(); const progress = getProgressInCycle(); setPosition(currentIndex, progress); animationFrameId = requestAnimationFrame(tick) }
@@ -307,159 +319,156 @@ export default function StartingPage() {
     <>
       <AppHeader />
 
-      <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', marginTop: 0, background: '#F2F2F2' }}>
+      <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', background: '#F2F2F2', width: '100%' }}>
         <div className="marquee-container" style={{ margin: 0, padding: 0, background: '#cc0000', overflow: 'hidden' }}>
           <div className="marquee-content" style={{ display: 'flex', animation: 'scroll 600s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
             {allMessages.map((msg, i) => (
-              <span key={i} className="marquee-item" style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#000', flexShrink: 0 }}>{msg}</span>
+              <span key={i} className="marquee-item" style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#FFF', flexShrink: 0 }}>{msg}</span>
             ))}
           </div>
         </div>
 
         <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } `}</style>
 
-        <div className="user-bar" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF' }}>
+        <div className="user-bar" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', maxWidth: '1400px', margin: '0 auto' }}>
           <div>
             <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '300' }}>Hello,</p>
-            <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>{user.username}</p>
+            <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#cc0000' }}>{user.username}</p>
           </div>
           <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="vip-text" style={{ fontSize: '14px', fontWeight: '600' }}>VIP{user.vipLevel}</span>
+            <span className="vip-text" style={{ fontSize: '14px', fontWeight: '600', color: '#FF6A00' }}>VIP{user.vipLevel}</span>
             <svg style={{ width: '32px', height: '32px', color: '#3b82f6' }} fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
           </div>
         </div>
 
-        {/* RESPONSIVE CAROUSEL */}
-        <div
-          ref={carouselRef}
-          className="product-carousel"
-          style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: '1600px',
-            height: 'min(500px, 60vh)',
-            margin: '0 auto',
-            overflow: 'visible',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#000',
-            zIndex: 1
-          }}
-        >
-          <div
-            ref={trackRef}
-            className="product-track"
-            style={{
-              display: 'flex',
-              gap: '20px',
-              position: 'absolute',
-              left: '50%',
-              top: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 'max-content',
-              padding: '0 max(16px, calc((100vw - 1600px) / 2))',
-              boxSizing: 'border-box',
-              zIndex: 2
-            }}
-          >
-            {products.map((src, index) => (
-              <div
-                key={src + index}
-                className="product-item"
-                style={{
-                  width: 'min(320px, 85vw)',
-                  height: 'min(450px, 55vh)',
-                  flexShrink: 0,
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  transition: 'transform 0.3s',
-                  backgroundColor: '#000',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-                }}
-              >
-                <img
-                  src={src}
-                  alt={`product ${index + 1}`}
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    backgroundColor: '#000',
-                    display: 'block'
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="starting-btn-container" style={{ padding: '20px', position: 'relative', zIndex: 0, maxWidth: '500px', margin: '0 auto' }}>
-          <button
-            onClick={handleStart}
-            disabled={setFinished}
-            className="starting-btn"
-            style={{
-              width: '100%',
-              background: setFinished? '#555' : '#cc0000',
-              color: '#FFF',
-              border: 'none',
-              borderRadius: '25px',
-              padding: '16px',
-              fontSize: '16px',
-              fontWeight: '600',
-              cursor: setFinished? 'not-allowed' : 'pointer'
-            }}
-          >
-            {setFinished? 'Contact Customer Service to Reset' : `Starting (${user.taskCompleted} / ${setSize})`}
-          </button>
-          {msg && <p style={{ textAlign: 'center', color: '#FF6A00', marginTop: 8, fontSize: 13 }}>{msg}</p>}
-        </div>
-
-        <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px', maxWidth: '500px', margin: '8px auto 0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
-            <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px', letterSpacing: '0.5px' }}>TODAY'S COMMISSION</div>
-            <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.todayProfit || 0).toFixed(2)} USD</div>
-            <div style={{ fontSize: '12px', color: '#999' }}>The displayed amount reflects today's earned commissions.</div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '24px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '140px', textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
-              <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>BALANCE</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{totalBalance.toFixed(2)} USD</div>
-              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects deposited + hold + special bonus.</div>
-            </div>
-
-            <div style={{ flex: 1, minWidth: '140px', textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>🧊</div>
-              <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>HOLD AMOUNT</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.holdAmount || 0).toFixed(2)} USD</div>
-              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Money for tasks not yet submitted.</div>
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Lucky Bonus</div>
-            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{(user.specialBonus || 0).toFixed(2)} USD</div>
-          </div>
-        </div>
-
-        <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '12px', textAlign: 'center', maxWidth: '500px', margin: '12px auto 0 auto' }}>
-          <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Important Notice</div>
-          <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Online Support Hours 09:45 - 23:10</div>
-          <div style={{ fontSize: '13px' }}>Please contact online support for your assistance</div>
-        </div>
-
-        <div style={{ textAlign: 'center', padding: '30px 16px 20px 16px', background: '#000', width: '100%' }}>
-          <img src="/logo.png" alt="logo" style={{ width: '120px', marginBottom: '12px' }} />
-          <div style={{ fontSize: '13px', color: '#FFF' }}>Copyrights 2026 © Disruptive Advertising Agency</div>
-        </div>
+        {/* FIXED CAROUSEL - CENTERED */}
+<div
+  ref={carouselRef}
+  className="product-carousel"
+  style={{
+    position: 'relative',
+    width: '100%',
+    maxWidth: '1600px',
+    height: 'min(500px, 60vh)',
+    margin: '0 auto',
+    overflow: 'hidden',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000',
+    zIndex: 1
+  }}
+>
+  <div
+    ref={trackRef}
+    className="product-track"
+    style={{
+      display: 'flex',
+      gap: '20px',
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      transform: 'translateX(-50%) translateY(-50%)', // FIX: split transform so we can slide X only
+      width: 'max-content',
+      padding: '20px 0', 
+      boxSizing: 'border-box',
+      zIndex: 2
+    }}
+  >
+    {products.map((src, index) => (
+      <div
+        key={src + index}
+        className="product-item"
+        style={{
+          width: 'min(320px, 85vw)',
+          height: 'min(450px, 55vh)',
+          flexShrink: 0,
+          borderRadius: '12px',
+          overflow: 'hidden',
+          transition: 'transform 300ms ease', // smoother zoom
+          backgroundColor: '#000',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
+        }}
+      >
+        <img src={src} alt={`product ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', backgroundColor: '#000', display: 'block' }} />
       </div>
-      <BottomNav />
-    </>
-  )
-}
+    ))}
+  </div>
+</div>
+
+{/* BUTTON WITH BACKGROUND SO IT DOESNT OVERLAP */}
+<div className="starting-btn-container" style={{
+  padding: '20px',
+  position: 'relative',
+  zIndex: 10,
+  background: '#F2F2F2',
+  width: 'min(320px, 85vw)', // FIX: same width as 1 image so it centers
+  margin: '-10px auto 0 auto' // center it
+}}>
+  <button
+    onClick={handleStart}
+    disabled={setFinished}
+    className="starting-btn"
+    style={{
+      width: '100%',
+      background: setFinished? '#555' : '#cc0000',
+      color: '#FFF',
+      border: 'none',
+      borderRadius: '25px',
+      padding: '16px',
+      fontSize: '16px',
+      fontWeight: '600',
+      cursor: setFinished? 'not-allowed' : 'pointer',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+    }}
+  >
+    {setFinished? 'Contact Customer Service to Reset' : `Starting (${user.tasksInCurrentSet || 0} / ${user.totalTasks || setSize})`}
+  </button>
+  {msg && <p style={{ textAlign: 'center', color: '#FF6A00', marginTop: 8, fontSize: 13 }}>{msg}</p>}
+</div>
+
+<div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px', maxWidth: '1200px', margin: '8px auto 0 auto' }}>
+  <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+    <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
+    <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px', letterSpacing: '0.5px' }}>TODAY'S COMMISSION</div>
+    <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.todayProfit || 0).toFixed(2)} USD</div>
+    <div style={{ fontSize: '12px', color: '#999' }}>The displayed amount reflects today's earned commissions.</div>
+  </div>
+
+  <div style={{ display: 'flex', gap: '20px', marginBottom: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
+    <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>
+      <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
+      <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>BALANCE</div>
+      <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{totalBalance.toFixed(2)} USD</div>
+      <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects deposited + hold + special bonus.</div>
+    </div>
+    <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>
+      <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>🧊</div>
+      <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>HOLD AMOUNT</div>
+      <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.holdAmount || 0).toFixed(2)} USD</div>
+      <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Money for tasks not yet submitted.</div>
+    </div>
+  </div>
+
+  <div style={{ textAlign: 'center' }}>
+    <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Lucky Bonus</div>
+    <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{(user.specialBonus || 0).toFixed(2)} USD</div>
+  </div>
+</div>
+
+<div style={{ background: '#FFF', padding: '20px 16px', marginTop: '12px', textAlign: 'center', maxWidth: '1200px', margin: '12px auto 0 auto' }}>
+  <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Important Notice</div>
+  <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Online Support Hours 09:45 - 23:10</div>
+  <div style={{ fontSize: '13px' }}>Please contact online support for your assistance</div>
+</div>
+
+<div style={{ textAlign: 'center', padding: '30px 16px 20px 16px', background: '#000', width: '100%' }}>
+  <img src="/logo.png" alt="logo" style={{ width: '120px', marginBottom: '12px' }} />
+  <div style={{ fontSize: '13px', color: '#FFF' }}>Copyrights 2026 © Disruptive Advertising Agency</div>
+</div>
+</div>
+<BottomNav />
+</>
+)
