@@ -237,13 +237,6 @@ export default function StartingPage() {
   }, [])
 
   useEffect(() => {
-    const imageList = []
-    for (let i = 1; i <= 74; i++) { imageList.push(`/image${i}.jpg`) }
-    const shuffled = imageList.sort(() => Math.random() - 0.5)
-    setProducts([...shuffled,...shuffled])
-  }, [])
-
-  useEffect(() => {
     if (products.length === 0) return
     const track = trackRef.current
     const carousel = carouselRef.current
@@ -258,14 +251,19 @@ export default function StartingPage() {
       let animationFrameId
       const getCurrentIndexFromTime = () => { const elapsed = Date.now() % (products.length/2 * CYCLE_TIME); return Math.floor(elapsed / CYCLE_TIME) }
       const getProgressInCycle = () => { const elapsed = Date.now() % CYCLE_TIME; return elapsed }
-      const updateActive = (index, progressMs) => {
-        const centerIndex = Math.floor(products.length/2) + (index % Math.floor(products.length/2))
-        const isInHoldPhase = progressMs >= SCROLL_TIME
+
+      const updateActive = (centerIndex) => {
         items.forEach((item, i) => {
-          item.style.transform = (i === centerIndex && isInHoldPhase)? 'scale(1.1)' : 'scale(1)'
-          item.style.zIndex = (i === centerIndex && isInHoldPhase)? 3 : 1 // keep zoomed on top
+          if(i === centerIndex){
+            item.style.transform = 'scale(1.1)'
+            item.style.zIndex = 3
+          } else {
+            item.style.transform = 'scale(1)'
+            item.style.zIndex = 1
+          }
         })
       }
+
       const setPosition = (index, progressMs) => {
         const realIndex = Math.floor(products.length/2) + (index % Math.floor(products.length/2))
         const basePos = realIndex * itemWidth - centerOffset
@@ -276,10 +274,14 @@ export default function StartingPage() {
           const prevPos = prevRealIndex * itemWidth - centerOffset
           const slideProgress = progressMs / SCROLL_TIME
           currentPos = prevPos + (basePos - prevPos) * slideProgress
+          // reset all to scale 1 during slide
+          items.forEach(item => { item.style.transform = 'scale(1)'; item.style.zIndex = 1 })
+        } else {
+          currentPos = basePos
+          updateActive(realIndex) // zoom only during hold
         }
         track.style.transition = 'none'
-        track.style.transform = `translateX(-${currentPos}px) translateY(-50%)` // FIX: add translateY back
-        updateActive(index, progressMs)
+        track.style.transform = `translateX(-${currentPos}px) translateY(-50%)`
       }
       const tick = () => { const currentIndex = getCurrentIndexFromTime(); const progress = getProgressInCycle(); setPosition(currentIndex, progress); animationFrameId = requestAnimationFrame(tick) }
       tick()
@@ -328,18 +330,17 @@ export default function StartingPage() {
           </div>
         </div>
 
-        <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }`}</style> {/* FIXED: closed } */}
+        <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }`}</style>
 
-        <div className="user-bar" style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', maxWidth: '1400px', margin: '0 auto' }}>
+        {/* FIXED USER BAR LIKE VIDEO */}
+        <div className="user-bar" style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', maxWidth: '1400px', margin: '0 auto', borderBottom: '1px solid #F0F0F0' }}>
           <div>
-            <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '300' }}>Hello,</p>
-            <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#cc0000' }}>{user.username}</p>
+            <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '400', color: '#000' }}>Hello,</p>
+            <p className="user-name" style={{ margin: 0, fontSize: '20px', fontWeight: '700', color: '#000' }}>{user.username}</p>
           </div>
-          <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="vip-text" style={{ fontSize: '14px', fontWeight: '600', color: '#FF6A00' }}>VIP{user.vipLevel}</span>
-            <svg style={{ width: '32px', height: '32px', color: '#3b82f6' }} fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
+          <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span className="vip-text" style={{ fontSize: '14px', fontWeight: '700', color: '#FF6A00' }}>VIP{user.vipLevel}</span>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'linear-gradient(135deg, #FFD700, #FFA500)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>👑</div>
           </div>
         </div>
 
@@ -370,7 +371,7 @@ export default function StartingPage() {
       position: 'absolute',
       left: '50%',
       top: '50%',
-      transform: 'translateX(-50%) translateY(-50%)', // FIX: split transform so we can slide X only
+      transform: 'translateX(-50%) translateY(-50%)',
       width: 'max-content',
       padding: '20px 0',
       boxSizing: 'border-box',
@@ -387,7 +388,7 @@ export default function StartingPage() {
           flexShrink: 0,
           borderRadius: '12px',
           overflow: 'hidden',
-          transition: 'transform 300ms ease', // smoother zoom
+          transition: 'transform 300ms ease',
           backgroundColor: '#000',
           boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
         }}
@@ -404,8 +405,8 @@ export default function StartingPage() {
   position: 'relative',
   zIndex: 10,
   background: '#F2F2F2',
-  width: 'min(320px, 85vw)', // FIX: same width as 1 image so it centers
-  margin: '-10px auto 0 auto' // center it
+  width: 'min(320px, 85vw)',
+  margin: '-10px auto 0 auto'
 }}>
   <button
     onClick={handleStart}
@@ -413,7 +414,7 @@ export default function StartingPage() {
     className="starting-btn"
     style={{
       width: '100%',
-      background: setFinished? '#555' : '#cc0000',
+      background: setFinished? '#555' : '#FF7A00', // FIXED: orange like video
       color: '#FFF',
       border: 'none',
       borderRadius: '25px',
@@ -472,4 +473,4 @@ export default function StartingPage() {
 <BottomNav />
 </>
 )
-} // FIXED: added closing brace for export default function
+}
