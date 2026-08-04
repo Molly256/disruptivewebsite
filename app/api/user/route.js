@@ -25,7 +25,7 @@ export async function GET(req) {
         createdAt: true,
         updatedAt: true,
         vipLevel: true,
-        totalBalance: true,
+        totalBalance: true, // your DB column
         holdAmount: true,
         bonus: true,
         specialBonus: true,
@@ -37,6 +37,9 @@ export async function GET(req) {
         completedProducts: true,
         currentTaskProducts: true, 
         mergedTasks: true,
+        todayProfit: true, // <-- ADDED
+        lastProfitReset: true, // <-- ADDED
+        tasksInCurrentSet: true, // <-- ADDED
       }
     })
 
@@ -44,7 +47,16 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ user })
+    // ONLY CHANGE: map DB names to what frontend expects
+    const fixedUser = {
+     ...user,
+      walletBalance: user.totalBalance, // <-- FIX BOUNCE: frontend uses walletBalance
+      tasksInCurrentSet: user.tasksInCurrentSet ?? user.currentSet ?? 0, // fallback
+      todayProfit: user.todayProfit ?? 0,
+      lastProfitReset: user.lastProfitReset ?? user.createdAt,
+    }
+
+    return NextResponse.json({ user: fixedUser })
   } catch (e) {
     console.error('API /user error:', e)
     return NextResponse.json({ error: 'Request failed' }, { status: 500 })
