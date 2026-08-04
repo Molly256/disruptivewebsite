@@ -66,9 +66,10 @@ export async function POST(req) {
 
           vipId: 1,
           vipLevel: 1,
-          currentSet: 1,
-          setCompleted: 0,
+          setsCompleted: 0,        // FIXED: was setCompleted
+          tasksInCurrentSet: 0,    // FIXED: for 0/40 button
           taskCompleted: 0,
+          totalTasks: 40,          // ADDED: for display
 
           walletBalance: 0,
           holdAmount: 0,
@@ -99,10 +100,9 @@ export async function POST(req) {
 
       if (loginType === 'username') {
         if (!username) return NextResponse.json({ error: 'Username required' }, { status: 400 })
-        user = await prisma.user.findUnique({ where: { username } })
+        user = await prisma.user.findFirst({ where: { username } })
       } else {
         if (!phone) return NextResponse.json({ error: 'Phone required' }, { status: 400 })
-        
         user = await prisma.user.findFirst({ where: { phone } })
       }
 
@@ -122,6 +122,7 @@ export async function POST(req) {
           phone: user.phone,
           gender: user.gender,
           vipLevel: user.vipLevel,
+          vipId: user.vipId,
           walletBalance: user.walletBalance,
           holdAmount: user.holdAmount,
           specialBonus: user.specialBonus,
@@ -129,8 +130,10 @@ export async function POST(req) {
           lastProfitReset: user.lastProfitReset,
           currentTaskProducts: user.currentTaskProducts,
           taskCompleted: user.taskCompleted,
-          currentSet: user.currentSet,
-          inviteCode: user.inviteCode // send to profile for sharing
+          tasksInCurrentSet: user.tasksInCurrentSet, // ADDED: for button
+          setsCompleted: user.setsCompleted,         // ADDED
+          totalTasks: user.totalTasks,               // ADDED
+          inviteCode: user.inviteCode
         }
       })
 
