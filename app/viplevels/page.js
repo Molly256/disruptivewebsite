@@ -19,20 +19,20 @@ export default function VipLevels() {
       }
 
       const localUser = JSON.parse(savedUser)
+      setUser(localUser) // SHOW IMMEDIATELY SO NO BOUNCE
+
       try {
         const res = await fetch(`/api/user?id=${localUser.id}`)
         const data = await res.json()
 
         if (res.ok && data.user) {
-          setUser(data.user)
+          setUser(data.user) // update with fresh data
           localStorage.setItem('user', JSON.stringify(data.user))
-        } else {
-          localStorage.removeItem('user')
-          router.push('/login')
         }
+        // IMPORTANT: if API fails, we still keep localUser. No logout.
       } catch (e) {
         console.error(e)
-        setUser(localUser)
+        // if network fails, still keep localUser
       } finally {
         setLoading(false)
       }
@@ -250,7 +250,7 @@ export default function VipLevels() {
                         fontWeight: '500'
                       }}
                     >
-                      <span style={{ position: 'absolute', left: 0, color: '#000000' }}>•</span>
+                      <span style={{ position: 'absolute', left: 0, color: '#000' }}>•</span>
                       {perk}
                     </li>
                   ))}

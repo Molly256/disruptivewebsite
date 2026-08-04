@@ -30,6 +30,19 @@ export default function ProfilePage() {
     if (!u.vipId) u.vipId = 1
     setUser(u)
     setAvatar(u.avatar || '')
+
+    // REFRESH IN BACKGROUND - NO BOUNCE ON FAIL
+    const refresh = async () => {
+      try {
+        const res = await fetch(`/api/user?id=${u.id}`)
+        const data = await res.json()
+        if (res.ok && data.user) {
+          setUser(data.user)
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
+      } catch(e) { console.error(e) }
+    }
+    refresh()
   }, [router])
 
   const handleAvatarClick = () => fileInputRef.current.click()
@@ -120,7 +133,7 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
               <p style={{ color: '#FFF', fontSize: '14px', margin: '0 0 2px' }}>Hello,</p>
-              <h2 style={{ color: '#FF0000', fontSize: '28px', fontWeight: '800', margin: 0 }}>{user.name}</h2>
+              <h2 style={{ color: '#FF0000', fontSize: '28px', fontWeight: '800', margin: 0 }}>{user.username}</h2> {/* FIXED: was user.name */}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ color: currentVip.innerBadgeColor, fontSize: '18px', fontWeight: '800' }}>{vipLevel}</span>

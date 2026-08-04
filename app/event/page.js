@@ -1,10 +1,45 @@
 'use client'
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react' // <-- ADDED
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 
 export default function EventPage() {
   const router = useRouter()
+  const [user, setUser] = useState(null) // <-- ADDED
+  const [loading, setLoading] = useState(true) // <-- ADDED
+
+  useEffect(() => { // <-- ADDED WHOLE BLOCK
+    const fetchUser = async () => {
+      const savedUser = localStorage.getItem('user')
+      if (!savedUser) {
+        router.push('/login')
+        return
+      }
+
+      const localUser = JSON.parse(savedUser)
+      setUser(localUser) // SHOW IMMEDIATELY SO NO BOUNCE
+
+      try {
+        const res = await fetch(`/api/user?id=${localUser.id}`)
+        const data = await res.json()
+
+        if (res.ok && data.user) {
+          setUser(data.user)
+          localStorage.setItem('user', JSON.stringify(data.user))
+        }
+        // IMPORTANT: if API fails, we still keep localUser. No logout.
+      } catch (e) {
+        console.error(e)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchUser()
+  }, [router])
+
+  if (loading ||!user) return null // <-- ADDED
 
   const rewards = [
     { tier: 'Basic', amount: 'USD 100', extra: 'USD 10' },
@@ -33,7 +68,7 @@ export default function EventPage() {
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
-      
+
       <AppHeader />
 
       {/* TITLE */}
@@ -160,7 +195,7 @@ export default function EventPage() {
             <h3 style={{ color: '#FFF', fontSize: '12px', fontWeight: '700', margin: 0 }}>Days Worked</h3>
             <h3 style={{ color: '#FFF', fontSize: '12px', fontWeight: '700', margin: 0 }}>Salary Earned</h3>
           </div>
-          
+
           {workdays.map((item) => (
             <div key={item.days} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
               {/* LEFT BLUE → HOT RED */}
@@ -169,7 +204,7 @@ export default function EventPage() {
                 <span style={{ color: '#FFF', fontSize: '16px', fontWeight: '800' }}>{item.days}</span>
                 <span style={{ color: '#FFF', fontSize: '10px', fontWeight: '600' }}>working days</span>
               </div>
-              
+
               {/* LIGHTNING + SALARY */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '20px' }}>⚡</span>
