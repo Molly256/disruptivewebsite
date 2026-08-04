@@ -229,83 +229,90 @@ export default function StartingPage() {
     fetchUser()
   }, [router])
 
-    useEffect(() => {
-    if (products.length === 0) return
-    const track = trackRef.current
-    const carousel = carouselRef.current
-    if (!track || !carousel) return
-    const init = () => {
-      const items = Array.from(track.children)
-      if (items.length === 0 || items[0].offsetWidth === 0) { requestAnimationFrame(init); return }
-      const gap = 20
-      const itemWidth = items[0].offsetWidth + gap
-      const containerWidth = carousel.offsetWidth
-      const centerOffset = containerWidth / 2 - items[0].offsetWidth / 2
-      let animationFrameId
-      const getCurrentIndexFromTime = () => { const elapsed = Date.now() % (products.length/2 * CYCLE_TIME); return Math.floor(elapsed / CYCLE_TIME) }
-      const getProgressInCycle = () => { const elapsed = Date.now() % CYCLE_TIME; return elapsed }
+  // FIX: LOAD IMAGES SO CAROUSEL IS NOT BLACK
+  useEffect(() => {
+    const imageList = []
+    for (let i = 1; i <= 74; i++) { imageList.push(`/image${i}.jpg`) }
+    const shuffled = imageList.sort(() => Math.random() - 0.5)
+    setProducts([...shuffled,...shuffled])
+  }, [])
 
-      // FIXED: Separated from the sliding block so scaling transitions smoothly
-      const updateScaleProgress = (centerIndex, progressMs) => {
+  useEffect(() => {
+  if (products.length === 0) return
+  const track = trackRef.current
+  const carousel = carouselRef.current
+  if (!track ||!carousel) return
+
+  const init = () => {
+    const items = Array.from(track.children)
+    if (items.length === 0 || items[0].offsetWidth === 0) { requestAnimationFrame(init); return }
+
+    const gap = 20
+    const itemWidth = items[0].offsetWidth + gap
+    const containerWidth = carousel.offsetWidth
+    const centerOffset = containerWidth / 2 - items[0].offsetWidth / 2
+    let animationFrameId
+
+    const getCurrentIndexFromTime = () => {
+      const elapsed = Date.now() % (Math.floor(products.length/2) * CYCLE_TIME);
+      return Math.floor(elapsed / CYCLE_TIME)
+    }
+    const getProgressInCycle = () => {
+      const elapsed = Date.now() % CYCLE_TIME;
+      return elapsed
+    }
+
+    const setPosition = (index, progressMs) => {
+      const half = Math.floor(products.length/2)
+      const realIndex = half + (index % half)
+      const basePos = realIndex * itemWidth - centerOffset
+      let currentPos = basePos
+
+      // 1. SLIDE
+      if (progressMs < SCROLL_TIME) {
+        const prevIndex = (index - 1 + half) % half
+        const prevRealIndex = half + prevIndex
+        const prevPos = prevRealIndex * itemWidth - centerOffset
+        const slideProgress = progressMs / SCROLL_TIME
+        currentPos = prevPos + (basePos - prevPos) * slideProgress
+
+        // Scale during slide
         items.forEach((item, i) => {
-          if (i === centerIndex) {
-            if (progressMs < SCROLL_TIME) {
-              // Smoothly scale up from 1.0 to 1.1 during the slide-in phase
-              const progress = progressMs / SCROLL_TIME
-              const scale = 1 + (0.1 * progress)
-              item.style.transform = `scale(${scale})`
-            } else {
-              // Lock at full zoom during the hold phase
-              item.style.transform = 'scale(1.1)'
-            }
+          const scale = i === realIndex? 1 + (0.1 * slideProgress) : 1
+          item.style.transform = `scale(${scale})`
+          item.style.zIndex = i === realIndex? 3 : 1
+        })
+      }
+      // 2. HOLD
+      else {
+        currentPos = basePos
+        items.forEach((item, i) => {
+          if(i === realIndex){
+            item.style.transform = 'scale(1.1)'
             item.style.zIndex = 3
-          } else if (i === (centerIndex - 1 + items.length) % items.length) {
-            // Smoothly scale down the exiting image from 1.1 to 1.0
-            if (progressMs < SCROLL_TIME) {
-              const progress = progressMs / SCROLL_TIME
-              const scale = 1.1 - (0.1 * progress)
-              item.style.transform = `scale(${scale})`
-            } else {
-              item.style.transform = 'scale(1)'
-            }
-            item.style.zIndex = 1
           } else {
-            // All other background items stay flat
             item.style.transform = 'scale(1)'
             item.style.zIndex = 1
           }
         })
       }
 
-      const setPosition = (index, progressMs) => {
-        const realIndex = Math.floor(products.length/2) + (index % Math.floor(products.length/2))
-        const basePos = realIndex * itemWidth - centerOffset
-        let currentPos = basePos
-        
-        if (progressMs < SCROLL_TIME) {
-          const prevIndex = (index - 1 + Math.floor(products.length/2)) % Math.floor(products.length/2)
-          const prevRealIndex = Math.floor(products.length/2) + prevIndex
-          const prevPos = prevRealIndex * itemWidth - centerOffset
-          const slideProgress = progressMs / SCROLL_TIME
-          currentPos = prevPos + (basePos - prevPos) * slideProgress
-        } else {
-          currentPos = basePos
-        }
-        
-        // FIXED: Apply the progressive scale alignment alongside the position
-        updateScaleProgress(realIndex, progressMs)
-        
-        track.style.transition = 'none'
-        track.style.transform = `translateX(-${currentPos}px) translateY(-50%)`
-      }
-      const tick = () => { const currentIndex = getCurrentIndexFromTime(); const progress = getProgressInCycle(); setPosition(currentIndex, progress); animationFrameId = requestAnimationFrame(tick) }
-      tick()
-      return () => { cancelAnimationFrame(animationFrameId) }
+      track.style.transition = 'none'
+      track.style.transform = `translateX(-${currentPos}px) translateY(-50%)`
     }
-    const cleanup = init()
-    return cleanup
-  }, [products])
 
+    const tick = () => {
+      const currentIndex = getCurrentIndexFromTime();
+      const progress = getProgressInCycle();
+      setPosition(currentIndex, progress);
+      animationFrameId = requestAnimationFrame(tick)
+    }
+    tick()
+    return () => { cancelAnimationFrame(animationFrameId) }
+  }
+  const cleanup = init()
+  return cleanup
+}, [products])
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
@@ -349,13 +356,13 @@ export default function StartingPage() {
         <style jsx>{` @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); } }`}</style>
 
        {/* FULL WIDTH USER BAR LIKE SCREENSHOT */}
-<div className="user-bar" style={{ 
-  width: '100%', 
-  padding: '10px 16px', 
-  display: 'flex', 
-  justifyContent: 'space-between', 
-  alignItems: 'center', 
-  background: '#FFF', 
+<div className="user-bar" style={{
+  width: '100%',
+  padding: '10px 16px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  background: '#FFF',
   borderBottom: '1px solid #F0F0F0',
   boxSizing: 'border-box'
 }}>
