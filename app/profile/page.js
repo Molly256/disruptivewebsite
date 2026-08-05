@@ -31,7 +31,6 @@ export default function ProfilePage() {
     setUser(u)
     setAvatar(u.avatar || '')
 
-    // REFRESH IN BACKGROUND - NO BOUNCE ON FAIL
     const refresh = async () => {
       try {
         const res = await fetch(`/api/user?id=${u.id}`)
@@ -62,7 +61,7 @@ export default function ProfilePage() {
 
   const copyReferral = () => {
     if (!user) return
-    const referralCode = user.inviteCode || '' // FIXED: use DB field
+    const referralCode = user.inviteCode || ''
     navigator.clipboard.writeText(referralCode)
     alert('Referral Code Copied!')
   }
@@ -75,20 +74,19 @@ export default function ProfilePage() {
   if (!user) return null
 
   const phone = user.phone || ''
-  const referralCode = user.inviteCode || '' // FIXED: use DB field
+  const referralCode = user.inviteCode || ''
   const vipLevel = user.vipLevel || 'VIP1'
   const vipId = user.vipId || 1
   const currentVip = vipData.find(v => v.id === vipId) || vipData[0]
   const todayProfit = user.todayProfit || '0.00'
-  const totalBalance = user.totalBalance || '0.00'
+  const totalBalance = user.walletBalance || '0.00' // CHANGED: use walletBalance
   const creditScore = user.creditScore || 100
 
-  // HOT RED BAR COMPONENT - WITH WHITE BOLD ARROW
   const MenuItem = ({ icon, title, onClick }) => (
     <div
       onClick={onClick}
       style={{
-        background: '#FF0000', // HOT RED
+        background: '#FF0000',
         borderRadius: '12px',
         padding: '16px 20px',
         display: 'flex',
@@ -102,7 +100,7 @@ export default function ProfilePage() {
         <span style={{ fontSize: '22px' }}>{icon}</span>
         <span style={{ color: '#FFF', fontSize: '15px', fontWeight: '600' }}>{title}</span>
       </div>
-      <span style={{ color: '#FFF', fontSize: '18px', fontWeight: '800' }}>▼</span> {/* WHITE DROP ARROW */}
+      <span style={{ color: '#FFF', fontSize: '18px', fontWeight: '800' }}>▼</span>
     </div>
   )
 
@@ -115,7 +113,6 @@ export default function ProfilePage() {
         <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#000', margin: 0, flex: 1, textAlign: 'center' }}>My Profile</h1>
       </div>
 
-      {/* AVATAR SECTION */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0 24px' }}>
         <div onClick={handleAvatarClick} style={{ width: '100px', height: '100px', borderRadius: '50%', border: '2px dashed #CCC', background: avatar? '#000' : '#F1F1F1', overflow: 'hidden', cursor: 'pointer', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {avatar? <img src={avatar} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: '40px', color: '#AAA', fontWeight: '200' }}>+</span>}
@@ -127,13 +124,12 @@ export default function ProfilePage() {
         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
       </div>
 
-      {/* BLACK INFO CARD */}
       <div style={{ padding: '0 20px' }}>
         <div style={{ background: '#000', borderRadius: '16px', padding: '20px', color: '#FFF' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
               <p style={{ color: '#FFF', fontSize: '14px', margin: '0 0 2px' }}>Hello,</p>
-              <h2 style={{ color: '#FF0000', fontSize: '28px', fontWeight: '800', margin: 0 }}>{user.username}</h2> {/* FIXED: was user.name */}
+              <h2 style={{ color: '#FF0000', fontSize: '28px', fontWeight: '800', margin: 0 }}>{user.username}</h2>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ color: currentVip.innerBadgeColor, fontSize: '18px', fontWeight: '800' }}>{vipLevel}</span>
@@ -160,7 +156,7 @@ export default function ProfilePage() {
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: '12px', color: '#AAA', margin: '0 0 8px' }}>Total Balance (USD)</p>
               <p style={{ fontSize: '20px', fontWeight: '800', color: '#FFF', margin: 0 }}>{totalBalance}</p>
-              <p style={{ fontSize: '10px', color: '#AAA', margin: '2px 0 0' }}>Budget: {currentVip.price}</p>
+              {/* REMOVED: Budget: {currentVip.price} */}
             </div>
           </div>
 
@@ -176,14 +172,13 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* MENU SECTIONS */}
       <div style={{ padding: '24px 20px 0' }}>
         <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '0 0 16px' }}>My Profile</h3>
         <MenuItem icon="👤" title="Account Info" onClick={() => router.push('/account-info')} />
         <MenuItem icon="🔗" title="Bind Wallet" onClick={() => router.push('/bind-wallet')} />
 
         <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>My Financial</h3>
-        <MenuItem icon="🏦" title="Deposit" onClick={() => router.push('/deposit')} /> {/* BANK EMOJI */}
+        <MenuItem icon="🏦" title="Deposit" onClick={() => router.push('/deposit')} />
         <MenuItem icon="💸" title="Withdraw" onClick={() => router.push('/withdraw')} />
 
         <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>Other</h3>
