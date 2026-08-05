@@ -4,7 +4,7 @@ import { vip1Set1 } from '@/data/vip1Set1'
 import { vip1Set2 } from '@/data/vip1Set2'
 
 const VIP_CONFIG = {
-  1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
+ 1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
 }
 
 const ALL_PRODUCTS = {
@@ -28,17 +28,12 @@ export async function POST(req) {
 
     let productsToAssign = []
 
-    if (user.adminMergedProductIds) {
-      const mergedIds = JSON.parse(user.adminMergedProductIds)
-      if (Array.isArray(mergedIds) && mergedIds.length > 0) {
-        productsToAssign = mergedIds.map(id => baseSet.find(p => p.id === id)).filter(Boolean)
-      }
-    }
+    // REMOVED: adminMergedProductIds check because field doesn't exist in schema
+    // If you want merges later, store them in activeProducts Json field
 
-    if (productsToAssign.length === 0) {
-      const normalProduct = baseSet.find(p => p.id === taskNumber)
-      if (normalProduct) productsToAssign.push(normalProduct)
-    }
+    // Default: assign 1 product by task number
+    const normalProduct = baseSet.find(p => p.id === taskNumber)
+    if (normalProduct) productsToAssign.push(normalProduct)
 
     if (productsToAssign.length === 0) {
       return NextResponse.json({ error: 'No items available for this task' }, { status: 400 })
@@ -51,9 +46,10 @@ export async function POST(req) {
     productsToAssign.forEach(p => {
       const profitAmount = parseFloat((p.price * config.profit).toFixed(2))
       const reserveAmount = parseFloat((p.price + profitAmount).toFixed(2))
-      
+
+      // Keep image path dynamic based on set
       const imageIndex = ((p.id - 1) % 40) + 1
-      const localImagePath = `/vip1/set1/photo${imageIndex}.jpg`
+      const localImagePath = `/vip1/set${currentSet}/photo${imageIndex}.jpg`
 
       totalPrice += p.price
       totalReserveAdded += reserveAmount
@@ -80,12 +76,13 @@ export async function POST(req) {
         holdAmount: newHold,
         currentTaskProducts: taskProducts,
         tasksInCurrentSet: user.tasksInCurrentSet + 1,
-        adminMergedProductIds: null
+        // REMOVED: adminMergedProductIds: null
       }
     })
 
     return NextResponse.json({ success: true, user: updatedUser })
   } catch (err) {
+    console.error('start-task error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
