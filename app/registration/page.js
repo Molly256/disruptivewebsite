@@ -389,7 +389,7 @@ export default function Registration() {
       )}
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}> {/* FIXED: was 400px */}
-        <div style={{ maxWidth: '500px', margin: '0 auto' }}> {/* keeps form centered */}
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}> {/* keeps form centered */}
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <h1 style={{ fontSize: '24px', fontWeight: '700', margin: '0 0 12px', color: '#000' }}>
               DISRUPTIVE WELCOMES YOU

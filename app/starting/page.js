@@ -119,25 +119,36 @@ const SCROLL_TIME = 1000
 const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 
-function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
-  const profitRate = VIP_PROFIT[vipLevel] || 0
+function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
+  // Enforce a strict 0.5% calculation rate for VIP 1
+  const profitRate = 0.005 
+  
   const totalPrice = products.reduce((s, p) => s + p.price, 0)
-  const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0) // FIXED: calc from rate
+  const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
   const totalReserve = products.reduce((s, p) => s + p.reserveAmount, 0)
-  const taskCode = `20260729${String(products[0].id).padStart(10, '0')}`
+  
+  // Create an overall invoice code using the first product in the active queue
+  const taskCode = `20260729${String(products[0]?.id || 0).padStart(10, '0')}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+  // Submit blocks cleanly if the user's overall balance drops to a negative deficit
+  const isLocked = walletBalance < 0
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
+      {/* Header Navigation Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '1200px', margin: '0 auto' }}>
         <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24 }}>‹</button>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Starting Detail</h1>
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
+        {/* Renders each item in the product queue sequentially (handles both single products and merged combos seamlessly) */}
         {products.map(product => (
           <div key={product.id} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
-            <img src={`/vip1/set1/photo${product.id}.jpg`} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} /> {/* FIXED: Image path */}
+            {/* Uses dynamic background tracking image paths */}
+            <img src={product.image || `/vip1/set1/photo${product.id}.jpg`} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} /> 
+            
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
               <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
@@ -150,30 +161,48 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
                 <div style={{ fontSize: 16, fontWeight: 800 }}>{product.price.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
               </div>
               <div style={{ flex: 1, minWidth: '140px', border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate*100).toFixed(1)}%</div> {/* FIXED: Now 0.5% */}
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{(product.price * profitRate).toFixed(2)} <span style={{fontSize:12}}>USD</span></div> {/* FIXED: calc from rate */}
+                <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate * 100).toFixed(1)}%</div> 
+                <div style={{ fontSize: 16, fontWeight: 800 }}>{(product.price * profitRate).toFixed(2)} <span style={{fontSize:12}}>USD</span></div> 
               </div>
             </div>
-
-            {product.stillOwed > 0 &&
-              <div style={{ background: '#FFF3CD', color: '#856404', padding: 8, borderRadius: 8, textAlign: 'center', fontSize: 12 }}>
-                Still need: ${product.stillOwed.toFixed(2)} to start this product
-              </div>
-            }
+            {/* CLEAN: Warning boxes, notes, and red border flags completely removed */}
           </div>
         ))}
 
+        {/* Shared Invoice Summary Card & Submit Trigger Actions */}
         <div style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
           <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
+            
+            {/* CLEAN: Deficits and negative pending values display inside this row natively (e.g. -$300.00 USD) */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: isLocked ? '#FF0000' : '#000', fontWeight: isLocked ? '700' : '400' }}>
+              <span>AVAILABLE BALANCE</span>
+              <span>{(walletBalance || 0).toFixed(2)} USD</span>
+            </div>
+            
             <hr style={{margin: '8px 0'}}/>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{totalPrice.toFixed(2)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{totalProfit.toFixed(2)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
           </div>
 
-          <button onClick={onSubmit} style={{ width: '100%', background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 12, padding: '16px', fontSize: 16, fontWeight: 500 }}>
+          {/* Submit button locks up automatically if user balance is short, unlocking instantly once they deposit */}
+          <button 
+            onClick={onSubmit} 
+            disabled={isLocked}
+            style={{ 
+              width: '100%', 
+              background: isLocked ? '#CCCCCC' : '#FF0000', 
+              color: '#FFF', 
+              border: 'none', 
+              borderRadius: 12, 
+              padding: '16px', 
+              fontSize: 16, 
+              fontWeight: 500,
+              cursor: isLocked ? 'not-allowed' : 'pointer'
+            }}
+          >
             Submit
           </button>
         </div>
@@ -185,21 +214,22 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel }) {
 
 export default function StartingPage() {
   const router = useRouter()
-  const [showDetail][setShowDetail] = useState(false)
-  const [user][setUser] = useState(null)
-  const [loading][setLoading] = useState(true)
-  const [msg][setMsg] = useState('')
+  // FIXED: Repaired broken bracket syntax parser errors on state definitions
+  const [showDetail, setShowDetail] = useState(false)
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [msg, setMsg] = useState('')
 
   const setSize = vip1Set1.length
-  const setFinished = user? user.taskCompleted >= setSize : false
+  const setFinished = user ? user.taskCompleted >= setSize : false
 
   useEffect(() => {
     const fetchUser = async () => {
       const saved = localStorage.getItem('user')
       if(!saved) { router.push('/login'); return }
       const localUser = JSON.parse(saved)
-      setUser(localUser)
-      setLoading(false)
+      
+      // REMOVED: Do not set loading to false here prematurely
       try {
         const res = await fetch(`/api/user?id=${localUser.id}`)
         const data = await res.json()
@@ -210,7 +240,7 @@ export default function StartingPage() {
           const todayNY = new Date(nowNY).toDateString()
           const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
           const lastResetDay = new Date(lastResetNY).toDateString()
-          if (todayNY!== lastResetDay) {
+          if (todayNY !== lastResetDay) {
             await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
             u.todayProfit = 0
             u.lastProfitReset = new Date()
@@ -220,11 +250,21 @@ export default function StartingPage() {
           if(u.currentTaskProducts && u.currentTaskProducts.length > 0) {
             setShowDetail(true)
           }
+        } else {
+          // Fallback to local profile snapshot cache memory state data parameters if API query drops
+          setUser(localUser)
         }
-      } catch(e) { console.error(e) }
+      } catch(e) { 
+        console.error(e) 
+        setUser(localUser) // Error fallback safety parameters assignment assignment rule
+      } finally {
+        // FIXED: Only release the initialization load screen layout block now that all parameters exist
+        setLoading(false) 
+      }
     }
     fetchUser()
   }, [router])
+
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
@@ -245,9 +285,17 @@ export default function StartingPage() {
     else { setMsg(data.error) }
   }
 
-  if (loading ||!user) return null
+  if (loading || !user) return null
   if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
-    return <StartingDetail products={user.currentTaskProducts} onBack={() => setShowDetail(false)} onSubmit={handleSubmit} vipLevel={user.vipLevel} />
+    return (
+      <StartingDetail 
+        products={user.currentTaskProducts} 
+        onBack={() => setShowDetail(false)} 
+        onSubmit={handleSubmit} 
+        vipLevel={user.vipLevel} 
+        walletBalance={user.walletBalance || 0} // FIXED: Explicitly maps the active user wallet state directly into the interface calculations
+      />
+    )
   }
 
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
