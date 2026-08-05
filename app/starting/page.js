@@ -287,11 +287,19 @@ export default function StartingPage() {
   }
 
   const handleSubmit = async () => {
+    if(!user || !user.id) { setMsg('User not loaded. Refresh page.'); return } // FIX 500
     setMsg('Submitting...')
-    const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
-    const data = await res.json()
-    if(res.ok) { setUser(data.user); localStorage.setItem('user', JSON.stringify(data.user)); setShowDetail(false); setMsg('Task Completed! Payout Received') }
-    else { setMsg(data.error) }
+    console.log('Submitting with userId:', user.id)
+    try {
+      const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
+      const data = await res.json()
+      console.log('Submit response:', res.status, data)
+      if(res.ok) { setUser(data.user); localStorage.setItem('user', JSON.stringify(data.user)); setShowDetail(false); setMsg('Task Completed! Payout Received') }
+      else { setMsg(data.error || `Error ${res.status}`) }
+    } catch(e) {
+      console.error('submit fetch error', e)
+      setMsg('Network error. Try again.')
+    }
   }
 
   if (loading ||!user) return null
