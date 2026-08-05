@@ -13,7 +13,7 @@ const VIP_CONFIG = {
 
 export async function POST(req) {
   try {
-    const { userId, taskId } = await req.json()
+    const { userId } = await req.json()
     if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
@@ -26,35 +26,26 @@ export async function POST(req) {
     if(!config) return NextResponse.json({ error: 'VIP not configured' }, { status: 400 })
 
     const profitRate = config.profit
-
     const totalPrice = taskProducts.reduce((sum, p) => sum + p.price, 0)
-    // FIX: fallback to profitRate if p.profit missing
     const totalProfit = taskProducts.reduce((sum, p) => sum + (p.profit || (p.price * profitRate)), 0)
     const totalReserve = totalPrice + totalProfit
 
     const pendingTask = await prisma.task.findFirst({
-      where: {
-        userId: userId,
-        status: 'pending',
-     ...(taskId && { id: taskId })
-      },
+      where: { userId: userId, status: 'pending' },
       orderBy: { createdAt: 'desc' }
     })
 
-    if(!pendingTask) return NextResponse.json({ error: 'No pending task found' }, { status: 400 })
-
     const nextTaskCount = user.tasksInCurrentSet + 1
     const isSetComplete = nextTaskCount >= config.tasksPerSet
-
-    // RULE: hold can only go down to 0. Balance can go negative
     const newHoldAmount = Math.max(0, (user.holdAmount || 0) - totalPrice)
 
-    const [updatedUser] = await prisma.$transaction([
+    // FIX: If no pendingTask record, just update user and create a completed record
+    const tx = [
       prisma.user.update({
         where: { id: userId },
         data: {
-          walletBalance: { increment: totalReserve }, // return capital + profit. Can be negative
-          holdAmount: newHoldAmount, // only remove the original price from hold
+          walletBalance: { increment: totalReserve },
+          holdAmount: newHoldAmount,
           todayProfit: { increment: totalProfit },
           currentTaskProducts: [],
           completedProducts: [...(user.completedProducts || []),...taskProducts],
@@ -63,18 +54,25 @@ export async function POST(req) {
           setsCompleted: isSetComplete? user.setsCompleted + 1 : user.setsCompleted,
           taskCompleted: { increment: 1 }
         }
-      }),
-      prisma.task.update({
-        where: { id: pendingTask.id },
-        data: {
-          status: 'completed',
-          completedAt: new Date(),
-          payoutAmount: totalReserve,
-          profitAmount: totalProfit
-        }
       })
-    ])
+    ]
 
+    if(pendingTask) {
+      tx.push(prisma.task.update({
+        where: { id: pendingTask.id },
+        data: { status: 'completed', completedAt: new Date(), payoutAmount: totalReserve, profitAmount: totalProfit }
+      }))
+    } else {
+      // create record so history is not lost
+      tx.push(prisma.task.create({
+        data: {
+          userId, status: 'completed', products: taskProducts,
+          totalPrice, totalProfit, totalReserve, payoutAmount: totalReserve, profitAmount: totalProfit, completedAt: new Date()
+        }
+      }))
+    }
+
+    await prisma.$transaction(tx)
     const finalUser = await prisma.user.findUnique({ where: { id: userId } })
 
     return NextResponse.json({ success: true, user: finalUser, message: 'Task Completed! Payout Received' })
