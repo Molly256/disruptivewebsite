@@ -1,5 +1,4 @@
 export const dynamic = 'force-dynamic'
-
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
@@ -13,10 +12,7 @@ const VIP_CONFIG = {
 
 export async function POST(req) {
   try {
-    const body = await req.json()
-    console.log('submit-task body:', body) // LOG
-    
-    const { userId } = body
+    const { userId } = await req.json()
     if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
@@ -53,7 +49,9 @@ export async function POST(req) {
           activeProducts: [],
           tasksInCurrentSet: isSetComplete? 0 : nextTaskCount,
           setsCompleted: isSetComplete? (user.setsCompleted || 0) + 1 : (user.setsCompleted || 0),
-          taskCompleted: { increment: 1 }
+          taskCompleted: { increment: 1 },
+          vipLevel: user.vipLevel,
+          vipId: user.vipId
         }
       })
     ]
@@ -61,13 +59,27 @@ export async function POST(req) {
     if(pendingTask) {
       tx.push(prisma.task.update({
         where: { id: pendingTask.id },
-        data: { status: 'completed', completedAt: new Date(), payoutAmount: totalReserve, profitAmount: totalProfit }
+        data: {
+          status: 'completed',
+          completedAt: new Date(),
+          totalPrice: totalPrice,
+          totalProfit: totalProfit
+        }
       }))
     } else {
       tx.push(prisma.task.create({
         data: {
-          userId, status: 'completed', products: taskProducts,
-          totalPrice, totalProfit, totalReserve, payoutAmount: totalReserve, profitAmount: totalProfit, completedAt: new Date()
+          userId,
+          status: 'completed',
+          vipLevel: user.vipLevel,
+          setNumber: (user.setsCompleted || 0) + 1,
+          progress: `${nextTaskCount}/${config.tasksPerSet}`,
+          productId: taskProducts[0]?.id || 0,
+          price: taskProducts[0]?.price || 0,
+          totalPrice,
+          totalProfit,
+          completedAt: new Date(),
+          taskCode: `T${Date.now()}${userId.slice(-4)}`
         }
       }))
     }

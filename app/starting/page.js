@@ -118,13 +118,12 @@ const winnerMessages = [
 const SCROLL_TIME = 1000
 const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
-
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
   const profitRate = 0.005
 
   const totalPrice = products.reduce((s, p) => s + p.price, 0)
   const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
-  const totalReserve = products.reduce((s, p) => s + (p.reserveAmount || (p.price * (1 + profitRate))), 0)
+  const totalReserve = totalPrice + totalProfit // FIX: removed reserveAmount
 
   const taskCode = `20260729${String(products[0]?.id || 0).padStart(10, '0')}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })

@@ -47,6 +47,7 @@ model User {
   currentTaskProducts Json @default("[]")
   activeProducts Json @default("[]")
   completedProducts Json @default("[]")
+  mergedTasks Json @default("[]") // <-- ADMIN MERGED TASKS. Array of merged product sets
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
