@@ -12,7 +12,7 @@ export async function GET(req) {
     const user = await prisma.user.findFirst({
       where: { 
         OR: [
-          { username: { equals: q, mode: 'insensitive' } }, // FIX 1: case insensitive
+          { username: { equals: q, mode: 'insensitive' } },
           { phone: q }
         ] 
       },
@@ -23,11 +23,19 @@ export async function GET(req) {
         countryName: true, 
         gender: true, 
         vipLevel: true, 
-        currentSet: true, 
+        vipId: true,
+        setsCompleted: true, // FIX: was currentSet
+        tasksInCurrentSet: true, // FIX: added this
         taskCompleted: true, 
         totalTasks: true,
-        totalBalance: true, // FIX 2: needed for Deposit/Upgrade block
-        specialBonus: true  // FIX 3: needed for Lucky Bonus block
+        walletBalance: true, // FIX: was totalBalance
+        holdAmount: true, // added for admin panel
+        specialBonus: true,
+        bonus: true, // added for admin panel
+        creditScore: true,
+        currentTaskProducts: true,
+        activeProducts: true,
+        createdAt: true
       }
     })
 
@@ -35,6 +43,6 @@ export async function GET(req) {
     return NextResponse.json({ user })
   } catch (e) {
     console.error('API /user/search error:', e)
-    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+    return NextResponse.json({ error: e.message }, { status: 500 }) // return real error for debugging
   }
 }
