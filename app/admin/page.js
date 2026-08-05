@@ -19,8 +19,8 @@ export default function AdminPage() {
   const [resetSearch, setResetSearch] = useState(''); const [resetUser, setResetUser] = useState(null);
   const [passSearch, setPassSearch] = useState(''); const [passUser, setPassUser] = useState(null); const [showPassInput, setShowPassInput] = useState(false); const [newPass, setNewPass] = useState('');
   const [mergeSearch, setMergeSearch] = useState(''); const [mergeUser, setMergeUser] = useState(null); const [selectedMergeSet, setSelectedMergeSet] = useState(''); const [selectedPhotos, setSelectedPhotos] = useState([]); const [mergePhotos, setMergePhotos] = useState([]);
-  const [editingPhoto, setEditingPhoto] = useState(null) // NEW
-  const [editData, setEditData] = useState({title:'', price:0}) // NEW
+  const [editingPhoto, setEditingPhoto] = useState(null)
+  const [editData, setEditData] = useState({title:'', price:0})
   const [depositSearch, setDepositSearch] = useState(''); const [depositUser, setDepositUser] = useState(null); const [depositAmount, setDepositAmount] = useState(''); const [showDepositInput, setShowDepositInput] = useState(false);
   const [withdrawList, setWithdrawList] = useState([]);
   const [notifSearch, setNotifSearch] = useState(''); const [notifUser, setNotifUser] = useState(null); const [showNotifInput, setShowNotifInput] = useState(false); const [notifMessage, setNotifMessage] = useState('');
@@ -73,12 +73,12 @@ export default function AdminPage() {
     if(res.ok) { alert('Merged. User tasks updated.'); setSelectedPhotos([]); setMergePhotos([]); setSelectedMergeSet('') } else alert('Failed')
   }
 
-  const editPrice = (photo) => { // NEW
+  const editPrice = (photo) => {
     setEditingPhoto(photo)
     setEditData({title: photo.title, price: photo.price})
   }
 
-  const saveEdit = async () => { // NEW
+  const saveEdit = async () => {
     const res = await fetch('/api/admin/merge-products/edit', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
@@ -94,7 +94,13 @@ export default function AdminPage() {
   const handleDeposit = async () => {
     if(!depositAmount) return alert('Enter amount')
     const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) })
-    if(res.ok) { alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed')
+    if(res.ok) {
+      const data = await res.json()
+      setDepositUser({...depositUser, walletBalance: data.newBalance}) // REFRESH
+      alert('Deposited');
+      setShowDepositInput(false);
+      setDepositAmount('')
+    } else alert('Failed')
   }
 
   const handleWithdraw = async (txId, action) => {
@@ -111,7 +117,13 @@ export default function AdminPage() {
   const handleGiveBonus = async () => {
     if(!bonusAmount) return alert('Enter amount')
     const res = await fetch('/api/admin/give-bonus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: bonusUser.id, amount: parseFloat(bonusAmount), adminId: admin.id }) })
-    if(res.ok) { alert('Bonus Given'); setShowBonusInput(false); setBonusAmount('') } else alert('Failed')
+    if(res.ok) {
+      const data = await res.json()
+      setBonusUser({...bonusUser, specialBonus: data.newBonus}) // REFRESH
+      alert('Bonus Given');
+      setShowBonusInput(false);
+      setBonusAmount('')
+    } else alert('Failed')
   }
 
   return (
@@ -128,7 +140,7 @@ export default function AdminPage() {
         {tab === 'upgrade' && (
           <div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(search, setFoundUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
-            {foundUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{foundUser.username}</b></p><p>{foundUser.phone}</p><p>Balance: ${foundUser.totalBalance}</p><div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'12px' }}><p>VIP Level: <span style={{color:'#FF1493', fontWeight:'700'}}>VIP{foundUser.vipLevel}</span></p><button onClick={() => setShowDropdown(!showDropdown)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Upgrade</button></div><p>Set: {foundUser.currentSet} | Tasks: {foundUser.taskCompleted}/{foundUser.totalTasks}</p>{showDropdown && (<div style={{ background:'#222', padding:'12px', marginTop:'12px', borderRadius:'12px' }}>{vipList.filter(v => v.id > 1).map(vip => (<div key={vip.id} onClick={() => setSelectedVip(vip)} style={{ padding:'12px', cursor:'pointer', background: selectedVip?.id === vip.id? '#FF1493' : 'transparent', borderRadius:'8px', marginBottom:'4px' }}>{vip.name} - ${vip.price} - {vip.tasks} Tasks</div>))}{selectedVip && <button onClick={handleUpgrade} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', marginTop:'10px', fontWeight:'800', cursor:'pointer' }}>Confirm Upgrade</button>}</div>)}</div>)}
+            {foundUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{foundUser.username}</b></p><p>{foundUser.phone}</p><p>Balance: ${foundUser.walletBalance}</p><div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'12px' }}><p>VIP Level: <span style={{color:'#FF1493', fontWeight:'700'}}>VIP{foundUser.vipLevel}</span></p><button onClick={() => setShowDropdown(!showDropdown)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Upgrade</button></div><p>Set: {foundUser.setsCompleted} | Tasks: {foundUser.taskCompleted}/{foundUser.totalTasks}</p>{showDropdown && (<div style={{ background:'#222', padding:'12px', marginTop:'12px', borderRadius:'12px' }}>{vipList.filter(v => v.id > 1).map(vip => (<div key={vip.id} onClick={() => setSelectedVip(vip)} style={{ padding:'12px', cursor:'pointer', background: selectedVip?.id === vip.id? '#FF1493' : 'transparent', borderRadius:'8px', marginBottom:'4px' }}>{vip.name} - ${vip.price} - {vip.tasks} Tasks</div>))}{selectedVip && <button onClick={handleUpgrade} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', marginTop:'10px', fontWeight:'800', cursor:'pointer' }}>Confirm Upgrade</button>}</div>)}</div>)}
           </div>
         )}
 
@@ -136,7 +148,7 @@ export default function AdminPage() {
         {tab === 'resetset' && (
           <div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={resetSearch} onChange={e => setResetSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(resetSearch, setResetUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
-            {resetUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{resetUser.username}</b></p><p>VIP{resetUser.vipLevel} Set {resetUser.currentSet}</p><p>Tasks: {resetUser.taskCompleted}/{resetUser.totalTasks}</p><button onClick={()=>handleResetSet(resetUser.currentSet === 1? 2 : 1)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700', width:'100%', cursor:'pointer' }}>Reset to Set {resetUser.currentSet === 1? 2 : 1}</button></div>)}
+            {resetUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{resetUser.username}</b></p><p>VIP{resetUser.vipLevel} Set {resetUser.setsCompleted}</p><p>Tasks: {resetUser.taskCompleted}/{resetUser.totalTasks}</p><button onClick={()=>handleResetSet(resetUser.setsCompleted === 1? 2 : 1)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700', width:'100%', cursor:'pointer' }}>Reset to Set {resetUser.setsCompleted === 1? 2 : 1}</button></div>)}
           </div>
         )}
 
@@ -193,7 +205,7 @@ export default function AdminPage() {
         {tab === 'deposit' && (
           <div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
-            {depositUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{depositUser.username}</b></p><p>Balance: ${depositUser.totalBalance}</p><div style={{ display:'flex', justifyContent:'space-between' }}><p>Deposit: $0</p><button onClick={()=>setShowDepositInput(true)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Deposit</button></div>{showDepositInput && (<div style={{ marginTop:'12px' }}><input value={depositAmount} onChange={e=>setDepositAmount(e.target.value)} placeholder="Amount USD" type="number" style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'8px' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', fontWeight:'800', cursor:'pointer' }}>Confirm Deposit</button></div>)}</div>)}
+            {depositUser && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><p><b>{depositUser.username}</b></p><p>Balance: ${depositUser.walletBalance}</p><div style={{ display:'flex', justifyContent:'space-between' }}><p>Deposit: $0</p><button onClick={()=>setShowDepositInput(true)} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 16px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Deposit</button></div>{showDepositInput && (<div style={{ marginTop:'12px' }}><input value={depositAmount} onChange={e=>setDepositAmount(e.target.value)} placeholder="Amount USD" type="number" style={{ width:'100%', padding:'12px', borderRadius:'10px', marginBottom:'8px' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'10px', width:'100%', fontWeight:'800', cursor:'pointer' }}>Confirm Deposit</button></div>)}</div>)}
           </div>
         )}
 
