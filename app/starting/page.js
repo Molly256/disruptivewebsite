@@ -371,7 +371,7 @@ export default function StartingPage() {
           </div>
 
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Lucky Bonus</div>
+            <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Bonus</div>
             <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{(user.specialBonus || 0).toFixed(2)} USD</div>
           </div>
         </div>
