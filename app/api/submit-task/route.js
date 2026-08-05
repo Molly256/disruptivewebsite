@@ -25,15 +25,18 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel]
     if(!config) return NextResponse.json({ error: 'VIP not configured' }, { status: 400 })
 
+    const profitRate = config.profit
+
     const totalPrice = taskProducts.reduce((sum, p) => sum + p.price, 0)
-    const totalProfit = taskProducts.reduce((sum, p) => sum + p.profit, 0)
-    const totalReserve = totalPrice + totalProfit // price + profit to return
+    // FIX: fallback to profitRate if p.profit missing
+    const totalProfit = taskProducts.reduce((sum, p) => sum + (p.profit || (p.price * profitRate)), 0)
+    const totalReserve = totalPrice + totalProfit
 
     const pendingTask = await prisma.task.findFirst({
       where: {
         userId: userId,
         status: 'pending',
-      ...(taskId && { id: taskId })
+     ...(taskId && { id: taskId })
       },
       orderBy: { createdAt: 'desc' }
     })

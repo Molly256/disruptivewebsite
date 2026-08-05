@@ -124,7 +124,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
 
   const totalPrice = products.reduce((s, p) => s + p.price, 0)
   const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
-  const totalReserve = products.reduce((s, p) => s + p.reserveAmount, 0)
+  const totalReserve = products.reduce((s, p) => s + (p.reserveAmount || (p.price * (1 + profitRate))), 0)
 
   const taskCode = `20260729${String(products[0]?.id || 0).padStart(10, '0')}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -132,11 +132,10 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
   const hasPendingTask = products && products.length > 0
   const balanceAfterPurchase = walletBalance - totalPrice
 
-  // FIX: If pending task, only lock submit if balance is negative
-  // If new task, lock if this purchase would make balance negative
+  // FIX: If pending task, never lock. Only lock new task if balance would go negative
   const isLocked = hasPendingTask
-   ? walletBalance < 0
-    : (walletBalance >= 0 && balanceAfterPurchase < 0)
+   ? false
+    : (balanceAfterPurchase < 0)
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
