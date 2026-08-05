@@ -11,7 +11,7 @@ const VIP_CONFIG = {
 
 export async function POST(req) {
   try {
-    const { userId } = await req.json()
+    const { userId, taskId } = await req.json() // ADDED: taskId from Records button
     if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
@@ -26,21 +26,50 @@ export async function POST(req) {
     const totalReserve = taskProducts.reduce((sum, p) => sum + p.reserveAmount, 0) // price + profit
     const totalProfit = taskProducts.reduce((sum, p) => sum + p.profit, 0)
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        walletBalance: { increment: totalReserve }, // return capital + profit
-        holdAmount: { decrement: totalReserve }, // remove from hold
-        todayProfit: { increment: totalProfit },
-        currentTaskProducts: [],
-        completedProducts: [...user.completedProducts,...taskProducts],
-        activeProducts: [],
-      }
+    // Find the pending task to mark completed
+    const pendingTask = await prisma.task.findFirst({
+      where: {
+        userId: userId,
+        status: 'pending',
+       ...(taskId && { id: taskId }) // if taskId sent from records page
+      },
+      orderBy: { createdAt: 'desc' }
     })
 
-    return NextResponse.json({ success: true, user: updatedUser })
+    if(!pendingTask) return NextResponse.json({ error: 'No pending task found' }, { status: 400 })
+
+    const isSetComplete = user.tasksInCurrentSet >= config.tasksPerSet
+
+    // TRANSACTION: update user + mark task complete
+    const [updatedUser] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          walletBalance: { increment: totalReserve }, // return capital + profit
+          holdAmount: { decrement: totalReserve }, // remove from hold
+          todayProfit: { increment: totalProfit },
+          currentTaskProducts: [],
+          completedProducts: [...(user.completedProducts || []),...taskProducts],
+          activeProducts: [],
+          tasksInCurrentSet: isSetComplete? 0 : user.tasksInCurrentSet,
+          setsCompleted: isSetComplete? user.setsCompleted + 1 : user.setsCompleted,
+          taskCompleted: { increment: 1 }
+        }
+      }),
+      prisma.task.update({ // ADDED: mark task completed
+        where: { id: pendingTask.id },
+        data: {
+          status: 'completed',
+          completedAt: new Date()
+        }
+      })
+    ])
+
+    const finalUser = await prisma.user.findUnique({ where: { id: userId } })
+
+    return NextResponse.json({ success: true, user: finalUser, message: 'Task Completed! Payout Received' })
   } catch (err) {
-    console.error(err)
+    console.error('submit-task error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

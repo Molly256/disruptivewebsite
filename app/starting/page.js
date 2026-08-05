@@ -131,9 +131,14 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
   const taskCode = `20260729${String(products[0]?.id || 0).padStart(10, '0')}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
-  // CHANGED: Allow negative balance. Only lock if this new purchase would push you below 0 AND you're not already negative
+  const hasPendingTask = products && products.length > 0
   const balanceAfterPurchase = walletBalance - totalPrice
-  const isLocked = walletBalance >= 0 && balanceAfterPurchase < 0
+
+  // FIX: If pending task, only lock submit if balance is negative
+  // If new task, lock if this purchase would make balance negative
+  const isLocked = hasPendingTask
+    ? walletBalance < 0
+    : (walletBalance >= 0 && balanceAfterPurchase < 0)
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
@@ -182,10 +187,16 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
               <span>{(walletBalance || 0).toFixed(2)} USD</span>
             </div>
 
+            {hasPendingTask && isLocked && (
+              <div style={{marginTop: 8, padding: 8, background: '#FFF3F3', border: '1px solid #FFCCCC', borderRadius: 6, fontSize: 12, color: '#CC0000', fontWeight: 600}}>
+                Balance is negative. Deposit {Math.abs(walletBalance).toFixed(2)} USD to enable submit.
+              </div>
+            )}
+
             <hr style={{margin: '8px 0'}}/>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{totalPrice.toFixed(2)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{totalProfit.toFixed(2)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: isLocked? '#FF0000' : '#000' }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
           </div>
 
           {/* Submit button locks up automatically if user balance is short, unlocking instantly once they deposit */}
@@ -210,217 +221,5 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
       </div>
       <BottomNav />
     </div>
-  )
-}
-
-export default function StartingPage() {
-  const router = useRouter()
-  // FIXED: Repaired broken bracket syntax parser errors on state definitions
-  const [showDetail, setShowDetail] = useState(false)
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [msg, setMsg] = useState('')
-  const [showToast, setShowToast] = useState(false) // ADDED: for balance < 50 toast
-
-  const setSize = vip1Set1.length
-  const setFinished = user? user.taskCompleted >= setSize : false
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const saved = localStorage.getItem('user')
-      if(!saved) { router.push('/login'); return }
-      const localUser = JSON.parse(saved)
-
-      // REMOVED: Do not set loading to false here prematurely
-      try {
-        const res = await fetch(`/api/user?id=${localUser.id}`)
-        const data = await res.json()
-        if(res.ok && data.user) {
-          let u = data.user
-          const lastReset = new Date(u.lastProfitReset)
-          const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
-          const todayNY = new Date(nowNY).toDateString()
-          const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
-          const lastResetDay = new Date(lastResetNY).toDateString()
-          if (todayNY!== lastResetDay) {
-            await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
-            u.todayProfit = 0
-            u.lastProfitReset = new Date()
-          }
-          setUser(u)
-          localStorage.setItem('user', JSON.stringify(u))
-          if(u.currentTaskProducts && u.currentTaskProducts.length > 0) {
-            setShowDetail(true)
-          }
-        } else {
-          // Fallback to local profile snapshot cache memory state data parameters if API query drops
-          setUser(localUser)
-        }
-      } catch(e) {
-        console.error(e)
-        setUser(localUser) // Error fallback safety parameters assignment rule
-      } finally {
-        // FIXED: Only release the initialization load screen layout block now that all parameters exist
-        setLoading(false)
-      }
-    }
-    fetchUser()
-  }, [router])
-
-  const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
-
-  const handleStart = async () => {
-    if (setFinished) { setMsg('Set completed. Contact Customer Service to reset.'); return }
-
-    const balance = parseFloat(user.walletBalance || 0)
-    // ADDED: SCENARIO 1 - Check $50 before starting
-    if(balance < 50){
-      setShowToast(true)
-      setTimeout(() => setShowToast(false), 2000) // disappears after 2s
-      return
-    }
-
-    setMsg('Starting...')
-    const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
-    const data = await res.json()
-    if(res.ok) { setUser(data.user); localStorage.setItem('user', JSON.stringify(data.user)); setShowDetail(true); setMsg('') }
-    else { setMsg(data.error) }
-  }
-
-  const handleSubmit = async () => {
-    setMsg('Submitting...')
-    const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
-    const data = await res.json()
-    if(res.ok) { setUser(data.user); localStorage.setItem('user', JSON.stringify(data.user)); setShowDetail(false); setMsg('Task Completed! Payout Received') }
-    else { setMsg(data.error) }
-  }
-
-  if (loading ||!user) return null
-  if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
-    return (
-      <StartingDetail
-        products={user.currentTaskProducts}
-        onBack={() => setShowDetail(false)}
-        onSubmit={handleSubmit}
-        vipLevel={user.vipLevel}
-        walletBalance={user.walletBalance || 0} // FIXED: Explicitly maps the active user wallet state directly into the interface calculations
-      />
-    )
-  }
-
-  const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
-
-  return (
-    <>
-      <AppHeader />
-
-      {/* ADDED: BLACK TOAST like screenshot */}
-      {showToast && (
-        <div style={{
-          position: 'fixed',
-          top: '80px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.85)',
-          color: '#FFF',
-          padding: '10px 16px',
-          borderRadius: '8px',
-          fontSize: '14px',
-          fontWeight: '600',
-          zIndex: 99999,
-          animation: 'fadeInOut 2s ease'
-        }}>
-          Balance below 50 unable to continue trading
-        </div>
-      )}
-
-      <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', background: '#F2F2F2', width: '100%' }}>
-        <div className="marquee-container" style={{ margin: 0, padding: 0, background: '#cc0000', overflow: 'hidden' }}>
-          <div className="marquee-content" style={{ display: 'flex', animation: 'scroll 600s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
-            {allMessages.map((msg, i) => (
-              <span key={i} className="marquee-item" style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#FFF', flexShrink: 0 }}>{msg}</span>
-            ))}
-          </div>
-        </div>
-
-        <style jsx>{`
-          @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); }}
-          @keyframes fadeInOut { 0% {opacity: 0; transform: translateX(-50%) translateY(-10px)} 10% {opacity: 1; transform: translateX(-50%) translateY(0)} 90% {opacity: 1} 100% {opacity: 0; transform: translateX(-50%) translateY(-10px)} }
-        `}</style>
-
-       <div className="user-bar" style={{ width: '100%', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', borderBottom: '1px solid #F0F0F0', boxSizing: 'border-box' }}>
-          <div>
-            <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '400', color: '#666' }}>Hello,</p>
-            <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#CC0000' }}>{user.username}</p>
-          </div>
-          <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="vip-text" style={{ fontSize: '15px', fontWeight: '700', color: '#FF7A00' }}>VIP{user.vipLevel}</span>
-            <svg style={{ width: '22px', height: '22px', color: '#3B82F6' }} fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </div>
-        </div>
-
-        <div style={{ width: '100%', background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <video
-            src="/product-video.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata" // FIXED: loads fast
-            style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block' }}
-          />
-        </div>
-
-        <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
-          <button onClick={handleStart} disabled={setFinished} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'not-allowed' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
-            {setFinished? 'Contact Customer Service to Reset' : `Starting (${user.tasksInCurrentSet || 0} / ${setSize})`}
-          </button>
-          {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
-        </div>
-
-        <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px', maxWidth: '1200px', margin: '8px auto 0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
-            <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px', letterSpacing: '0.5px' }}>TODAY'S COMMISSION</div>
-            <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.todayProfit || 0).toFixed(2)} USD</div>
-            <div style={{ fontSize: '12px', color: '#999' }}>The displayed amount reflects today's earned commissions.</div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
-              <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>BALANCE</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0', color: user.walletBalance < 0? '#FF0000' : '#000' }}>{(user.walletBalance || 0).toFixed(2)} USD</div>
-              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects deposited + hold + special bonus.</div>
-            </div>
-            <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>
-              <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>🧊</div>
-              <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>HOLD AMOUNT</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.holdAmount || 0).toFixed(2)} USD</div>
-              <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Money for tasks not yet submitted.</div>
-            </div>
-          </div>
-
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Bonus</div>
-            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{(user.specialBonus || 0).toFixed(2)} USD</div>
-          </div>
-        </div>
-
-        <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '12px', textAlign: 'center', maxWidth: '1200px', margin: '12px auto 0 auto' }}>
-          <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Important Notice</div>
-          <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Online Support Hours 09:45 - 23:10</div>
-          <div style={{ fontSize: '13px' }}>Please contact online support for your assistance</div>
-        </div>
-
-        <div style={{ textAlign: 'center', padding: '30px 16px 20px 16px', background: '#000', width: '100%' }}>
-          <img src="/logo.png" alt="logo" style={{ width: '120px', marginBottom: '12px' }} />
-          <div style={{ fontSize: '13px', color: '#FFF' }}>Copyrights 2026 © Disruptive Advertising Agency</div>
-        </div>
-      </div>
-      <BottomNav />
-    </>
   )
 }

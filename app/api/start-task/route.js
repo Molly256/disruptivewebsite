@@ -8,7 +8,13 @@ const VIP_CONFIG = {
 }
 
 const ALL_PRODUCTS = {
-  1: { 1: vip1Set1, 2: vip1Set2 },
+ 1: { 1: vip1Set1, 2: vip1Set2 },
+}
+
+const generateTaskCode = () => {
+  const date = new Date().toISOString().slice(0,10).replace(/-/g,'')
+  const rand = Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')
+  return `${date}${rand}`
 }
 
 export async function POST(req) {
@@ -23,13 +29,14 @@ export async function POST(req) {
     const currentSet = (user.setsCompleted || 0) + 1
     const taskNumber = (user.tasksInCurrentSet || 0) + 1
 
+    if(taskNumber > config.tasksPerSet) {
+      return NextResponse.json({ error: 'Set completed' }, { status: 400 })
+    }
+
     const baseSet = ALL_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!baseSet) return NextResponse.json({ error: 'Product set configuration missing' }, { status: 400 })
 
     let productsToAssign = []
-
-    // REMOVED: adminMergedProductIds check because field doesn't exist in schema
-    // If you want merges later, store them in activeProducts Json field
 
     // Default: assign 1 product by task number
     const normalProduct = baseSet.find(p => p.id === taskNumber)
@@ -41,46 +48,64 @@ export async function POST(req) {
 
     let totalPrice = 0
     let totalReserveAdded = 0
+    let totalProfit = 0
     const taskProducts = []
 
     productsToAssign.forEach(p => {
       const profitAmount = parseFloat((p.price * config.profit).toFixed(2))
       const reserveAmount = parseFloat((p.price + profitAmount).toFixed(2))
 
-      // Keep image path dynamic based on set
       const imageIndex = ((p.id - 1) % 40) + 1
-      const localImagePath = `/vip1/set${currentSet}/photo${imageIndex}.jpg`
+      const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${imageIndex}.jpg`
 
       totalPrice += p.price
       totalReserveAdded += reserveAmount
+      totalProfit += profitAmount
 
       taskProducts.push({
         id: p.id,
         name: p.name,
         image: localImagePath,
-        rating: p.rating,
         price: p.price,
         profit: profitAmount,
         reserveAmount
       })
     })
 
-    // Calculate final balance outcome (can become negative)
+    const taskCode = generateTaskCode()
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        walletBalance: newWallet, // Stores negative balance directly if user is short
-        holdAmount: newHold,
-        currentTaskProducts: taskProducts,
-        tasksInCurrentSet: user.tasksInCurrentSet + 1,
-        // REMOVED: adminMergedProductIds: null
-      }
-    })
+    // WRAP IN TRANSACTION: update user + create task
+    const [updatedUser] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: {
+          walletBalance: newWallet,
+          holdAmount: newHold,
+          currentTaskProducts: taskProducts,
+          tasksInCurrentSet: user.tasksInCurrentSet + 1,
+        }
+      }),
+      prisma.task.create({ // ADDED: save task to DB for Records
+        data: {
+          userId: userId,
+          vipLevel: user.vipLevel,
+          setNumber: currentSet,
+          progress: `${taskNumber}/${config.tasksPerSet}`,
+          productId: normalProduct.id,
+          price: totalPrice,
+          totalPrice: totalPrice,
+          totalProfit: totalProfit,
+          status: 'pending',
+          taskCode: taskCode,
+        }
+      })
+    ])
 
-    return NextResponse.json({ success: true, user: updatedUser })
+    const finalUser = await prisma.user.findUnique({ where: { id: userId } })
+
+    return NextResponse.json({ success: true, user: finalUser })
   } catch (err) {
     console.error('start-task error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

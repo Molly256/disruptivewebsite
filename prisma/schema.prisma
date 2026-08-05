@@ -52,9 +52,33 @@ model User {
   updatedAt DateTime @updatedAt
 
   transactions Transaction[]
+  tasks Task[] // ADDED: relation to tasks
   merges TaskMerge[]
   notifications Notification[]
   adminLogs AdminLog[]
+}
+
+// NEW: Task table for Records page
+model Task {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  vipLevel Int // so we know which vip folder to pull images from
+  setNumber Int // 1 or 2
+  progress String // "3/40"
+  productId Int // index from vip1Set1.js
+
+  price Float // snapshot price at time of task
+  totalPrice Float
+  totalProfit Float
+
+  status String @default("pending") // "pending" | "completed"
+
+  taskCode String @unique // 202607290000016
+
+  createdAt DateTime @default(now())
+  completedAt DateTime?
 }
 
 model Transaction {

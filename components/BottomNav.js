@@ -1,9 +1,10 @@
 'use client'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation' // added usePathname
 import { useEffect, useState } from 'react'
 
 export default function BottomNav() {
   const router = useRouter()
+  const pathname = usePathname() // to check active tab
   const [isDesktop, setIsDesktop] = useState(false)
 
   // check screen size on mount + resize
@@ -14,8 +15,6 @@ export default function BottomNav() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  // MOBILE: centered 430px pill
-  // DESKTOP: full width bar
   const navStyle = {
     position: 'fixed',
     bottom: 0,
@@ -34,14 +33,15 @@ export default function BottomNav() {
     borderTop: '1px solid #222'
   }
 
-  const iconStyle = { 
+  const iconStyle = (isActive) => ({ 
     textAlign: 'center', 
     cursor: 'pointer',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: '4px'
-  }
+    gap: '4px',
+    opacity: isActive? 1 : 0.6 // dim inactive
+  })
 
   const labelStyle = { 
     fontSize: isDesktop ? '12px' : '10px', 
@@ -52,7 +52,7 @@ export default function BottomNav() {
   return (
     <nav style={navStyle}>
       {/* HOME */}
-      <div onClick={() => router.push('/dashboard')} style={iconStyle}>
+      <div onClick={() => router.push('/dashboard')} style={iconStyle(pathname === '/dashboard')}>
         <svg width={isDesktop ? "28" : "24"} height={isDesktop ? "28" : "24"} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         </svg>
@@ -102,8 +102,8 @@ export default function BottomNav() {
         <div style={labelStyle}>Starting</div>
       </div>
 
-      {/* RECORDS */}
-      <div onClick={() => router.push('/records')} style={iconStyle}>
+      {/* RECORDS - THIS IS CLICKABLE */}
+      <div onClick={() => router.push('/records')} style={iconStyle(pathname === '/records')}>
         <svg width={isDesktop ? "28" : "24"} height={isDesktop ? "28" : "24"} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2"/>
           <line x1="9" y1="3" x2="9" y2="21"/>
