@@ -13,12 +13,12 @@ export default function AppHeader() {
       alignItems: 'center',
       padding: '0 16px',
       height: '64px',
-      borderBottom: '1px solid #F0F0F0', // CHANGED: add subtle line
+      borderBottom: '1px solid #F0F0F0',
       position: 'fixed',
       top: 0,
-      left: 0,                    // CHANGED: was '50%'
-      width: '100%',              // CHANGED: full width
-      maxWidth: '100%',           // CHANGED: was 430px
+      left: 0,
+      width: '100%',
+      maxWidth: '100%',
       zIndex: 99999,
       boxSizing: 'border-box'
     }}>
@@ -27,8 +27,8 @@ export default function AppHeader() {
         alignItems: 'center',
         height: '100%',
         width: '100%',
-        maxWidth: '1400px',         // CHANGED: content max width for desktop
-        margin: '0 auto',           // CHANGED: center content inside full width header
+        maxWidth: '1400px',
+        margin: '0 auto',
         justifyContent: 'space-between'
       }}>
         <div style={{ 
@@ -75,17 +75,19 @@ export default function AppHeader() {
           <div
             onClick={() => router.push('/profile')}
             style={{
-              width: '40px',              // CHANGED: was 64px, too big
-              height: '40px',             // CHANGED: was 64px
+              width: '56px',              // Bigger click area
+              height: '48px',             
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              background: '#F5F5F5',      // light circle bg
+              borderRadius: '50%',        // make it round
+              fontSize: '28px',           // emoji size
+              lineHeight: 1
             }}
           >
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="#000"> {/* CHANGED: was 64 */}
-              <path d="M12 6C13.1 6 14 6.9 14 8C14 9.1 13.1 10 12 10C10.9 10 10 9.1 10 8C10 6.9 10.9 6 12 6ZM12 16C14.7 16 17.8 17.29 18 18H6C6.23 17.28 9.31 16 12 16Z"/>
-            </svg>
+            👤
           </div>
         </div>
       </div>
