@@ -14,11 +14,14 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
     }
 
-    // 1. Add to specialBonus and return updated user
+    // 1. Add to BOTH specialBonus AND walletBalance
     const user = await prisma.user.update({ 
       where: { id: userId }, 
-      data: { specialBonus: { increment: amt } },
-      select: { id: true, username: true, specialBonus: true } // return updated
+      data: { 
+        specialBonus: { increment: amt },   // For display: "Special Lucky Bonus"
+        walletBalance: { increment: amt }   // So user can actually withdraw it
+      },
+      select: { id: true, username: true, specialBonus: true, walletBalance: true } // return updated
     })
 
     // 2. Log admin action
@@ -29,7 +32,7 @@ export async function POST(req) {
       }
     })
 
-    // 3. Also create a transaction record so user can see it in history
+    // 3. Transaction history
     await prisma.transaction.create({
       data: {
         userId,
@@ -39,7 +42,11 @@ export async function POST(req) {
       }
     })
 
-    return NextResponse.json({ success: true, newBonus: user.specialBonus })
+    return NextResponse.json({ 
+      success: true, 
+      newBonus: user.specialBonus,
+      newBalance: user.walletBalance 
+    })
   } catch (e) { 
     console.error('Give bonus error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 }) 

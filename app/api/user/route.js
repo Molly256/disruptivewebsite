@@ -11,9 +11,8 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
 
-    // Prisma cuid is string, so don't parseInt
     const user = await prisma.user.findUnique({
-      where: { id: String(id) }, // force to string
+      where: { id: String(id) },
       select: {
         id: true,
         username: true,
@@ -25,21 +24,20 @@ export async function GET(req) {
         createdAt: true,
         updatedAt: true,
         vipLevel: true,
-        totalBalance: true, // your DB column
+        walletBalance: true, // FIX: was totalBalance
         holdAmount: true,
         bonus: true,
-        specialBonus: true,
+        specialBonus: true, // <-- STAYS SEPARATE
         taskCompleted: true,
-        currentSet: true,
+        setsCompleted: true, // FIX: was currentSet
         totalTasks: true,
-        setCompleted: true,
         activeProducts: true,
         completedProducts: true,
         currentTaskProducts: true, 
         mergedTasks: true,
-        todayProfit: true, // <-- ADDED
-        lastProfitReset: true, // <-- ADDED
-        tasksInCurrentSet: true, // <-- ADDED
+        todayProfit: true,
+        lastProfitReset: true,
+        tasksInCurrentSet: true,
       }
     })
 
@@ -47,18 +45,10 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // ONLY CHANGE: map DB names to what frontend expects
-    const fixedUser = {
-     ...user,
-      walletBalance: user.totalBalance, // <-- FIX BOUNCE: frontend uses walletBalance
-      tasksInCurrentSet: user.tasksInCurrentSet ?? user.currentSet ?? 0, // fallback
-      todayProfit: user.todayProfit ?? 0,
-      lastProfitReset: user.lastProfitReset ?? user.createdAt,
-    }
-
-    return NextResponse.json({ user: fixedUser })
+    // No mapping needed anymore. Send as-is
+    return NextResponse.json({ user })
   } catch (e) {
     console.error('API /user error:', e)
-    return NextResponse.json({ error: 'Request failed' }, { status: 500 })
+    return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
