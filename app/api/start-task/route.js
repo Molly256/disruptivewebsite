@@ -48,7 +48,7 @@ export async function POST(req) {
 
     let totalPrice = 0
     let totalReserveAdded = 0
-    let totalProfit = 0 // ADD
+    let totalProfit = 0
     const taskProducts = []
 
     productsToAssign.forEach(p => {
@@ -57,11 +57,11 @@ export async function POST(req) {
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${p.id}.jpg`
       totalPrice += p.price
       totalReserveAdded += reserveAmount
-      totalProfit += profitAmount // ADD
+      totalProfit += profitAmount
       taskProducts.push({ id: p.id, name: p.name, image: localImagePath, price: p.price, profit: profitAmount, reserveAmount })
     })
 
-    const taskCode = generateTaskCode() // ADD
+    const taskCode = generateTaskCode()
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
@@ -80,7 +80,7 @@ export async function POST(req) {
           userId,
           vipLevel: user.vipLevel,
           setNumber: currentSet,
-          taskNumber: index + 1,
+          // taskNumber: index + 1, <-- REMOVED THIS LINE
           progress: `${index + 1}/${config.tasksPerSet}`, // 1/40
           productId: taskProducts[0].id,
           price: totalPrice,
