@@ -25,14 +25,13 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    // If user already has a task, force them to submit it
     if(user.currentTaskProducts && user.currentTaskProducts.length > 0) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
     const config = VIP_CONFIG[user.vipLevel]
     const currentSet = (user.setsCompleted || 0) + 1
-    const index = user.tasksInCurrentSet || 0 // 0 = first task
+    const index = user.tasksInCurrentSet || 0
 
     if(index >= config.tasksPerSet) {
       return NextResponse.json({ error: 'Set completed' }, { status: 400 })
@@ -43,17 +42,10 @@ export async function POST(req) {
 
     let productsToAssign = []
     const merged = user.mergedTasks || []
-
-    if(merged.length > 0 && merged[index]) {
-      productsToAssign = merged[index]
-    }
+    if(merged.length > 0 && merged[index]) productsToAssign = merged[index]
     else {
       const normalProduct = baseSet[index]
       if (normalProduct) productsToAssign.push(normalProduct)
-    }
-
-    if (productsToAssign.length === 0) {
-      return NextResponse.json({ error: 'No items available for this task' }, { status: 400 })
     }
 
     let totalPrice = 0
@@ -65,24 +57,20 @@ export async function POST(req) {
       const profitAmount = parseFloat((p.price * config.profit).toFixed(2))
       const reserveAmount = parseFloat((p.price + profitAmount).toFixed(2))
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${p.id}.jpg`
-
       totalPrice += p.price
       totalReserveAdded += reserveAmount
       totalProfit += profitAmount
-
-      taskProducts.push({
-        id: p.id, name: p.name, image: localImagePath,
-        price: p.price, profit: profitAmount, reserveAmount
-      })
+      taskProducts.push({ id: p.id, name: p.name, image: localImagePath, price: p.price, profit: profitAmount, reserveAmount })
     })
 
     const taskCode = generateTaskCode()
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    const [updatedUser] = await prisma.$transaction([
+    // ATOMIC UPDATE
+    await prisma.$transaction([
       prisma.user.update({
-        where: { id: userId, tasksInCurrentSet: index }, // ATOMIC LOCK: prevents double click skip
+        where: { id: userId, tasksInCurrentSet: index },
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
@@ -101,9 +89,18 @@ export async function POST(req) {
     ])
 
     const finalUser = await prisma.user.findUnique({ where: { id: userId } })
-    return NextResponse.json({ success: true, user: finalUser })
+
+    return NextResponse.json({
+      success: true,
+      user: finalUser,
+      currentTaskNumber: index + 1
+    })
+
   } catch (err) {
     console.error('start-task error:', err)
+    if (err.code === 'P2025') {
+      return NextResponse.json({ error: 'Task processing conflict. Please wait.' }, { status: 409 })
+    }
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

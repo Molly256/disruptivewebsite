@@ -33,16 +33,16 @@ export async function POST(req) {
       orderBy: { createdAt: 'desc' }
     })
 
-    const nextTaskCount = (user.tasksInCurrentSet || 0) + 1
+    const currentIndex = user.tasksInCurrentSet || 0
+    const nextTaskCount = currentIndex + 1
     const isSetComplete = nextTaskCount >= config.tasksPerSet
-    const newHoldAmount = Math.max(0, (user.holdAmount || 0) - totalPrice)
 
     const tx = [
       prisma.user.update({
-        where: { id: userId },
+        where: { id: userId, tasksInCurrentSet: currentIndex }, // ATOMIC LOCK: prevents skip
         data: {
-          walletBalance: { increment: totalReserve },
-          holdAmount: newHoldAmount,
+          walletBalance: { increment: totalReserve }, // return price + profit
+          holdAmount: 0.00, // FIX: Force reset to 0.00
           todayProfit: { increment: totalProfit },
           currentTaskProducts: [],
           completedProducts: [...(user.completedProducts || []),...taskProducts],
