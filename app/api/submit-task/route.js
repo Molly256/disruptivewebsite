@@ -27,6 +27,7 @@ export async function POST(req) {
     const totalPrice = taskProducts.reduce((sum, p) => sum + (p.price || 0), 0)
     const totalProfit = taskProducts.reduce((sum, p) => sum + (p.profit || (p.price * profitRate)), 0)
     const totalReserve = totalPrice + totalProfit
+    const tasksCompletedInThisSubmit = taskProducts.length // FIX 1: Count how many tasks we actually completed
 
     const pendingTask = await prisma.task.findFirst({
       where: { userId: userId, status: 'pending' },
@@ -34,22 +35,22 @@ export async function POST(req) {
     })
 
     const currentIndex = user.tasksInCurrentSet || 0
-    const nextTaskCount = currentIndex + 1
+    const nextTaskCount = currentIndex + tasksCompletedInThisSubmit // FIX 2: Add 1 or 2 or 3
     const isSetComplete = nextTaskCount >= config.tasksPerSet
 
     const tx = [
       prisma.user.update({
-        where: { id: userId, tasksInCurrentSet: currentIndex }, // ATOMIC LOCK: prevents skip
+        where: { id: userId, tasksInCurrentSet: currentIndex }, // ATOMIC LOCK
         data: {
-          walletBalance: { increment: totalReserve }, // return price + profit
-          holdAmount: 0.00, // FIX: Force reset to 0.00
+          walletBalance: { increment: totalReserve },
+          holdAmount: 0.00,
           todayProfit: { increment: totalProfit },
           currentTaskProducts: [],
           completedProducts: [...(user.completedProducts || []),...taskProducts],
           activeProducts: [],
-          tasksInCurrentSet: isSetComplete? 0 : nextTaskCount,
+          tasksInCurrentSet: isSetComplete? 0 : nextTaskCount, // now goes 6 + 2 = 8 if merged
           setsCompleted: isSetComplete? (user.setsCompleted || 0) + 1 : (user.setsCompleted || 0),
-          taskCompleted: { increment: 1 },
+          taskCompleted: { increment: tasksCompletedInThisSubmit }, // FIX 3: Add 1 or 2
           vipLevel: user.vipLevel,
           vipId: user.vipId
         }
@@ -63,7 +64,8 @@ export async function POST(req) {
           status: 'completed',
           completedAt: new Date(),
           totalPrice: totalPrice,
-          totalProfit: totalProfit
+          totalProfit: totalProfit,
+          progress: `${nextTaskCount}/${config.tasksPerSet}` // update progress too
         }
       }))
     } else {
@@ -75,7 +77,7 @@ export async function POST(req) {
           setNumber: (user.setsCompleted || 0) + 1,
           progress: `${nextTaskCount}/${config.tasksPerSet}`,
           productId: taskProducts[0]?.id || 0,
-          price: taskProducts[0]?.price || 0,
+          price: totalPrice,
           totalPrice,
           totalProfit,
           completedAt: new Date(),
