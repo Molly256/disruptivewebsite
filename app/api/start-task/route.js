@@ -6,12 +6,6 @@ import { vip1Set2 } from '@/data/vip1Set2'
 const VIP_CONFIG = { 1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 } }
 const ALL_PRODUCTS = { 1: { 1: vip1Set1, 2: vip1Set2 } }
 
-const generateTaskCode = () => {
-  const date = new Date().toISOString().slice(0,10).replace(/-/g,'')
-  const rand = Math.floor(Math.random() * 10000000000).toString().padStart(10, '0')
-  return `${date}${rand}`
-}
-
 export async function POST(req) {
   try {
     const { userId } = await req.json()
@@ -19,6 +13,7 @@ export async function POST(req) {
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
     if(user.currentTaskProducts && user.currentTaskProducts.length > 0) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
@@ -32,59 +27,52 @@ export async function POST(req) {
     const baseSet = ALL_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!baseSet) return NextResponse.json({ error: 'Product set configuration missing' }, { status: 400 })
 
-    // FORCE BY ID
+    // FORCE BY ID. 0/40 = id 1, 1/40 = id 2
     const productIdForThisTask = index + 1
     let productsToAssign = []
     const merged = user.mergedTasks || []
-    if(merged.length > 0 && merged[index]) productsToAssign = merged[index]
-    else {
+
+    if(merged.length > 0 && merged[index]) {
+      productsToAssign = merged[index] // merged: [photo4, photo5]
+    } else {
       const normalProduct = baseSet.find(p => p.id === productIdForThisTask)
-      if (normalProduct) productsToAssign.push(normalProduct)
+      if (normalProduct) productsToAssign.push(normalProduct) // normal: [photo1]
     }
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: `Product id ${productIdForThisTask} not found` }, { status: 400 })
 
     let totalPrice = 0
     let totalReserveAdded = 0
-    let totalProfit = 0
     const taskProducts = []
 
     productsToAssign.forEach(p => {
       const profitAmount = parseFloat((p.price * config.profit).toFixed(2))
       const reserveAmount = parseFloat((p.price + profitAmount).toFixed(2))
-      const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${p.id}.jpg` // photo1.jpg... photo40.jpg... photo41.jpg
+      const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${p.id}.jpg`
       totalPrice += p.price
       totalReserveAdded += reserveAmount
-      totalProfit += profitAmount
       taskProducts.push({ id: p.id, name: p.name, image: localImagePath, price: p.price, profit: profitAmount, reserveAmount })
     })
 
-    const taskCode = generateTaskCode()
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: userId, tasksInCurrentSet: index },
-        data: {
-          walletBalance: newWallet,
-          holdAmount: newHold,
-          currentTaskProducts: taskProducts,
-          tasksInCurrentSet: { increment: 1 },
-        }
-      }),
-      prisma.task.create({
-        data: {
-          userId: userId, vipLevel: user.vipLevel, setNumber: currentSet,
-          progress: `${index + 1}/${config.tasksPerSet}`, productId: taskProducts[0].id,
-          price: totalPrice, totalPrice: totalPrice, totalProfit: totalProfit,
-          status: 'pending', taskCode: taskCode,
-        }
-      })
-    ])
+    // FIX: Only assign products. Don't increment progress. Don't create task yet
+    await prisma.user.update({
+      where: { id: userId, tasksInCurrentSet: index },
+      data: {
+        walletBalance: newWallet,
+        holdAmount: newHold,
+        currentTaskProducts: taskProducts, // This holds photo1, or [photo4, photo5]
+      }
+    })
 
     const finalUser = await prisma.user.findUnique({ where: { id: userId } })
-    return NextResponse.json({ success: true, user: finalUser, currentTaskNumber: index + 1 })
+    return NextResponse.json({
+      success: true,
+      user: finalUser,
+      currentTaskNumber: index // Still shows 0/40 until submit
+    })
 
   } catch (err) {
     console.error('start-task error:', err)

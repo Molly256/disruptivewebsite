@@ -324,6 +324,9 @@ export default function StartingPage() {
   }
 
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
+  
+  // FIX: calculate next task number for display so button doesn't lag behind
+  const currentTaskNumber = (user.tasksInCurrentSet || 0) + 1
 
   return (
     <>
@@ -388,7 +391,7 @@ export default function StartingPage() {
 
         <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
           <button onClick={handleStart} disabled={setFinished} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'not-allowed' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
-            {setFinished? 'Contact Customer Service to Reset' : `Starting (${user.tasksInCurrentSet || 0} / ${setSize})`}
+            {setFinished? 'Contact Customer Service to Reset' : `Starting (${currentTaskNumber} / ${setSize})`} {/* FIXED: +1 */}
           </button>
           {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
         </div>
