@@ -6,6 +6,12 @@ import { vip1Set2 } from '@/data/vip1Set2'
 const VIP_CONFIG = { 1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 } }
 const ALL_PRODUCTS = { 1: { 1: vip1Set1, 2: vip1Set2 } }
 
+const generateTaskCode = () => {
+  const date = new Date().toISOString().slice(0,10).replace(/-/g,'')
+  const rand = Math.floor(Math.random() * 10000000).toString().padStart(10, '0')
+  return `${date}${rand}`
+}
+
 export async function POST(req) {
   try {
     const { userId } = await req.json()
@@ -27,22 +33,22 @@ export async function POST(req) {
     const baseSet = ALL_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!baseSet) return NextResponse.json({ error: 'Product set configuration missing' }, { status: 400 })
 
-    // FORCE BY ID. 0/40 = id 1, 1/40 = id 2
     const productIdForThisTask = index + 1
     let productsToAssign = []
     const merged = user.mergedTasks || []
 
     if(merged.length > 0 && merged[index]) {
-      productsToAssign = merged[index] // merged: [photo4, photo5]
+      productsToAssign = merged[index]
     } else {
       const normalProduct = baseSet.find(p => p.id === productIdForThisTask)
-      if (normalProduct) productsToAssign.push(normalProduct) // normal: [photo1]
+      if (normalProduct) productsToAssign.push(normalProduct)
     }
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: `Product id ${productIdForThisTask} not found` }, { status: 400 })
 
     let totalPrice = 0
     let totalReserveAdded = 0
+    let totalProfit = 0 // ADD
     const taskProducts = []
 
     productsToAssign.forEach(p => {
@@ -51,27 +57,47 @@ export async function POST(req) {
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${p.id}.jpg`
       totalPrice += p.price
       totalReserveAdded += reserveAmount
+      totalProfit += profitAmount // ADD
       taskProducts.push({ id: p.id, name: p.name, image: localImagePath, price: p.price, profit: profitAmount, reserveAmount })
     })
 
+    const taskCode = generateTaskCode() // ADD
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    // FIX: Only assign products. Don't increment progress. Don't create task yet
-    await prisma.user.update({
-      where: { id: userId, tasksInCurrentSet: index },
-      data: {
-        walletBalance: newWallet,
-        holdAmount: newHold,
-        currentTaskProducts: taskProducts, // This holds photo1, or [photo4, photo5]
-      }
-    })
+    // FIX: Transaction. Create pending task + assign products
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId, tasksInCurrentSet: index },
+        data: {
+          walletBalance: newWallet,
+          holdAmount: newHold,
+          currentTaskProducts: taskProducts,
+        }
+      }),
+      prisma.task.create({ // CREATE PENDING TASK
+        data: {
+          userId,
+          vipLevel: user.vipLevel,
+          setNumber: currentSet,
+          taskNumber: index + 1,
+          progress: `${index + 1}/${config.tasksPerSet}`, // 1/40
+          productId: taskProducts[0].id,
+          price: totalPrice,
+          totalPrice,
+          totalProfit,
+          status: 'pending', // KEY: This makes it show in Pending tab
+          taskCode,
+          products: taskProducts, // save json so records can show images
+        }
+      })
+    ])
 
     const finalUser = await prisma.user.findUnique({ where: { id: userId } })
     return NextResponse.json({
       success: true,
       user: finalUser,
-      currentTaskNumber: index // Still shows 0/40 until submit
+      currentTaskNumber: index + 1 // FIX: send 1 not 0
     })
 
   } catch (err) {
