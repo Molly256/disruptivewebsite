@@ -65,7 +65,6 @@ export async function POST(req) {
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    // FIX: Transaction. Create pending task + assign products
     await prisma.$transaction([
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: index },
@@ -75,20 +74,19 @@ export async function POST(req) {
           currentTaskProducts: taskProducts,
         }
       }),
-      prisma.task.create({ // CREATE PENDING TASK
+      prisma.task.create({
         data: {
           userId,
           vipLevel: user.vipLevel,
           setNumber: currentSet,
-          // taskNumber: index + 1, <-- REMOVED THIS LINE
-          progress: `${index + 1}/${config.tasksPerSet}`, // 1/40
+          progress: `${index + 1}/${config.tasksPerSet}`,
           productId: taskProducts[0].id,
           price: totalPrice,
           totalPrice,
           totalProfit,
-          status: 'pending', // KEY: This makes it show in Pending tab
+          status: 'pending',
           taskCode,
-          products: taskProducts, // save json so records can show images
+          // products: taskProducts, <-- DELETE THIS LINE
         }
       })
     ])
@@ -97,7 +95,7 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       user: finalUser,
-      currentTaskNumber: index + 1 // FIX: send 1 not 0
+      currentTaskNumber: index + 1
     })
 
   } catch (err) {
