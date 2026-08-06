@@ -125,7 +125,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
   const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
   const totalReserve = totalPrice + totalProfit // FIX: removed reserveAmount
 
-  const taskCode = `20260729${String(products[0]?.id || 0).padStart(10, '0')}`
+  const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}${String(products[0]?.id || 0).padStart(10, '0')}` // FIX: was hardcoded 20260729
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   const hasPendingTask = products && products.length > 0
@@ -146,7 +146,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
         {products.map(product => (
           <div key={product.id} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
-            <img src={product.image || `/vip1/set1/photo${product.id}.jpg`} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
+            <img src={product.image || `/vip${vipLevel}/set1/photo${product.id}.jpg`} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} /> {/* FIX: dynamic vip */}
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
               <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
@@ -293,7 +293,16 @@ export default function StartingPage() {
       const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
       const data = await res.json()
       console.log('Submit response:', res.status, data)
-      if(res.ok) { setUser(data.user); localStorage.setItem('user', JSON.stringify(data.user)); setShowDetail(false); setMsg('Task Completed! Payout Received') }
+      if(res.ok) { 
+        setUser(data.user); 
+        localStorage.setItem('user', JSON.stringify(data.user)); 
+        setShowDetail(false); 
+        setMsg('Task Completed! Payout Received');
+        // FIX: Force refetch to get hold=0
+        const r = await fetch(`/api/user?id=${user.id}`);
+        const d = await r.json();
+        if(r.ok) setUser(d.user);
+      }
       else { setMsg(data.error || `Error ${res.status}`) }
     } catch(e) {
       console.error('submit fetch error', e)

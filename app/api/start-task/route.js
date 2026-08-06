@@ -82,12 +82,12 @@ export async function POST(req) {
 
     const [updatedUser] = await prisma.$transaction([
       prisma.user.update({
-        where: { id: userId },
+        where: { id: userId, tasksInCurrentSet: index }, // ATOMIC LOCK: prevents double click skip
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
           currentTaskProducts: taskProducts,
-          tasksInCurrentSet: index + 1,
+          tasksInCurrentSet: { increment: 1 },
         }
       }),
       prisma.task.create({
