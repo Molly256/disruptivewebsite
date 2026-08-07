@@ -317,27 +317,28 @@ export default function StartingPage() {
     }
   }
 
-  if (loading ||!user) return null
-  if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
-    return (
-      <StartingDetail
-        products={user.currentTaskProducts}
-        onBack={() => setShowDetail(false)}
-        onSubmit={handleSubmit}
-        vipLevel={user.vipLevel}
-        walletBalance={user.walletBalance || 0}
-      />
-    )
-  }
-
-  const totalBalance = Math.round(((user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)) * 100) / 100
-  
-  // FIX: calculate next task number for display so button doesn't lag behind
-  const currentTaskNumber = (user.tasksInCurrentSet || 0) + 1
-
+  if (loading || !user) return null
+if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
   return (
-    <>
-      <AppHeader />
+    <StartingDetail
+      products={user.currentTaskProducts}
+      onBack={() => setShowDetail(false)}
+      onSubmit={handleSubmit}
+      vipLevel={user.vipLevel}
+      walletBalance={user.walletBalance || 0}
+    />
+  )
+}
+
+// 1. Just sum the numbers up normally. Do not round or divide here.
+const totalBalanceRaw = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
+
+// FIX: calculate next task number for display so button doesn't lag behind
+const currentTaskNumber = (user.tasksInCurrentSet || 0) + 1
+
+return (
+  <>
+    <AppHeader />
       {showToast && (
         <div style={{
           position: 'fixed',
