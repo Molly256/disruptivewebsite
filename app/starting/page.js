@@ -130,15 +130,15 @@ const formatMoney = (n) => {
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
   const profitRate = 0.005
 
-  const totalPrice = products.reduce((s, p) => s + p.price, 0)
-  const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
-  const totalReserve = totalPrice + totalProfit // FIX: removed reserveAmount
+  const totalPrice = Math.round(products.reduce((s, p) => s + p.price, 0) * 100) / 100
+  const totalProfit = Math.round(products.reduce((s, p) => s + (p.price * profitRate), 0) * 100) / 100
+  const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100 // FIX: removed reserveAmount
 
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}${String(products[0]?.id || 0).padStart(10, '0')}` // FIX: was hardcoded 20260729
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   const hasPendingTask = products && products.length > 0
-  const balanceAfterPurchase = walletBalance - totalPrice
+  const balanceAfterPurchase = Math.round((walletBalance - totalPrice) * 100) / 100
 
   // FIX: If pending task, never lock. Only lock new task if balance would go negative
   const isLocked = hasPendingTask
