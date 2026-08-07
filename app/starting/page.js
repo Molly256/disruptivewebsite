@@ -422,6 +422,11 @@ export default function StartingPage() {
             </div>
           </div>
 
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ fontWeight: '700', fontSize: '14px' }}>TOTAL BALANCE</div>
+            <div style={{ fontSize: '20px', fontWeight: '800', marginTop: '4px', color: '#FF6A00' }}>{formatMoney(totalBalance)} USD</div>
+          </div>
+
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Bonus</div>
             <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{formatMoney(user.specialBonus)} USD</div>
