@@ -121,9 +121,8 @@ const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 const formatMoney = (n) => {
   const num = Number(n) || 0
   const rounded = Math.round(num * 100) / 100 // FIX: kills 0.5700001
-  return rounded.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+  return rounded.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
-
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
   const profitRate = 0.005
 
