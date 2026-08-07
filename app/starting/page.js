@@ -121,7 +121,12 @@ const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
   const profitRate = 0.005
 
-  const totalPrice = products.reduce((s, p) => s + p.price, 0)
+  const formatMoney = (n) => {
+  const num = Number(n) || 0
+  return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+}
+
+const totalPrice = products.reduce((s, p) => s + p.price, 0)
   const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
   const totalReserve = totalPrice + totalProfit // FIX: removed reserveAmount
 
@@ -150,16 +155,16 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
               <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
-              <div style={{ fontWeight: 700, marginBottom: 16 }}>{product.price.toFixed(2)} x1 USD</div>
+              <div style={{ fontWeight: 700, marginBottom: 16 }}>{formatMoney(product.price)} x1 USD</div>
             </div>
             <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: '140px', border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
                 <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>TOTAL AMOUNT</div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{product.price.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>{formatMoney(product.price)} <span style={{fontSize:12}}>USD</span></div>
               </div>
               <div style={{ flex: 1, minWidth: '140px', border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
                 <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate * 100).toFixed(1)}%</div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{(product.price * profitRate).toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+                <div style={{ fontSize: 16, fontWeight: 800 }}>{formatMoney(product.price * profitRate)} <span style={{fontSize:12}}>USD</span></div>
               </div>
             </div>
           </div>
@@ -169,21 +174,19 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
           <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, color: walletBalance < 0? '#FF0000' : '#000', fontWeight: walletBalance < 0? '700' : '400' }}>
-              <span>AVAILABLE BALANCE</span>
-              <span>{(walletBalance || 0).toFixed(2)} USD</span>
-            </div>
+            
+            {/* AVAILABLE BALANCE REMOVED */}
 
             {hasPendingTask && isLocked && (
               <div style={{marginTop: 8, padding: 8, background: '#FFF3F3', border: '1px solid #FFCCCC', borderRadius: 6, fontSize: 12, color: '#CC0000', fontWeight: 600}}>
-                Balance is negative. Deposit {Math.abs(walletBalance).toFixed(2)} USD to enable submit.
+                Balance is negative. Deposit {formatMoney(Math.abs(walletBalance))} USD to enable submit.
               </div>
             )}
 
             <hr style={{margin: '8px 0'}}/>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{totalPrice.toFixed(2)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{totalProfit.toFixed(2)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: isLocked? '#FF0000' : '#000' }}><span>TO PAY/HOLD</span><span>{totalReserve.toFixed(2)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: isLocked? '#FF0000' : '#000' }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
           </div>
 
           <button
@@ -400,7 +403,7 @@ export default function StartingPage() {
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
             <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px', letterSpacing: '0.5px' }}>TODAY'S COMMISSION</div>
-            <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.todayProfit || 0).toFixed(2)} USD</div>
+            <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>{formatMoney(user.todayProfit)} USD</div>
             <div style={{ fontSize: '12px', color: '#999' }}>The displayed amount reflects today's earned commissions.</div>
           </div>
 
@@ -408,20 +411,20 @@ export default function StartingPage() {
             <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
               <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>BALANCE</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0', color: user.walletBalance < 0? '#FF0000' : '#000' }}>{(user.walletBalance || 0).toFixed(2)} USD</div>
+              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0', color: user.walletBalance < 0? '#FF0000' : '#000' }}>{formatMoney(user.walletBalance)} USD</div>
               <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects deposited + hold + special bonus.</div>
             </div>
             <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>🧊</div>
               <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>HOLD AMOUNT</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{(user.holdAmount || 0).toFixed(2)} USD</div>
+              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{formatMoney(user.holdAmount)} USD</div>
               <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Money for tasks not yet submitted.</div>
             </div>
           </div>
 
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Bonus</div>
-            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{(user.specialBonus || 0).toFixed(2)} USD</div>
+            <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{formatMoney(user.specialBonus)} USD</div>
           </div>
         </div>
 
