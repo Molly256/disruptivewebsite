@@ -78,8 +78,10 @@ export default function ProfilePage() {
   const vipLevel = user.vipLevel || 'VIP1'
   const vipId = user.vipId || 1
   const currentVip = vipData.find(v => v.id === vipId) || vipData[0]
-  const todayProfit = user.todayProfit || '0.00'
-  const totalBalance = user.walletBalance || '0.00' // CHANGED: use walletBalance
+  
+  // FIX: Force numbers to strictly display 2 decimal digits via clean string transformation
+  const todayProfit = Number(user.todayProfit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const totalBalance = Number(user.walletBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const creditScore = user.creditScore || 100
 
   const MenuItem = ({ icon, title, onClick }) => (
