@@ -118,15 +118,15 @@ const winnerMessages = [
 const SCROLL_TIME = 1000
 const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
-function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
-  const profitRate = 0.005
-
-  const formatMoney = (n) => {
+const formatMoney = (n) => {
   const num = Number(n) || 0
   return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })
 }
 
-const totalPrice = products.reduce((s, p) => s + p.price, 0)
+function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
+  const profitRate = 0.005
+
+  const totalPrice = products.reduce((s, p) => s + p.price, 0)
   const totalProfit = products.reduce((s, p) => s + (p.price * profitRate), 0)
   const totalReserve = totalPrice + totalProfit // FIX: removed reserveAmount
 
