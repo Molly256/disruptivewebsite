@@ -327,7 +327,7 @@ export default function StartingPage() {
     )
   }
 
-  const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
+  const totalBalance = Math.round(((user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)) * 100) / 100
   
   // FIX: calculate next task number for display so button doesn't lag behind
   const currentTaskNumber = (user.tasksInCurrentSet || 0) + 1
