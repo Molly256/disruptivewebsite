@@ -4,13 +4,13 @@ import path from 'path'
 
 export async function POST(req) {
   try {
-    const { vipSet, imageId, newData } = await req.json() // imageId = vip1set1-data-3
+    const { vipSet, taskOrder, newData } = await req.json() // NOW: taskOrder: 3
 
-    if(!vipSet ||!imageId) return NextResponse.json({ error: 'vipSet, imageId required' }, { status: 400 })
+    if(!vipSet ||!taskOrder) return NextResponse.json({ error: 'vipSet, taskOrder required' }, { status: 400 })
 
     const vip = vipSet.match(/vip(\d)/)[1]
     const set = vipSet.match(/set(\d)/)[1]
-    const taskOrder = parseInt(imageId.split('-').pop()) // get 3 from vip1set1-data-3
+    const idx = taskOrder - 1 // task 3 = array index 2
 
     const dataPath = path.join(process.cwd(), 'data', `vip${vip}Set${set}.js`)
 
@@ -20,7 +20,7 @@ export async function POST(req) {
     let dataArr = require(dataPath).default
 
     // Update the item at taskOrder - 1
-    dataArr[taskOrder - 1] = {...dataArr[taskOrder - 1],...newData }
+    dataArr[idx] = {...dataArr[idx],...newData }
 
     const fileContent = `export default ${JSON.stringify(dataArr, null, 2)}`
     fs.writeFileSync(dataPath, fileContent, 'utf-8')
