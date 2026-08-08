@@ -121,30 +121,30 @@ const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 const formatMoney = (n) => {
   const num = Number(n) || 0
-  
-  // toLocaleString automatically rounds to the specified fractional digits
   return num.toLocaleString('en-US', { 
     minimumFractionDigits: 2, 
     maximumFractionDigits: 2 
   })
 }
+
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
   const profitRate = 0.005
 
-  const totalPrice = Math.round(products.reduce((s, p) => s + p.price, 0) * 100) / 100
-  const totalProfit = Math.round(products.reduce((s, p) => s + (p.price * profitRate), 0) * 100) / 100
-  const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100 // FIX: removed reserveAmount
+  // SAFETY: prevent crash if products is empty
+  if (!products || products.length === 0) return null
 
-  const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}${String(products[0]?.id || 0).padStart(10, '0')}` // FIX: was hardcoded 20260729
+  const totalPrice = Math.round(products.reduce((s, p) => s + Number(p.price || 0), 0) * 100) / 100
+  const totalProfit = Math.round(products.reduce((s, p) => s + (Number(p.price || 0) * profitRate), 0) * 100) / 100
+  const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
+
+  const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}${String(products[0]?.id || 0).padStart(10, '0')}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
   const hasPendingTask = products && products.length > 0
   const balanceAfterPurchase = Math.round((walletBalance - totalPrice) * 100) / 100
 
   // FIX: If pending task, never lock. Only lock new task if balance would go negative
-  const isLocked = hasPendingTask
-   ? false
-    : (balanceAfterPurchase < 0)
+  const isLocked = hasPendingTask ? false : (balanceAfterPurchase < 0)
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
@@ -156,7 +156,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
         {products.map(product => (
           <div key={product.id} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
-            <img src={product.image || `/vip${vipLevel}/set1/photo${product.id}.jpg`} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} /> {/* FIX: dynamic vip */}
+            <img src={product.image || `/vip${vipLevel}/set1/photo${product.id}.jpg`} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
               <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
@@ -179,8 +179,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
           <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
-            
-            {/* AVAILABLE BALANCE REMOVED */}
 
             {hasPendingTask && isLocked && (
               <div style={{marginTop: 8, padding: 8, background: '#FFF3F3', border: '1px solid #FFCCCC', borderRadius: 6, fontSize: 12, color: '#CC0000', fontWeight: 600}}>
@@ -271,21 +269,16 @@ export default function StartingPage() {
 
   const handleStart = async () => {
     if (setFinished) { setMsg('Set completed. Contact Customer Service to reset.'); return }
-
-    // FIX: If user has pending task, just continue. Don't check $50 again
     if(user.currentTaskProducts && user.currentTaskProducts.length > 0) {
       setShowDetail(true)
       return
     }
-
     const balance = parseFloat(user.walletBalance || 0)
-    // Only check $50 for NEW task
     if(balance < 50){
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2000)
       return
     }
-
     setMsg('Starting...')
     const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
     const data = await res.json()
@@ -294,19 +287,16 @@ export default function StartingPage() {
   }
 
   const handleSubmit = async () => {
-    if(!user || !user.id) { setMsg('User not loaded. Refresh page.'); return } // FIX 500
+    if(!user || !user.id) { setMsg('User not loaded. Refresh page.'); return }
     setMsg('Submitting...')
-    console.log('Submitting with userId:', user.id)
     try {
       const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
       const data = await res.json()
-      console.log('Submit response:', res.status, data)
       if(res.ok) { 
         setUser(data.user); 
         localStorage.setItem('user', JSON.stringify(data.user)); 
         setShowDetail(false); 
         setMsg('Task Completed! Payout Received');
-        // FIX: Force refetch to get hold=0
         const r = await fetch(`/api/user?id=${user.id}`);
         const d = await r.json();
         if(r.ok) setUser(d.user);
@@ -319,27 +309,25 @@ export default function StartingPage() {
   }
 
   if (loading || !user) return null
-if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
+  if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
+    return (
+      <StartingDetail
+        products={user.currentTaskProducts}
+        onBack={() => setShowDetail(false)}
+        onSubmit={handleSubmit}
+        vipLevel={user.vipLevel}
+        walletBalance={user.walletBalance || 0}
+      />
+    )
+  }
+
+  // FIXED: renamed to totalBalance
+  const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
+  const currentTaskNumber = (user.tasksInCurrentSet || 0) + 1
+
   return (
-    <StartingDetail
-      products={user.currentTaskProducts}
-      onBack={() => setShowDetail(false)}
-      onSubmit={handleSubmit}
-      vipLevel={user.vipLevel}
-      walletBalance={user.walletBalance || 0}
-    />
-  )
-}
-
-// 1. Just sum the numbers up normally. Do not round or divide here.
-const totalBalanceRaw = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
-
-// FIX: calculate next task number for display so button doesn't lag behind
-const currentTaskNumber = (user.tasksInCurrentSet || 0) + 1
-
-return (
-  <>
-    <AppHeader />
+    <>
+       <AppHeader />
       {showToast && (
         <div style={{
           position: 'fixed',
