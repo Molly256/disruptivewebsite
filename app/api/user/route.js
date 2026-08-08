@@ -45,8 +45,8 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // No mapping needed anymore. Send as-is
-    return NextResponse.json({ user })
+    // ADDED: send currentSet for frontend compatibility
+    return NextResponse.json({ user: { ...user, currentSet: user.setsCompleted } })
   } catch (e) {
     console.error('API /user error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
