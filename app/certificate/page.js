@@ -1,15 +1,16 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react' // <-- ADDED
+import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import { t } from '@/lib/i18n' // 1. IMPORT
 
 export default function CertificatePage() {
   const router = useRouter()
-  const [user, setUser] = useState(null) // <-- ADDED
-  const [loading, setLoading] = useState(true) // <-- ADDED
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => { // <-- ADDED WHOLE BLOCK
+  useEffect(() => {
     const fetchUser = async () => {
       const savedUser = localStorage.getItem('user')
       if (!savedUser) {
@@ -18,7 +19,7 @@ export default function CertificatePage() {
       }
 
       const localUser = JSON.parse(savedUser)
-      setUser(localUser) // SHOW IMMEDIATELY SO NO BOUNCE
+      setUser(localUser)
 
       try {
         const res = await fetch(`/api/user?id=${localUser.id}`)
@@ -28,7 +29,6 @@ export default function CertificatePage() {
           setUser(data.user)
           localStorage.setItem('user', JSON.stringify(data.user))
         }
-        // IMPORTANT: if API fails, we still keep localUser. No logout.
       } catch (e) {
         console.error(e)
       } finally {
@@ -39,7 +39,7 @@ export default function CertificatePage() {
     fetchUser()
   }, [router])
 
-  if (loading ||!user) return null // <-- ADDED
+  if (loading ||!user) return null
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
@@ -55,7 +55,7 @@ export default function CertificatePage() {
           margin: 0,
           letterSpacing: '1px'
         }}>
-          CERTIFICATE
+          {t('certificate')}
         </h1>
       </div>
 
@@ -78,8 +78,11 @@ export default function CertificatePage() {
             }}
           />
         </div>
+      </div>
 
-        {/* REMOVED DOWNLOAD BUTTON */}
+      {/* FOOTER */}
+      <div style={{ textAlign: 'center', marginTop: '20px', paddingBottom: '20px' }}>
+        <p style={{ fontSize: '14px', color: '#666', fontWeight: '400' }}>Copyrights 2026 © Disruptive Advertising Agency</p>
       </div>
 
       <BottomNav />

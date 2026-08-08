@@ -17,16 +17,16 @@ export async function POST(req) {
     // 1. Update user wallet
     const user = await prisma.user.update({ 
       where: { id: userId }, 
-      data: { walletBalance: { increment: amt } } // FIXED: added closing }
+      data: { walletBalance: { increment: amt } }
     })
 
-    // 2. Create transaction record
+    // 2. Create transaction record - clean, no account text
     await prisma.transaction.create({ 
       data: { 
         userId, 
         type: 'deposit',
         amount: amt, 
-        status: 'success' 
+        status: 'completed' // must be 'completed' to match enum
       } 
     })
 

@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import { t } from '@/lib/i18n'
 
 export default function DepositPage() {
   const router = useRouter()

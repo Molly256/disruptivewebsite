@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { t } from '@/lib/i18n'
 
 const countries = [
   { code: '+93', flag: '🇦🇫', name: 'Afghanistan' },

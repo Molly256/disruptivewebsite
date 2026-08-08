@@ -11,21 +11,22 @@ async function main() {
       gender: 'Male',
       countryCode: '+256',
       countryName: 'Uganda',
-      referralCode: 'ADMIN256',
-      inviteCode: '345678DI',
+      inviteCode: '345678DI', // this is their own code
+      referredBy: null, // who invited admin = null
       isAdmin: true,
 
       // VIP / TASK - VIP 1
       vipId: 1,
       vipLevel: 1,
-      currentSet: 1,
-      setCompleted: 0,
+      setsCompleted: 0, // 0 = Set1 not done yet
+      tasksInCurrentSet: 0, // 0/40
       taskCompleted: 0,
       totalTasks: 40,
 
       // MONEY
       walletBalance: 5000,
       holdAmount: 0,
+      freezeAmount: 0, // <-- ADDED
       bonus: 0,
       specialBonus: 0,
       todayProfit: 0,
@@ -36,6 +37,7 @@ async function main() {
       currentTaskProducts: [],
       activeProducts: [],
       completedProducts: [],
+      mergedTasks: [], // <-- ADDED
     },
     create: {
       username: 'Admin256',
@@ -45,21 +47,22 @@ async function main() {
       gender: 'Male',
       countryCode: '+256',
       countryName: 'Uganda',
-      referralCode: 'ADMIN256',
       inviteCode: '345678DI',
+      referredBy: null,
       isAdmin: true,
 
       // VIP / TASK - VIP 1
       vipId: 1,
       vipLevel: 1,
-      currentSet: 1,
-      setCompleted: 0,
+      setsCompleted: 0,
+      tasksInCurrentSet: 0,
       taskCompleted: 0,
       totalTasks: 40,
 
       // MONEY
       walletBalance: 5000,
       holdAmount: 0,
+      freezeAmount: 0,
       bonus: 0,
       specialBonus: 0,
       todayProfit: 0,
@@ -70,6 +73,7 @@ async function main() {
       currentTaskProducts: [],
       activeProducts: [],
       completedProducts: [],
+      mergedTasks: [],
     }
   })
   console.log('✅ Admin256 ready - VIP 1 with $5000 balance')

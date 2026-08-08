@@ -18,7 +18,12 @@ export default function AdminPage() {
   const [search, setSearch] = useState(''); const [foundUser, setFoundUser] = useState(null); const [showDropdown, setShowDropdown] = useState(false); const [selectedVip, setSelectedVip] = useState(null);
   const [resetSearch, setResetSearch] = useState(''); const [resetUser, setResetUser] = useState(null);
   const [passSearch, setPassSearch] = useState(''); const [passUser, setPassUser] = useState(null); const [showPassInput, setShowPassInput] = useState(false); const [newPass, setNewPass] = useState('');
-  const [mergeSearch, setMergeSearch] = useState(''); const [mergeUser, setMergeUser] = useState(null); const [selectedMergeSet, setSelectedMergeSet] = useState(''); const [selectedPhotos, setSelectedPhotos] = useState([]); const [mergePhotos, setMergePhotos] = useState([]);
+
+  // MERGE STATES - UPDATED
+  const [mergeSearch, setMergeSearch] = useState(''); const [mergeUser, setMergeUser] = useState(null); const [selectedMergeSet, setSelectedMergeSet] = useState('');
+  const [selectedPhotos, setSelectedPhotos] = useState([]); const [selectedData, setSelectedData] = useState([]); const [mergePhotos, setMergePhotos] = useState([]);
+  const [mergeView, setMergeView] = useState('photos'); const [activeSet, setActiveSet] = useState('');
+
   const [editingPhoto, setEditingPhoto] = useState(null)
   const [editData, setEditData] = useState({title:'', price:0})
   const [depositSearch, setDepositSearch] = useState(''); const [depositUser, setDepositUser] = useState(null); const [depositAmount, setDepositAmount] = useState(''); const [showDepositInput, setShowDepositInput] = useState(false);
@@ -45,6 +50,8 @@ export default function AdminPage() {
     const res = await fetch(`/api/admin/merge-products/list?vipSet=${vipSet}`)
     const data = await res.json()
     setMergePhotos(data.photos || [])
+    setSelectedPhotos([])
+    setSelectedData([])
   }
 
   const handleUpgrade = async () => {
@@ -67,10 +74,12 @@ export default function AdminPage() {
     if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
   }
 
+  // MERGE FUNCTION - UPDATED
   const handleMerge = async () => {
-    if(selectedPhotos.length === 0) return alert('Select at least 1 photo')
-    const res = await fetch('/api/admin/merge-products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, photoIds: selectedPhotos, adminId: admin.id }) })
-    if(res.ok) { alert('Merged. User tasks updated.'); setSelectedPhotos([]); setMergePhotos([]); setSelectedMergeSet('') } else alert('Failed')
+    if(selectedPhotos.length === 0 || selectedPhotos.length!== selectedData.length) return alert('Select same number of Photos and Data in order')
+    const pairs = selectedPhotos.map((photoId, i) => ({ photoId, dataId: selectedData[i], taskOrder: i+1 }))
+    const res = await fetch('/api/admin/merge-products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, pairs, adminId: admin.id }) })
+    if(res.ok) { alert('Merged. User tasks updated.'); setSelectedPhotos([]); setSelectedData([]); setActiveSet('') } else alert('Failed')
   }
 
   const editPrice = (photo) => {
@@ -110,7 +119,7 @@ export default function AdminPage() {
 
   const handleSendNotif = async () => {
     if(!notifMessage) return alert('Enter message')
-    const res = await fetch('/api/admin/send-notification', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) })
+    const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) })
     if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed')
   }
 
@@ -160,42 +169,57 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 4. MERGE TASKS */}
+        {/* 4. MERGE TASKS - FULLY UPDATED */}
         {tab === 'merge' && (
           <div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(mergeSearch, setMergeUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
             {mergeUser && (
               <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
                 <p><b>{mergeUser.username}</b> - VIP{mergeUser.vipLevel}</p>
-                {['set1','set2'].map(s => (
-                  <div key={s} style={{ marginTop:'12px' }}>
-                    <button onClick={()=>{const set=`vip${mergeUser.vipLevel}${s}`; setSelectedMergeSet(set); loadMergePhotos(set)}} style={{ background:'#FF0000', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700', width:'100%', cursor:'pointer' }}>
-                      Set {s.slice(-1)} Merge Tasks
-                    </button>
-                  </div>
-                ))}
-                {selectedMergeSet && (
-                  <div style={{ marginTop:'12px' }}>
-                    <p>Select Images from {selectedMergeSet}</p>
-                    <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px', maxHeight:'400px', overflowY:'auto' }}>
-                      {mergePhotos.map(p=>(
-                        <div key={p.id} style={{ width:100, background:'#111', padding:6, borderRadius:8 }}>
-                          <img
-                            src={p.url}
-                            onClick={()=>setSelectedPhotos(prev=> prev.includes(p.id)? prev.filter(x=>x!==p.id): [...prev,p.id])}
-                            style={{ width:'100%', height:90, objectFit:'cover', border:'3px solid', borderColor:selectedPhotos.includes(p.id)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer' }}
-                          />
-                          <p style={{fontSize:11, margin:'4px 0'}}><b>${p.price}</b></p>
-                          <p style={{fontSize:10, margin:'2px 0', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{p.title}</p>
-                          <button onClick={()=>editPrice(p)} style={{fontSize:10, background:'#FF1493', border:'none', borderRadius:6, padding:'4px 0', width:'100%', color:'#FFF', cursor:'pointer'}}>Edit</button>
+                <p style={{fontSize:12, color:'#AAA'}}>Progress: {mergeUser.taskCompleted}/{mergeUser.totalTasks}</p>
+
+                {[1,2].map(setNum => {
+                  const setId = `vip${mergeUser.vipLevel}set${setNum}`
+                  const isCurrentSet = mergeUser.currentSet === setNum
+                  return (
+                    <div key={setNum} style={{ marginTop:'16px', border:'1px solid #333', borderRadius:12, padding:12 }}>
+                      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                        <p style={{fontWeight:800}}>Set {setNum} {isCurrentSet && <span style={{color:'red', marginLeft:4}}>●</span>}</p>
+                        <button onClick={()=>{setSelectedMergeSet(setId); setActiveSet(setId); setMergeView('photos'); loadMergePhotos(setId)}} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 14px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Merge Tasks</button>
+                      </div>
+
+                      {activeSet === setId && (
+                        <div style={{ marginTop:'12px' }}>
+                          <div style={{display:'flex', gap:8, marginBottom:12}}>
+                            <button onClick={()=>setMergeView('photos')} style={{flex:1, background: mergeView==='photos'? '#FF1493':'#333', border:'none', padding:10, borderRadius:8, color:'#FFF', fontWeight:700}}>Photos</button>
+                            <button onClick={()=>setMergeView('data')} style={{flex:1, background: mergeView==='data'? '#FF1493':'#333', border:'none', padding:10, borderRadius:8, color:'#FFF', fontWeight:700}}>Data</button>
+                          </div>
+                          <p style={{fontSize:12, marginBottom:8}}>Select in order: 1,2,3... {mergeView === 'photos'? 'Photos' : 'Data'}</p>
+
+                          <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px', maxHeight:'400px', overflowY:'auto' }}>
+                            {mergePhotos.filter(p => p.type === mergeView).sort((a,b)=>a.taskOrder-b.taskOrder).map(p=>(
+                              <div key={p.id} style={{ width:110, background:'#111', padding:6, borderRadius:8 }}>
+                                {mergeView === 'photos'? (
+                                  <img src={p.url} onClick={()=>setSelectedPhotos(prev=> prev.includes(p.id)? prev.filter(x=>x!==p.id): [...prev,p.id])} style={{ width:'100%', height:90, objectFit:'cover', border:'3px solid', borderColor:selectedPhotos.includes(p.id)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer' }} />
+                                ) : (
+                                  <div onClick={()=>setSelectedData(prev=> prev.includes(p.id)? prev.filter(x=>x!==p.id): [...prev,p.id])} style={{ width:'100%', height:90, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', border:'3px solid', borderColor:selectedData.includes(p.id)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer', background:'#222' }}>
+                                    <p style={{fontSize:10}}>${p.price}</p>
+                                  </div>
+                                )}
+                                <p style={{fontSize:10, margin:'4px 0'}}>Task {p.taskOrder}</p>
+                                <p style={{fontSize:9, margin:'2px 0', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{p.title || 'No title'}</p>
+                                <button onClick={()=>editPrice(p)} style={{fontSize:10, background:'#FF1493', border:'none', borderRadius:6, padding:'4px 0', width:'100%', color:'#FFF', cursor:'pointer'}}>Edit</button>
+                              </div>
+                            ))}
+                          </div>
+                          <button onClick={handleMerge} disabled={selectedPhotos.length!== selectedData.length} style={{ background: selectedPhotos.length === selectedData.length && selectedPhotos.length > 0? '#00C853' : '#555', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800', cursor:'pointer' }}>
+                            Merge {selectedPhotos.length} Tasks
+                          </button>
                         </div>
-                      ))}
+                      )}
                     </div>
-                    <button onClick={handleMerge} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800', cursor:'pointer' }}>
-                      Merge Selected {selectedPhotos.length}
-                    </button>
-                  </div>
-                )}
+                  )
+                })}
               </div>
             )}
           </div>

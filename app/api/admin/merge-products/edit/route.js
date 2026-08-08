@@ -4,34 +4,29 @@ import path from 'path'
 
 export async function POST(req) {
   try {
-    const { vipSet, imageId, newData } = await req.json() // imageId = "shoe1.jpg"
+    const { vipSet, imageId, newData } = await req.json() // imageId = vip1set1-data-3
 
-    if(!vipSet ||!imageId) return NextResponse.json({ error: 'Missing data' }, { status: 400 })
+    if(!vipSet ||!imageId) return NextResponse.json({ error: 'vipSet, imageId required' }, { status: 400 })
 
-    const filePath = path.join(process.cwd(), 'data', `${vipSet}.json`)
+    const vip = vipSet.match(/vip(\d)/)[1]
+    const set = vipSet.match(/set(\d)/)[1]
+    const taskOrder = parseInt(imageId.split('-').pop()) // get 3 from vip1set1-data-3
 
-    // 1. Create file if it doesn't exist
-    if (!fs.existsSync(filePath)) {
-      fs.writeFileSync(filePath, '[]')
-    }
+    const dataPath = path.join(process.cwd(), 'data', `vip${vip}Set${set}.js`)
 
-    // 2. Read current data
-    const oldData = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+    if(!fs.existsSync(dataPath)) return NextResponse.json({ error: 'Data file not found' }, { status: 404 })
 
-    // 3. Update or Add item
-    const itemIndex = oldData.findIndex(item => item.id === imageId)
-    if(itemIndex > -1){
-      oldData[itemIndex] = {...oldData[itemIndex],...newData }
-    } else {
-      oldData.push({ id: imageId,...newData })
-    }
+    delete require.cache[require.resolve(dataPath)]
+    let dataArr = require(dataPath).default
 
-    // 4. Write back
-    fs.writeFileSync(filePath, JSON.stringify(oldData, null, 2))
+    // Update the item at taskOrder - 1
+    dataArr[taskOrder - 1] = {...dataArr[taskOrder - 1],...newData }
+
+    const fileContent = `export default ${JSON.stringify(dataArr, null, 2)}`
+    fs.writeFileSync(dataPath, fileContent, 'utf-8')
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    console.error('Edit merge error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

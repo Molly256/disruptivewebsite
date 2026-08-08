@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import { t } from '@/lib/i18n'
 
 const vipData = [
   { id: 1, title: 'VIP1', price: '100 USD', badgeColor: '#5BC0BE', innerBadgeColor: '#A3E2E2' },
@@ -175,19 +176,19 @@ export default function ProfilePage() {
       </div>
 
       <div style={{ padding: '24px 20px 0' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '0 0 16px' }}>My Profile</h3>
-        <MenuItem icon="👤" title="Account Info" onClick={() => router.push('/account-info')} />
-        <MenuItem icon="🔗" title="Bind Wallet" onClick={() => router.push('/bind-wallet')} />
+  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '0 0 16px' }}>{t('myProfileSection')}</h3>
+  <MenuItem icon="👤" title={t('accountInfo')} onClick={() => router.push('/account-info')} />
+  <MenuItem icon="🔗" title={t('bindWallet')} onClick={() => router.push('/bind-wallet')} />
 
-        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>My Financial</h3>
-        <MenuItem icon="🏦" title="Deposit" onClick={() => router.push('/deposit')} />
-        <MenuItem icon="💸" title="Withdraw" onClick={() => router.push('/withdraw')} />
+  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>{t('myFinancial')}</h3>
+  <MenuItem icon="🏦" title={t('deposit')} onClick={() => router.push('/deposit')} />
+  <MenuItem icon="💸" title={t('withdraw')} onClick={() => router.push('/withdraw')} />
 
-        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>Other</h3>
-        <MenuItem icon="🔔" title="Notifications" onClick={() => router.push('/notifications')} />
-        <MenuItem icon="⚙️" title="Change Language" onClick={() => router.push('/language')} />
-        <MenuItem icon="⏻" title="Logout" onClick={handleLogout} />
-      </div>
+  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>{t('other')}</h3>
+  <MenuItem icon="🔔" title={t('notifications')} onClick={() => router.push('/notifications')} />
+  <MenuItem icon="⚙️" title={t('changeLanguage')} onClick={() => router.push('/language')} />
+  <MenuItem icon="⏻" title={t('logout')} onClick={handleLogout} />
+</div>
 
       <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '80px' }}>
         <p style={{ fontSize: '14px', color: '#666', fontWeight: '400' }}>Copyrights 2026 © Disruptive Advertising Agency</p>

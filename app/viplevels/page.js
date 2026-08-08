@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import { t } from '@/lib/i18n'
 
 export default function VipLevels() {
   const router = useRouter()

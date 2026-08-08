@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import { t } from '@/lib/i18n'
 import { vip1Set1 } from '@/data/vip1Set1'
 
 const VIP_PROFIT = { 1: 0.005, 2: 0.01, 3: 0.015, 4: 0.02, 5: 0.025 } // 0.5% to 2.5%

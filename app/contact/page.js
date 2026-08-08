@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import { t } from '@/lib/i18n'
 
 export default function Contact() {
   const router = useRouter()
@@ -11,7 +12,7 @@ export default function Contact() {
       minHeight: '100vh',
       background: '#fff',
       paddingTop: '64px',
-      paddingBottom: '40px',
+      paddingBottom: '90px',
       boxSizing: 'border-box'
     }}>
       <AppHeader />
@@ -24,11 +25,11 @@ export default function Contact() {
           >
             ←
           </button>
-          <h1 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>Contact Us</h1>
+          <h1 style={{ fontSize: '24px', fontWeight: '600', margin: 0 }}>{t('contactUs')}</h1>
         </div>
 
         <p style={{ fontSize: '16px', color: '#666', marginBottom: '24px' }}>
-          Looking to get in touch? You can reach us with the info below
+          {t('contactDesc')}
         </p>
 
         <div
@@ -50,11 +51,13 @@ export default function Contact() {
               alt="Support"
               style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover' }}
             />
-            <span style={{ color: '#000', fontSize: '16px', fontWeight: '600' }}>Online Customer Support</span>
+            <span style={{ color: '#000', fontSize: '16px', fontWeight: '600' }}>{t('onlineSupport')}</span>
           </div>
           <span style={{ color: '#000', fontSize: '20px', fontWeight: '600' }}>›</span>
         </div>
       </div>
+
+      <BottomNav />
     </div>
   )
 }

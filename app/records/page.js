@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import { t } from '@/lib/i18n'
 import { vip1Set1 } from '@/data/vip1Set1'
 import { vip1Set2 } from '@/data/vip1Set2' // ADD THIS
 

@@ -23,11 +23,11 @@ model User {
 
   avatar String?
 
-  // VIP & TASK FIELDS - NEW SYSTEM
+  // VIP & TASK FIELDS
   vipLevel Int @default(1)
   vipId Int @default(1)
 
-  setsCompleted Int @default(0) // 0 = Set1, 1 = Set2 done. Only admin changes this
+  setsCompleted Int @default(0) // 0 = Set1 active, 1 = Set2 active. Only admin changes this
   tasksInCurrentSet Int @default(0) // 0-40. This is what moves 0/40 on button
 
   taskCompleted Int @default(0) // total tasks done ever. for history
@@ -36,6 +36,7 @@ model User {
   // MONEY FIELDS
   walletBalance Float @default(0.00)
   holdAmount Float @default(0.00)
+  freezeAmount Float @default(0.00) // for withdraw page freeze
   bonus Float @default(0.00)
   specialBonus Float @default(0.00)
   todayProfit Float @default(0.00)
@@ -44,19 +45,22 @@ model User {
   isAdmin Boolean @default(false)
 
   // TASK DATA
-  currentTaskProducts Json @default("[]")
+  currentTaskProducts Json @default("[]") // [{photoId, dataId, taskOrder, status}]
   activeProducts Json @default("[]")
   completedProducts Json @default("[]")
-  mergedTasks Json @default("[]") // <-- ADMIN MERGED TASKS. Array of merged product sets
+  mergedTasks Json @default("[]") // [{vipSet, pairs:[{photoId, dataId, taskOrder}]}]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   transactions Transaction[]
-  tasks Task[] // ADDED: relation to tasks
+  tasks Task[]
   merges TaskMerge[]
   notifications Notification[]
   adminLogs AdminLog[]
+
+  @@index([username])
+  @@index([phone])
 }
 
 // NEW: Task table for Records page
@@ -85,27 +89,36 @@ model Task {
 model Transaction {
   id String @id @default(cuid())
   userId String
-  user User @relation(fields: [userId], references: [id])
-  type String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type String // deposit, withdraw, special_bonus
   amount Float
-  status String @default("pending")
-  account String?
+  status String @default("pending") // pending, completed, rejected
+  account String? // wallet address for withdraw
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
 }
 
 model TaskMerge {
   id String @id @default(cuid())
   userId String
-  user User @relation(fields: [userId], references: [id])
-  vipSet String
-  photoIds String[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vipSet String // vip1set1
+  pairs Json // [{photoId, dataId, taskOrder}]
+  status String @default("active") // active, used
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([vipSet])
 }
 
 model Notification {
   id String @id @default(cuid())
   userId String
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   message String
   isRead Boolean @default(false)
   createdAt DateTime @default(now())
@@ -116,5 +129,5 @@ model AdminLog {
   adminId String
   action String
   createdAt DateTime @default(now())
-  user User? @relation(fields: [adminId], references: [id])
+  user User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
 }
