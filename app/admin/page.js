@@ -183,7 +183,7 @@ export default function AdminPage() {
                 onClick={async ()=>{
                   const q = mergeSearch.trim()
                   if(!q) return alert('Enter username or phone')
-                  const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`) // FIX 1
+                  const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`)
                   const data = await res.json()
                   if(res.ok) setMergeUser(data.user)
                   else alert(data.error || 'User not found')
@@ -195,14 +195,15 @@ export default function AdminPage() {
             {mergeUser && (
               <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
                 <p><b>{mergeUser.username}</b> - VIP{mergeUser.vipLevel}</p>
-                <p style={{fontSize:12, color:'#AAA'}}>Progress: {mergeUser.taskCompleted}/{mergeUser.totalTasks}</p>
+                <p style={{fontSize:12, color:'#AAA'}}>Progress: {mergeUser.taskCompleted}/{mergeUser.totalTasks} | Active Set: {mergeUser.setsCompleted + 1}</p>
 
                 {[1,2,3,4,5].map(setNum => {
-                  const isCurrentSet = (mergeUser.currentSet || mergeUser.setsCompleted) === setNum
+                  const activeSetNumber = mergeUser.setsCompleted + 1 // FIX: 0 = Set1, 1 = Set2
+                  const isCurrentSet = activeSetNumber === setNum
                   return (
                     <div key={setNum} style={{ marginTop:'16px', border:'1px solid #333', borderRadius:12, padding:12 }}>
                       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-                        <p style={{fontWeight:800}}>Set {setNum} {isCurrentSet && <span style={{color:'red', marginLeft:4}}>●</span>}</p>
+                        <p style={{fontWeight:800}}>Set {setNum} {isCurrentSet && <span style={{color:'red', marginLeft:4}}>● ACTIVE</span>}</p>
                         <button 
                           onClick={async ()=>{
                             const vipSet = `vip${mergeUser.vipLevel}set${setNum}`
@@ -211,7 +212,7 @@ export default function AdminPage() {
                             setMergeView('photos'); 
                             setSelectedPhotos([]); 
                             setSelectedData([]);
-                            await loadMergePhotos(vipSet) // use your existing function
+                            await loadMergePhotos(vipSet)
                           }} 
                           style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'10px 14px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}
                         >Merge Tasks</button>
@@ -257,7 +258,7 @@ export default function AdminPage() {
                             ))}
                           </div>
                           <button 
-                            onClick={handleMerge} // FIX 2: use your existing handleMerge
+                            onClick={handleMerge}
                             disabled={selectedPhotos.length!== selectedData.length || selectedPhotos.length === 0} 
                             style={{ background: selectedPhotos.length === selectedData.length && selectedPhotos.length > 0? '#00C853' : '#555', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800', cursor:'pointer' }}
                           >

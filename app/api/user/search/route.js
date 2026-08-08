@@ -25,20 +25,22 @@ export async function GET(req) {
         gender: true, 
         vipLevel: true, 
         vipId: true,
-        setsCompleted: true, 
-        currentSet: true, // added back in case you use it
+        setsCompleted: true, // 0 = Set1 active, 1 = Set2 active
         tasksInCurrentSet: true,
         taskCompleted: true, 
         totalTasks: true,
         walletBalance: true,
         holdAmount: true,
-        specialBonus: true,
+        freezeAmount: true,
         bonus: true,
+        specialBonus: true,
         creditScore: true,
         currentTaskProducts: true,
         activeProducts: true,
+        completedProducts: true,
+        mergedTasks: true,
         createdAt: true,
-        lastProfitReset: true, // needed for daily reset
+        lastProfitReset: true,
         todayProfit: true
       }
     })
