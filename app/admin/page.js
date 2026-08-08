@@ -172,23 +172,78 @@ export default function AdminPage() {
         {/* 4. MERGE TASKS - FULLY UPDATED */}
         {tab === 'merge' && (
           <div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} /><button onClick={()=>searchUser(mergeSearch, setMergeUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+              <input 
+                value={mergeSearch} 
+                onChange={e => setMergeSearch(e.target.value)} 
+                placeholder="Username or Phone" 
+                style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none' }} 
+              />
+              <button 
+                onClick={async ()=>{
+                  const res = await fetch(`/api/user?id=${mergeSearch}`)
+                  const data = await res.json()
+                  if(res.ok) setMergeUser(data.user)
+                }} 
+                style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}
+              >🔍</button>
+            </div>
+
             {mergeUser && (
               <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
                 <p><b>{mergeUser.username}</b> - VIP{mergeUser.vipLevel}</p>
                 <p style={{fontSize:12, color:'#AAA'}}>Progress: {mergeUser.taskCompleted}/{mergeUser.totalTasks}</p>
 
-                {[1,2].map(setNum => {
+                {[1,2,3,4,5].map(setNum => { // changed to 5 sets
                   const setId = `vip${mergeUser.vipLevel}set${setNum}`
-                  const isCurrentSet = mergeUser.currentSet === setNum
+                  const isCurrentSet = (mergeUser.currentSet || mergeUser.setsCompleted) === setNum // FIX: fallback
                   return (
                     <div key={setNum} style={{ marginTop:'16px', border:'1px solid #333', borderRadius:12, padding:12 }}>
                       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <p style={{fontWeight:800}}>Set {setNum} {isCurrentSet && <span style={{color:'red', marginLeft:4}}>●</span>}</p>
-                        <button onClick={()=>{setSelectedMergeSet(setId); setActiveSet(setId); setMergeView('photos'); loadMergePhotos(setId)}} style={{ background:'#FF0000', color:'#000', border:'none', padding:'10px 14px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}>Merge Tasks</button>
+                        <button 
+                          onClick={async ()=>{
+                            setSelectedMergeSet(setNum); 
+                            setActiveSet(setNum); // FIX: use number not string
+                            setMergeView('photos'); 
+                            setSelectedPhotos([]); 
+                            setSelectedData([]);
+                            
+                            // LOAD PHOTOS
+                            const photos = []
+                            for(let i=1; i<=20; i++){ // 20 = max photos per set
+                              photos.push({
+                                id: `p${i}`,
+                                type: 'photos',
+                                taskOrder: i,
+                                url: `/vip${mergeUser.vipLevel}/set${setNum}/photo${i}.jpg`,
+                                title: `Photo ${i}`
+                              })
+                            }
+
+                            // LOAD DATA
+                            let dataItems = []
+                            try {
+                              const dataModule = await import(`@/data/vip${mergeUser.vipLevel}Set${setNum}.js`)
+                              const data = dataModule.default || []
+                              dataItems = data.map((p, idx) => ({
+                                id: `d${p.id}`,
+                                type: 'data', 
+                                taskOrder: idx+1,
+                                price: p.price,
+                                title: p.name,
+                                raw: p
+                              }))
+                            } catch(e) {
+                              console.log("No data file for vip", mergeUser.vipLevel, "set", setNum)
+                            }
+                            setMergePhotos([...photos, ...dataItems])
+                          }} 
+                          style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'10px 14px', borderRadius:'12px', fontWeight:'700', cursor:'pointer' }}
+                        >Merge Tasks</button>
                       </div>
 
-                      {activeSet === setId && (
+                      {activeSet === setNum && ( // FIX: compare number to number
                         <div style={{ marginTop:'12px' }}>
                           <div style={{display:'flex', gap:8, marginBottom:12}}>
                             <button onClick={()=>setMergeView('photos')} style={{flex:1, background: mergeView==='photos'? '#FF1493':'#333', border:'none', padding:10, borderRadius:8, color:'#FFF', fontWeight:700}}>Photos</button>
@@ -200,19 +255,52 @@ export default function AdminPage() {
                             {mergePhotos.filter(p => p.type === mergeView).sort((a,b)=>a.taskOrder-b.taskOrder).map(p=>(
                               <div key={p.id} style={{ width:110, background:'#111', padding:6, borderRadius:8 }}>
                                 {mergeView === 'photos'? (
-                                  <img src={p.url} onClick={()=>setSelectedPhotos(prev=> prev.includes(p.id)? prev.filter(x=>x!==p.id): [...prev,p.id])} style={{ width:'100%', height:90, objectFit:'cover', border:'3px solid', borderColor:selectedPhotos.includes(p.id)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer' }} />
+                                  <img 
+                                    src={p.url} 
+                                    onError={(e)=>e.target.style.display='none'} // hide broken images
+                                    onClick={()=>setSelectedPhotos(prev=> prev.includes(p.id)? prev.filter(x=>x!==p.id): [...prev,p.id])} 
+                                    style={{ width:'100%', height:90, objectFit:'cover', border:'3px solid', borderColor:selectedPhotos.includes(p.id)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer' }} 
+                                  />
                                 ) : (
-                                  <div onClick={()=>setSelectedData(prev=> prev.includes(p.id)? prev.filter(x=>x!==p.id): [...prev,p.id])} style={{ width:'100%', height:90, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', border:'3px solid', borderColor:selectedData.includes(p.id)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer', background:'#222' }}>
-                                    <p style={{fontSize:10}}>${p.price}</p>
+                                  <div 
+                                    onClick={()=>setSelectedData(prev=> prev.includes(p.id)? prev.filter(x=>x!==p.id): [...prev,p.id])} 
+                                    style={{ width:'100%', height:90, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', border:'3px solid', borderColor:selectedData.includes(p.id)?'#00C853':'#555', borderRadius:'8px', cursor:'pointer', background:'#222', padding:4 }}
+                                  >
+                                    <p style={{fontSize:10, margin:0}}>${p.price}</p>
+                                    <p style={{fontSize:9, margin:2, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%'}}>{p.title}</p>
                                   </div>
                                 )}
                                 <p style={{fontSize:10, margin:'4px 0'}}>Task {p.taskOrder}</p>
                                 <p style={{fontSize:9, margin:'2px 0', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{p.title || 'No title'}</p>
-                                <button onClick={()=>editPrice(p)} style={{fontSize:10, background:'#FF1493', border:'none', borderRadius:6, padding:'4px 0', width:'100%', color:'#FFF', cursor:'pointer'}}>Edit</button>
+                                <button 
+                                  onClick={()=>{
+                                    setEditingPhoto(p)
+                                    setEditData({title: p.title, price: p.price})
+                                  }} 
+                                  style={{fontSize:10, background:'#FF1493', border:'none', borderRadius:6, padding:'4px 0', width:'100%', color:'#FFF', cursor:'pointer'}}
+                                >Edit</button>
                               </div>
                             ))}
                           </div>
-                          <button onClick={handleMerge} disabled={selectedPhotos.length!== selectedData.length} style={{ background: selectedPhotos.length === selectedData.length && selectedPhotos.length > 0? '#00C853' : '#555', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800', cursor:'pointer' }}>
+                          <button 
+                            onClick={async ()=>{
+                              if(selectedPhotos.length !== selectedData.length || selectedPhotos.length === 0) return alert('Select same number of photos and data')
+                              const res = await fetch('/api/admin/merge', {
+                                method: 'POST',
+                                headers: {'Content-Type':'application/json'},
+                                body: JSON.stringify({
+                                  userId: mergeUser.id,
+                                  set: activeSet,
+                                  photos: selectedPhotos,
+                                  data: selectedData
+                                })
+                              })
+                              const data = await res.json()
+                              if(res.ok) alert('Merged successfully')
+                            }} 
+                            disabled={selectedPhotos.length!== selectedData.length || selectedPhotos.length === 0} 
+                            style={{ background: selectedPhotos.length === selectedData.length && selectedPhotos.length > 0? '#00C853' : '#555', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800', cursor:'pointer' }}
+                          >
                             Merge {selectedPhotos.length} Tasks
                           </button>
                         </div>
