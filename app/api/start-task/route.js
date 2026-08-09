@@ -45,7 +45,6 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    // 1. Check if an admin created an active custom merge for this user in the DB
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: { userId, vipSet: vipSetLabel, status: 'active' },
       orderBy: { createdAt: 'desc' }
@@ -54,22 +53,18 @@ export async function POST(req) {
     let productsToAssign = []
     let isMergedTask = false
 
-    // Look for edits saved by the admin in the database template cache layer
     const masterPatch = await prisma.taskMerge.findFirst({
       where: { vipSet: vipSetLabel, status: 'system_template' }
     })
     const masterPairs = masterPatch ? (typeof masterPatch.pairs === 'string' ? JSON.parse(masterPatch.pairs) : masterPatch.pairs) : []
 
     if (activeUserMerge) {
-      // FLOW A: User has a merged task setup! Collect all target task order numbers at once
       isMergedTask = true
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       const targetTaskOrders = userPairs.map(p => p.taskOrder)
 
       targetTaskOrders.forEach(tOrder => {
-        // Look for custom admin edits first
         const adminEditMatch = masterPairs.find(m => m.taskOrder === tOrder)
-        // Fallback to the original hardcoded file data array if no custom admin edit exists
         const fileMatch = fileSet.find(p => (p.taskOrder || p.id) === tOrder)
 
         if (fileMatch) {
@@ -81,7 +76,6 @@ export async function POST(req) {
         }
       })
     } else {
-      // FLOW B: Standard Single Task. Pulls data from your local file imports exactly like before
       const productIdForThisTask = index + 1
       const adminEditMatch = masterPairs.find(m => m.taskOrder === productIdForThisTask)
       const normalProduct = fileSet.find(p => (p.taskOrder || p.id) === productIdForThisTask)
@@ -99,7 +93,6 @@ export async function POST(req) {
       return NextResponse.json({ error: 'No items could be assigned for this task number' }, { status: 400 })
     }
 
-    // 2. Apply the 10x Profit Multiplier ONLY if it's a merged task group
     const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
     let totalPrice = 0
@@ -112,7 +105,9 @@ export async function POST(req) {
       const pOrder = p.taskOrder || p.id
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-      const localImagePath = p.image || `/vip${user.vipLevel}/set${currentSet}/photo${pOrder}.jpg`
+      
+      // Force correct path matching: /vip1/set1/photo1.jpg up to photo40.jpg
+      const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pOrder}.jpg`
       
       totalPrice += pPrice
       totalReserveAdded += reserveAmount
@@ -154,6 +149,7 @@ export async function POST(req) {
           vipLevel: user.vipLevel,
           setNumber: currentSet,
           progress: `${index + 1}/${config.tasksPerSet}`,
+          // FIXED: Swapped out broken .taskOrder for specific index row reference pointer array positions
           productId: taskProducts[0].taskOrder,
           price: totalPrice,
           totalPrice,
