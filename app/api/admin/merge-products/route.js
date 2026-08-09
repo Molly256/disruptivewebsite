@@ -7,16 +7,29 @@ export async function POST(req) {
   try {
     const { userId, vipSet, photoTaskOrders, adminId } = await req.json()
 
-    if(!userId ||!vipSet ||!photoTaskOrders || photoTaskOrders.length < 2) {
+    if (!userId || !vipSet || !photoTaskOrders || photoTaskOrders.length < 2) {
       return NextResponse.json({ error: 'Select at least 2 photos' }, { status: 400 })
     }
 
-    const pairs = photoTaskOrders.map(taskOrder => ({ taskOrder }))
+    const pairs = photoTaskOrders.map(orderNum => {
+      const num = parseInt(orderNum);
+      return { photoId: num, dataId: num, taskOrder: num }
+    })
 
-    // 1. Save to TaskMerge
-    await prisma.taskMerge.create({ data: { userId, vipSet, pairs } })
+    await prisma.taskMerge.updateMany({
+      where: { userId, vipSet, status: 'active' },
+      data: { status: 'used' }
+    })
 
-    // 2. Update User so user can do it
+    await prisma.taskMerge.create({
+      data: {
+        userId,
+        vipSet: vipSet.toLowerCase(),
+        pairs: pairs, 
+        status: 'active'
+      }
+    })
+
     await prisma.user.update({
       where: { id: userId },
       data: {
@@ -25,18 +38,18 @@ export async function POST(req) {
       }
     })
 
-    // 3. Admin Log - FIXED: use connect
-    await prisma.adminLog.create({
-      data: { 
-        action: `Merged ${pairs.length} photos for ${vipSet}`,
-        admin: { connect: { id: adminId } },
-        user: { connect: { id: userId } }
-      }
-    })
+    if (adminId) {
+      await prisma.adminLog.create({
+        data: {
+          adminId: adminId, 
+          action: `Merged ${pairs.length} tasks in ${vipSet} for User ID: ${userId}`
+        }
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (e) {
-    console.error('Merge error:', e)
+    console.error('Merge tracking failed:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

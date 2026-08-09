@@ -67,50 +67,106 @@ export default function AdminPage() {
     if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
   }
 
-  const loadMergeSet = async (vipSet, setNum) => {
-    if(!mergeUser) return
-    const vipLevel = mergeUser.vipLevel
-    const taskCount = vipList.find(v=>v.id===vipLevel).tasks
-    const start = setNum === 1? 1 : taskCount + 1
-    const end = setNum === 1? taskCount : taskCount * 2
+ const loadMergeSet = async (vipSet, setNum) => {
+  if(!mergeUser) return alert('No user selected')
 
-    const photos = []
-    for(let i=start; i<=end; i++){
-      photos.push({ id: i, type: 'photos', taskOrder: i, url: `/vip${vipLevel}/set${setNum}/photo${i}.jpg`, name: `photo${i}.jpg` })
-    }
+  const vipLevel = mergeUser.vipLevel || mergeUser.vip
+  if(!vipLevel) return alert('Error: User has no vip level')
+  if(!setNum) return alert('Error: setNum missing')
 
-    let dataItems = []
-    try {
-      // FIXED: fetch from API instead of import because /data is in root
-      const dataRes = await fetch(`/api/admin/get-data-file?vipSet=vip${vipLevel}Set${setNum}`)
-      if(!dataRes.ok) throw new Error('File not found')
-      const data = await dataRes.json()
-      dataItems = data.map((p, idx) => ({ id: start + idx, type: 'data', taskOrder: start + idx, price: p.price, name: p.name, image: p.image, rating: p.rating }))
-    } catch(e) { console.error(e); alert(`Data file not found: vip${vipLevel}Set${setNum}.js`) }
+  console.log("Loading Set:", {vipLevel, setNum, vipSet}) 
 
-    setMergePhotos([...photos,...dataItems])
+  const vipData = vipList.find(v => v.id === vipLevel)
+  if(!vipData) return alert(`VIP level ${vipLevel} not found in vipList`)
+  const taskCount = vipData.tasks
 
+  const start = setNum === 1 ? 1 : taskCount + 1
+  const end = setNum === 1 ? taskCount : taskCount * 2
+
+  const photos = []
+  for(let i = start; i <= end; i++){
+    photos.push({ id: `photo-${i}`, type: 'photos', taskOrder: i, url: `/vip${vipLevel}/set${setNum}/photo${i}.jpg`, name: `photo${i}.jpg` })
+  }
+
+  let dataItems = []
+  try {
+    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}Set${setNum}`
+    console.log("FETCHING:", url) 
+    const dataRes = await fetch(url)
+    if(!dataRes.ok) throw new Error(`API returned ${dataRes.status}`)
+    const data = await dataRes.json()
+    
+    // FIX INTEGRATED: Reads p.taskOrder straight from file database structure
+    dataItems = data.map((p, idx) => ({ 
+      id: `data-${p.taskOrder || (start + idx)}`, 
+      type: 'data', 
+      taskOrder: p.taskOrder || (start + idx), 
+      price: p.price, 
+      name: p.name, 
+      image: p.image, 
+      rating: p.rating 
+    }))
+  } catch(e) {
+    console.error(e);
+    alert(`Data file not found: vip${vipLevel}Set${setNum}.js\nError: ${e.message}`)
+  }
+
+  setMergePhotos([...photos, ...dataItems])
+
+  try {
     const res = await fetch(`/api/admin/merged-tasks?userId=${mergeUser.id}&vipSet=${vipSet}`)
     const mData = await res.json()
     setExistingMerged(mData.tasks || [])
+  } catch(e) {
+    console.error("merged-tasks error:", e)
   }
+}
 
-  const handleMerge = async () => {
-    if(selectedPhotos.length < 2) return alert('Select at least 2 photos to merge')
-    const res = await fetch('/api/admin/merge-products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, photoTaskOrders: selectedPhotos, adminId: admin.id }) })
-    if(res.ok) { alert(`Merged ${selectedPhotos.length} photos into 1 task. Saved to DB`); setSelectedPhotos([]); loadMergeSet(selectedMergeSet, selectedMergeSet.match(/Set(\d)/i)[1]) } else alert('Failed')
-  }
+const handleMerge = async () => {
+  if(selectedPhotos.length < 2) return alert('Select at least 2 photos to merge')
+  const res = await fetch('/api/admin/merge-products', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, photoTaskOrders: selectedPhotos, adminId: admin.id })
+  })
+  if(res.ok) {
+    alert(`Merged ${selectedPhotos.length} photos into 1 task. Saved to DB`);
+    setSelectedPhotos([]);
+    loadMergeSet(selectedMergeSet, parseInt(selectedMergeSet.match(/Set(\d)/i)[1]))
+  } else alert('Failed')
+}
 
-  const handleSaveDataFile = async () => {
-    if(selectedData.length === 0) return alert('Select data items to save')
-    const updatedData = selectedData.map(taskOrder => { const data = mergePhotos.find(p=>p.type==='data' && p.taskOrder===taskOrder); return { taskOrder, name: data.name, price: parseFloat(data.price) } })
-    await fetch('/api/admin/save-data-file', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ vipSet: selectedMergeSet, data: updatedData }) })
-    await fetch('/api/admin/update-merged-task-data', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, data: updatedData, adminId: admin.id }) })
-    alert('Saved: /data file + DB updated'); setSelectedData([]); loadMergeSet(selectedMergeSet, selectedMergeSet.match(/Set(\d)/i)[1])
-  }
+const handleSaveDataFile = async () => {
+  if(selectedData.length === 0) return alert('Select data items to save')
+  const updatedData = selectedData.map(taskOrder => {
+    const data = mergePhotos.find(p => p.type === 'data' && p.taskOrder === taskOrder);
+    return { taskOrder, name: data.name, price: parseFloat(data.price) }
+  })
+  await fetch('/api/admin/save-data-file', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ vipSet: selectedMergeSet, data: updatedData })
+  })
+  await fetch('/api/admin/update-merged-task-data', {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, data: updatedData, adminId: admin.id })
+  })
+  alert('Saved: /data file + DB updated');
+  setSelectedData([]);
+  loadMergeSet(selectedMergeSet, parseInt(selectedMergeSet.match(/Set(\d)/i)[1]))
+}
 
-  const editPrice = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
-  const saveEdit = () => { setMergePhotos(prev => prev.map(p => p.taskOrder === editingPhoto.taskOrder? {...p, name: editData.name, price: parseFloat(editData.price)} : p)); setEditingPhoto(null); alert('Edited locally. Hit "Save Data" to update file + DB') }
+const editPrice = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
+
+const saveEdit = () => { 
+  setMergePhotos(prev => prev.map(p => p.taskOrder === editingPhoto.taskOrder ? {...p, name: editData.name, price: parseFloat(editData.price)} : p)); 
+  // FIX INTEGRATED: queues changes automatically on click
+  setSelectedData(prev => prev.includes(editingPhoto.taskOrder) ? prev : [...prev, editingPhoto.taskOrder]);
+  setEditingPhoto(null); 
+  alert('Edited locally. Hit "Save Data" to update file + DB');
+}
+
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
   const handleSendNotif = async () => { if(!notifMessage) return alert('Enter message'); const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) }); if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed') }
@@ -167,40 +223,67 @@ export default function AdminPage() {
         )}
 
         {tab === 'merge' && (
-          <div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
-              <input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} />
-              <button onClick={async ()=>{ const q = mergeSearch.trim(); if(!q) return alert('Enter username or phone'); const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`); const data = await res.json(); if(res.ok) setMergeUser(data.user); else alert(data.error || 'User not found') }} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button>
-            </div>
-            {mergeUser && (
-              <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
-                <p><b>{mergeUser.username}</b> - VIP{mergeUser.vipLevel}</p>
-                {existingMerged.length > 0 && (<div style={{background:'#111', padding:10, borderRadius:8, marginBottom:12}}><p style={{color:'#00C853', fontWeight:700}}>⚡ This user has {existingMerged.length} Merged Task(s). User will see Big Cards</p></div>)}
-                {[1,2].map(setNum => (
-                  <div key={setNum} style={{ marginTop:'16px', border:'1px solid #333', borderRadius:12, padding:12 }}>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><p style={{fontWeight:800}}>Set {setNum}</p><button onClick={async ()=>{ setSelectedMergeSet(`vip${mergeUser.vipLevel}Set${setNum}`); setActiveSet(setNum); setMergeView('photos'); setSelectedPhotos([]); setSelectedData([]); await loadMergeSet(`vip${mergeUser.vipLevel}Set${setNum}`, setNum) }} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'10px 14px', borderRadius:'12px', fontWeight:'700' }}>Open Set {setNum}</button></div>
-                    {activeSet === setNum && (
-                      <div style={{ marginTop:'12px' }}>
-                        <div style={{display:'flex', gap:8, marginBottom:12}}><button onClick={()=>setMergeView('photos')} style={{flex:1, background: mergeView==='photos'? '#FF1493':'#333', border:'none', padding:10, borderRadius:8, color:'#FFF', fontWeight:700}}>Photos</button><button onClick={()=>setMergeView('data')} style={{flex:1, background: mergeView==='data'? '#FF1493':'#333', border:'none', padding:10, borderRadius:8, color:'#FFF', fontWeight:700}}>Data</button></div>
-                        <div style={{ display:'flex', gap:'8px', flexWrap:'wrap', marginBottom:'12px', maxHeight:'400px', overflowY:'auto' }}>
-                          {mergePhotos.filter(p => p.type === mergeView).sort((a,b)=>a.taskOrder-b.taskOrder).map(p=>{ const isSelected = mergeView === 'photos'? selectedPhotos.includes(p.taskOrder) : selectedData.includes(p.taskOrder); return (
-                            <div key={p.taskOrder} style={{ width:110, background:'#111', padding:6, borderRadius:8, position:'relative' }}>
-                              <div onClick={()=>{ if(mergeView === 'photos'){ setSelectedPhotos(prev=> prev.includes(p.taskOrder)? prev.filter(x=>x!==p.taskOrder): [...prev,p.taskOrder]) } else { setSelectedData(prev=> prev.includes(p.taskOrder)? prev.filter(x=>x!==p.taskOrder): [...prev,p.taskOrder]) } }} style={{ position:'absolute', top:6, right:6, width:20, height:20, borderRadius:'50%', border:'2px solid #FFF', background: isSelected? '#FF0000' : 'transparent', display:'flex', alignItems:'center', justifyContent:'center', zIndex:2, cursor:'pointer' }}>{isSelected && <span style={{color:'#FFF', fontSize:12, fontWeight:900}}>✓</span>}</div>
-                              {mergeView === 'photos'? (<><img src={p.url} onError={(e)=>e.target.style.display='none'} style={{ width:'100%', height:90, objectFit:'cover', borderRadius:'8px' }} /><p style={{fontSize:9, margin:'4px 0', textAlign:'center'}}>{p.name}</p></>) : (<><div style={{ width:'100%', height:90, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#222', borderRadius:'8px', padding:4 }}><p style={{fontSize:10, margin:0}}>${p.price}</p><p style={{fontSize:9, margin:2, textAlign:'center', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%'}}>{p.name}</p></div><button onClick={()=>editPrice(p)} style={{fontSize:10, background:'#FF1493', border:'none', borderRadius:6, padding:'4px 0', width:'100%', color:'#FFF', marginTop:4}}>Edit</button></>)}
-                              <p style={{fontSize:10, margin:'4px 0', textAlign:'center'}}>Task {p.taskOrder}</p>
-                            </div>
-                          )})}
-                        </div>
-                        {mergeView === 'photos' && selectedPhotos.length >= 2 && (<button onClick={handleMerge} style={{ background: '#00C853', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800', marginBottom:8 }}>Merge Selected Photos ({selectedPhotos.length})</button>)}
-                        {mergeView === 'data' && selectedData.length > 0 && (<button onClick={handleSaveDataFile} style={{ background: '#FF1493', color:'#FFF', border:'none', padding:'14px', borderRadius:'12px', width:'100%', fontWeight:'800' }}>Save Data to File + DB ({selectedData.length})</button>)}
-                      </div>
-                    )}
-                  </div>
-                ))}
+  <div>
+    <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Username or Phone" style={{ flex: 1, padding: 14, border: '2px solid #FF1493', borderRadius: 12, color: '#000' }} />
+      <button onClick={async () => { const q = mergeSearch.trim(); if(!q) return alert('Enter search query'); const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`); const data = await res.json(); if(res.ok) { setMergeUser(data.user); const cur = data.user.currentOrder || 1; const vip = vipList.find(v => v.id === (data.user.vipLevel || data.user.vip)); const limit = vip ? vip.tasks : 40; setActiveSet(cur <= limit ? 1 : 2); } else alert(data.error || 'User not found'); }} style={{ background: '#FF1493', border: 'none', borderRadius: 12, padding: '0 18px', fontSize: 20, cursor: 'pointer' }}>🔍</button>
+    </div>
+
+    {mergeUser && (
+      <div style={{ background: '#000', color: '#FFF', padding: 20, borderRadius: 16 }}>
+        <p style={{ fontSize: 18, margin: '0 0 10px 0' }}><b>{mergeUser.username}</b> - VIP{mergeUser.vipLevel || mergeUser.vip}</p>
+        {existingMerged.length > 0 && <div style={{ background: '#111', padding: 10, borderRadius: 8, marginBottom: 12 }}><p style={{ color: '#00C853', fontWeight: 700, margin: 0 }}>⚡ {existingMerged.length} Merged Task(s) Active.</p></div>}
+
+        {[1, 2].map(setNum => {
+          const vipLevel = mergeUser.vipLevel || mergeUser.vip, vip = vipList.find(v => v.id === vipLevel), limit = vip ? vip.tasks : 40, cur = mergeUser.currentOrder || 1, isActive = setNum === 1 ? (cur <= limit) : (cur > limit);
+          return (
+            <div key={setNum} style={{ marginTop: 16, border: '1px solid #333', borderRadius: 12, padding: 12, background: '#0a0a0a' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <p style={{ fontWeight: 800, margin: 0 }}>Set {setNum} {isActive && <span style={{ color: '#FF0000' }}>✔️ (Current)</span>}</p>
+                <button onClick={async () => { setSelectedMergeSet(`vip${vipLevel}Set${setNum}`); setActiveSet(setNum); setMergeView(''); setSelectedPhotos([]); setSelectedData([]); await loadMergeSet(`vip${vipLevel}Set${setNum}`, setNum); }} style={{ background: '#FF0000', color: '#FFF', border: 'none', padding: '10px 14px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Merge Task</button>
               </div>
-            )}
-          </div>
-        )}
+
+              {activeSet === setNum && (
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #222' }}>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                    <button onClick={() => setMergeView('photos')} style={{ flex: 1, background: mergeView === 'photos' ? '#FF1493' : '#222', border: 'none', padding: 12, borderRadius: 8, color: '#FFF', fontWeight: 700, cursor: 'pointer' }}>📸 Photos</button>
+                    <button onClick={() => setMergeView('data')} style={{ flex: 1, background: mergeView === 'data' ? '#FF1493' : '#222', border: 'none', padding: 12, borderRadius: 8, color: '#FFF', fontWeight: 700, cursor: 'pointer' }}>📁 Data</button>
+                  </div>
+
+                  {mergeView && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, maxHeight: 400, overflowY: 'auto' }}>
+                      {mergePhotos.filter(p => p.type === mergeView).sort((a, b) => a.taskOrder - b.taskOrder).map(p => {
+                        const isSel = mergeView === 'photos' ? selectedPhotos.includes(p.taskOrder) : selectedData.includes(p.taskOrder);
+                        return (
+                          <div key={p.taskOrder} style={{ width: 110, background: '#111', padding: 6, borderRadius: 8, position: 'relative', border: isSel ? '1px solid #FF0000' : '1px solid #222' }}>
+                            <div onClick={() => { if(mergeView === 'photos') { setSelectedPhotos(v => v.includes(p.taskOrder) ? v.filter(x => x !== p.taskOrder) : [...v, p.taskOrder]); } else { setSelectedData(v => v.includes(p.taskOrder) ? v.filter(x => x !== p.taskOrder) : [...v, p.taskOrder]); } }} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel ? '#FF0000' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}>{isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}</div>
+                            {mergeView === 'photos' ? (
+                              <img src={p.url} onError={e => e.target.src='data:image/svg+xml;utf8,<svg xmlns="http://w3.org" width="100" height="90" viewBox="0 0 100 90"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10">Missing</text></svg>'} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
+                            ) : (
+                              <>
+                                <div style={{ width: '100%', height: 90, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#222', borderRadius: 8, padding: 4 }}><p style={{ fontSize: 11, margin: 0, fontWeight: 700, color: '#00C853' }}>${p.price}</p><p style={{ fontSize: 9, margin: '4px 0', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{p.name}</p></div>
+                                <button onClick={() => editPrice(p)} style={{ fontSize: 10, background: '#FF1493', border: 'none', borderRadius: 6, padding: '5px 0', width: '100%', color: '#FFF', marginTop: 4, cursor: 'pointer' }}>✏️ Edit</button>
+                              </>
+                            )}
+                            <p style={{ fontSize: 10, margin: '4px 0 0 0', textAlign: 'center', fontWeight: 'bold' }}>Task {p.taskOrder}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {mergeView === 'photos' && selectedPhotos.length >= 2 && <button onClick={handleMerge} style={{ background: '#00C853', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: 8, cursor: 'pointer' }}>💥 Merge Selected Photos ({selectedPhotos.length})</button>}
+                  {mergeView === 'data' && selectedData.length > 0 && <button onClick={handleSaveDataFile} style={{ background: '#FF1493', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: 8, cursor: 'pointer' }}>`💾 Save Data ({selectedData.length})`</button>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    )}
+  </div>
+)}
+
 
         {tab === 'deposit' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{depositUser &&!showDepositInput && <button onClick={()=>setShowDepositInput(true)} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Deposit to {depositUser.username} - Balance: ${depositUser.walletBalance}</button>}{showDepositInput && (<div><input value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Deposit</button></div>)}</div>)}
 
