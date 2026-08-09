@@ -69,6 +69,9 @@ export default function AdminPage() {
 
  const loadMergeSet = async (vipSet, setNum) => {
   if(!mergeUser) return alert('No user selected')
+  // FIX: Protect the target user identification parameters with strict checks
+  const targetUserId = mergeUser.id || mergeUser._id;
+  if(!targetUserId) return alert('Error: Selected user object has no valid ID structure.')
 
   const vipLevel = mergeUser.vipLevel || mergeUser.vip
   if(!vipLevel) return alert('Error: User has no vip level')
@@ -85,27 +88,31 @@ export default function AdminPage() {
 
   const photos = []
   for(let i = start; i <= end; i++){
+    // FIXED PATH STRING: Forms absolute clean directory path strings matching your folder rules exactly
     photos.push({ id: `photo-${i}`, type: 'photos', taskOrder: i, url: `/vip${vipLevel}/set${setNum}/photo${i}.jpg`, name: `photo${i}.jpg` })
   }
 
   let dataItems = []
   try {
-    // FIX 1: Appended user ID so serverless database can look up the real data details
-    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}Set${setNum}&userId=${mergeUser.id}`
+    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}Set${setNum}&userId=${targetUserId}`
     console.log("FETCHING:", url) 
     const dataRes = await fetch(url)
     if(!dataRes.ok) throw new Error(`API returned ${dataRes.status}`)
     const data = await dataRes.json()
     
-    dataItems = data.map((p, idx) => ({ 
-      id: `data-${p.taskOrder || (start + idx)}`, 
-      type: 'data', 
-      taskOrder: p.taskOrder || (start + idx), 
-      price: p.price, 
-      name: p.name, 
-      image: p.image || `photo${p.taskOrder || (start + idx)}.jpg`, 
-      rating: p.rating || 5 
-    }))
+    dataItems = data.map((p, idx) => {
+      const tOrder = p.taskOrder || (start + idx);
+      return { 
+        id: `data-${tOrder}`, 
+        type: 'data', 
+        taskOrder: tOrder, 
+        price: p.price, 
+        name: p.name, 
+        // FIXED PATH STRING: Ensures images fallback on the perfect public folder format
+        image: p.image || `/vip${vipLevel}/set${setNum}/photo${tOrder}.jpg`, 
+        rating: p.rating || 5 
+      }
+    })
   } catch(e) {
     console.error(e);
     alert(`Data layer error for: vip${vipLevel}Set${setNum}\nError: ${e.message}`)
@@ -114,7 +121,7 @@ export default function AdminPage() {
   setMergePhotos([...photos, ...dataItems])
 
   try {
-    const res = await fetch(`/api/admin/merged-tasks?userId=${mergeUser.id}&vipSet=${vipSet}`)
+    const res = await fetch(`/api/admin/merged-tasks?userId=${targetUserId}&vipSet=${vipSet}`)
     const mData = await res.json()
     setExistingMerged(mData.tasks || [])
   } catch(e) {
@@ -124,39 +131,49 @@ export default function AdminPage() {
 
 const handleMerge = async () => {
   if(selectedPhotos.length < 2) return alert('Select at least 2 photos to merge')
+  const targetUserId = mergeUser.id || mergeUser._id;
+  if(!targetUserId) return alert('Error: Missing tracking user parameter ID value.')
+
   const res = await fetch('/api/admin/merge-products', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, photoTaskOrders: selectedPhotos, adminId: admin.id })
+    body: JSON.stringify({ userId: targetUserId, vipSet: selectedMergeSet, photoTaskOrders: selectedPhotos, adminId: admin.id || admin._id || 'system' })
   })
   if(res.ok) {
     alert(`Merged ${selectedPhotos.length} photos into 1 task. Saved to DB`);
     setSelectedPhotos([]);
-    // FIX 2: Fixed the missing index [1] crash risk on regex matching
     const match = selectedMergeSet.match(/Set(\d+)/i);
     loadMergeSet(selectedMergeSet, match ? parseInt(match[1]) : 1)
-  } else alert('Failed')
+  } else {
+    const errText = await res.json();
+    alert(`Failed: ${errText.error || 'Check server logs'}`);
+  }
 }
 
 const handleSaveDataFile = async () => {
   if(selectedData.length === 0) return alert('Select data items to save')
+  const targetUserId = mergeUser.id || mergeUser._id;
+  if(!targetUserId) return alert('Error: User context state parameter tracking missing.')
+
   const updatedData = selectedData.map(taskOrder => {
     const data = mergePhotos.find(p => p.type === 'data' && p.taskOrder === taskOrder);
     return { taskOrder, name: data.name, price: parseFloat(data.price) }
   })
+  
   await fetch('/api/admin/save-data-file', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ vipSet: selectedMergeSet, data: updatedData })
   })
+  
   await fetch('/api/admin/update-merged-task-data', {
     method: 'PUT',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, data: updatedData, adminId: admin.id })
+    body: JSON.stringify({ userId: targetUserId, vipSet: selectedMergeSet, data: updatedData, adminId: admin.id || admin._id })
   })
+  
   alert('Saved: /data file + DB updated');
   setSelectedData([]);
-  // FIX 3: Fixed the missing index [1] crash risk on regex matching
   const match = selectedMergeSet.match(/Set(\d+)/i);
   loadMergeSet(selectedMergeSet, match ? parseInt(match[1]) : 1)
 }
@@ -169,6 +186,7 @@ const saveEdit = () => {
   setEditingPhoto(null); 
   alert('Edited locally. Hit "Save Data" to update file + DB');
 }
+
 
 
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
