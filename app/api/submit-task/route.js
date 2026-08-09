@@ -18,78 +18,108 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    const taskProducts = user.currentTaskProducts || []
-    if (taskProducts.length === 0) return NextResponse.json({ error: 'No active task' }, { status: 400 })
+    const userTaskProducts = user.currentTaskProducts || []
+    if (userTaskProducts.length === 0) return NextResponse.json({ error: 'No active task' }, { status: 400 })
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
-    const profitRate = config.profit
+    
+    // DETECT MERGED TASK LAYER: If there are 2 or more products, activate the 10x multiplier!
+    const isMergedTask = userTaskProducts.length > 1
+    const baseProfitRate = config.profit
+    const activeProfitRate = isMergedTask ? (baseProfitRate * 10) : baseProfitRate
 
-    const totalPrice = taskProducts.reduce((sum, p) => sum + (p.price || 0), 0)
-    const totalProfit = taskProducts.reduce((sum, p) => sum + (p.profit || (p.price * profitRate)), 0)
-    const totalReserve = totalPrice + totalProfit
-    const tasksCompletedInThisSubmit = taskProducts.length // FIX 1: Count how many tasks we actually completed
+    const currentSetNumber = (user.setsCompleted || 0) + 1
+    const vipSetLabel = `vip${user.vipLevel}set${currentSetNumber}`.toLowerCase()
 
-    const pendingTask = await prisma.task.findFirst({
-      where: { userId: userId, status: 'pending' },
-      orderBy: { createdAt: 'desc' }
+    // 1. Fetch real price overrides from master inventory table
+    const masterPatch = await prisma.taskMerge.findFirst({
+      where: { vipSet: vipSetLabel, status: 'system_template' }
     })
 
+    const masterPairs = masterPatch 
+      ? (typeof masterPatch.pairs === 'string' ? JSON.parse(masterPatch.pairs) : masterPatch.pairs)
+      : []
+
+    // 2. Map through products and apply the 10x multiplier if active
+    const enrichedProducts = userTaskProducts.map(ut => {
+      const match = masterPairs.find(m => m.taskOrder === ut.taskOrder)
+      const basePrice = match ? parseFloat(match.price) : (user.vipLevel === 2 ? 200.00 : 100.00)
+      const baseName = match ? match.name : `Premium Product ${ut.taskOrder}`
+      
+      return {
+        id: ut.taskOrder,
+        taskOrder: ut.taskOrder,
+        price: basePrice,
+        name: baseName,
+        // E.g., VIP1: $50 * (0.005 * 10) = $50 * 0.05 = $2.50 profit per product!
+        profit: basePrice * activeProfitRate
+      }
+    })
+
+    // Sum up cumulative task payouts safely
+    const totalPrice = enrichedProducts.reduce((sum, p) => sum + p.price, 0)
+    const totalProfit = enrichedProducts.reduce((sum, p) => sum + p.profit, 0)
+    const totalReserve = totalPrice + totalProfit
+    const tasksCompletedInThisSubmit = enrichedProducts.length
+
     const currentIndex = user.tasksInCurrentSet || 0
-    const nextTaskCount = currentIndex + tasksCompletedInThisSubmit // FIX 2: Add 1 or 2 or 3
+    const nextTaskCount = currentIndex + tasksCompletedInThisSubmit
     const isSetComplete = nextTaskCount >= config.tasksPerSet
 
     const tx = [
       prisma.user.update({
-        where: { id: userId, tasksInCurrentSet: currentIndex }, // ATOMIC LOCK
+        where: { id: userId, tasksInCurrentSet: currentIndex }, // Atomic lock guard
         data: {
           walletBalance: { increment: totalReserve },
           holdAmount: 0.00,
           todayProfit: { increment: totalProfit },
           currentTaskProducts: [],
-          completedProducts: [...(user.completedProducts || []),...taskProducts],
+          completedProducts: [...(user.completedProducts || []), ...enrichedProducts],
           activeProducts: [],
-          tasksInCurrentSet: isSetComplete? 0 : nextTaskCount, // now goes 6 + 2 = 8 if merged
-          setsCompleted: isSetComplete? (user.setsCompleted || 0) + 1 : (user.setsCompleted || 0),
-          taskCompleted: { increment: tasksCompletedInThisSubmit }, // FIX 3: Add 1 or 2
+          tasksInCurrentSet: isSetComplete ? 0 : nextTaskCount,
+          setsCompleted: isSetComplete ? (user.setsCompleted || 0) + 1 : (user.setsCompleted || 0),
+          taskCompleted: { increment: tasksCompletedInThisSubmit },
           vipLevel: user.vipLevel,
           vipId: user.vipId
         }
       })
     ]
 
-    if(pendingTask) {
-      tx.push(prisma.task.update({
-        where: { id: pendingTask.id },
-        data: {
-          status: 'completed',
-          completedAt: new Date(),
-          totalPrice: totalPrice,
-          totalProfit: totalProfit,
-          progress: `${nextTaskCount}/${config.tasksPerSet}` // update progress too
-        }
-      }))
-    } else {
+    // 3. Create transparent logs for each task order in the user's completed records
+    enrichedProducts.forEach((product, idx) => {
       tx.push(prisma.task.create({
         data: {
           userId,
           status: 'completed',
           vipLevel: user.vipLevel,
-          setNumber: (user.setsCompleted || 0) + 1,
-          progress: `${nextTaskCount}/${config.tasksPerSet}`,
-          productId: taskProducts[0]?.id || 0,
-          price: totalPrice,
-          totalPrice,
-          totalProfit,
+          setNumber: currentSetNumber,
+          progress: `${currentIndex + (idx + 1)}/${config.tasksPerSet}`,
+          productId: product.taskOrder,
+          price: product.price,
+          totalPrice: product.price,
+          totalProfit: product.profit, // Logs the 10x enriched profit amount safely in histories
           completedAt: new Date(),
-          taskCode: `T${Date.now()}${userId.slice(-4)}`
+          taskCode: `T${Date.now()}${idx}${userId.slice(-4)}`
         }
       }))
-    }
+    })
+
+    // 4. Archive old active TaskMerge items in the history log to clear the workspace
+    tx.push(prisma.taskMerge.updateMany({
+      where: { userId, vipSet: vipSetLabel, status: 'active' },
+      data: { status: 'used' }
+    }))
 
     await prisma.$transaction(tx)
     const finalUser = await prisma.user.findUnique({ where: { id: userId } })
 
-    return NextResponse.json({ success: true, user: finalUser, message: 'Task Completed! Payout Received' })
+    return NextResponse.json({ 
+      success: true, 
+      user: finalUser, 
+      message: isMergedTask 
+        ? `🔥 Premium Merged Task Completed! 10x Bonus Profits Payout Received!` 
+        : `Task Completed! Payout Received` 
+    })
   } catch (err) {
     console.error('submit-task error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

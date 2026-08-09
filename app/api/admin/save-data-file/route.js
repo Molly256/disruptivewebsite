@@ -1,62 +1,46 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req) {
   try {
-    const { vipSet, data } = await req.json()
+    const { vipSet, data: updatedData } = await req.json()
 
-    if(!vipSet || !data || data.length === 0) {
+    if (!vipSet || !updatedData || updatedData.length === 0) {
       return NextResponse.json({ error: 'Missing vipSet or data' }, { status: 400 })
     }
 
-    const vipMatch = vipSet.match(/vip(\d+)/i)
-    const setMatch = vipSet.match(/Set(\d+)/i)
-    
-    if(!vipMatch || !setMatch) {
-      return NextResponse.json({ error: 'Invalid vipSet format' }, { status: 400 })
-    }
+    const normalizedSet = vipSet.toLowerCase()
 
-    const vip = vipMatch[1]
-    const set = setMatch[1]
-    const varName = `vip${vip}Set${set}`
-    const dataPath = path.join(process.cwd(), 'data', `vip${vip}Set${set}.js`)
+    // 1. Find the master inventory record in the database
+    const masterData = await prisma.taskMerge.findFirst({
+      where: { vipSet: normalizedSet, status: 'system_template' }
+    })
 
-    console.log("SAVING TO:", dataPath)
-
-    if(!fs.existsSync(dataPath)) {
-      return NextResponse.json({ error: `File not found: ${dataPath}` }, { status: 404 })
-    }
-
-    // 1. Read existing file as text instead of require()
-    const fileContent = fs.readFileSync(dataPath, 'utf8')
-    
-    // 2. Safely extract raw array data
-    const arrayMatch = fileContent.match(/\[\s*\{[\s\S]*\}\s*\]/)
-    if (!arrayMatch) {
-      return NextResponse.json({ error: 'Could not parse data array from file' }, { status: 500 })
+    if (!masterData) {
+      return NextResponse.json({ error: 'Master product template not found in DB.' }, { status: 404 })
     }
     
-    let dataArr = JSON.parse(arrayMatch[0])
+    let productsArray = typeof masterData.pairs === 'string' ? JSON.parse(masterData.pairs) : masterData.pairs
 
-    // 3. Update matching items by searching for matching taskOrder safely
-    data.forEach(updatedItem => {
-      const targetIndex = dataArr.findIndex(item => item.taskOrder === updatedItem.taskOrder)
-      
-      if (targetIndex !== -1) {
-        dataArr[targetIndex] = {
-          ...dataArr[targetIndex],
+    // 2. Update the name and price changes directly inside the database array
+    updatedData.forEach(updatedItem => {
+      const idx = productsArray.findIndex(item => item.taskOrder === parseInt(updatedItem.taskOrder))
+      if (idx !== -1) {
+        productsArray[idx] = {
+          ...productsArray[idx],
           name: updatedItem.name,
           price: parseFloat(updatedItem.price)
         }
       }
     })
 
-    // 4. Overwrite back into the JS file matching your format
-    const newFileContent = `export const ${varName} = ${JSON.stringify(dataArr, null, 2)};\n`
-    fs.writeFileSync(dataPath, newFileContent, 'utf-8')
+    // 3. Save the modified product rules back into the database template
+    await prisma.taskMerge.update({
+      where: { id: masterData.id },
+      data: { pairs: productsArray }
+    })
 
     return NextResponse.json({ success: true })
   } catch (e) {

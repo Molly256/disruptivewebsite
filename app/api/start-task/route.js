@@ -3,8 +3,19 @@ import { prisma } from '@/lib/prisma'
 import { vip1Set1 } from '@/data/vip1Set1'
 import { vip1Set2 } from '@/data/vip1Set2'
 
-const VIP_CONFIG = { 1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 } }
-const ALL_PRODUCTS = { 1: { 1: vip1Set1, 2: vip1Set2 } }
+export const dynamic = 'force-dynamic'
+
+const VIP_CONFIG = { 
+  1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
+  2: { tasksPerSet: 60, totalSets: 2, profit: 0.01 },
+  3: { tasksPerSet: 80, totalSets: 2, profit: 0.015 },
+  4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
+  5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 }
+}
+
+const STATIC_PRODUCTS = {
+  1: { 1: vip1Set1, 2: vip1Set2 }
+}
 
 const generateTaskCode = () => {
   const date = new Date().toISOString().slice(0,10).replace(/-/g,'')
@@ -20,31 +31,76 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    if(user.currentTaskProducts && user.currentTaskProducts.length > 0) {
+    if (user.currentTaskProducts && user.currentTaskProducts.length > 0) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
-    const config = VIP_CONFIG[user.vipLevel]
+    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSet = (user.setsCompleted || 0) + 1
-    const index = user.tasksInCurrentSet || 0 // 0/40
+    const index = user.tasksInCurrentSet || 0 
 
-    if(index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
+    if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
-    const baseSet = ALL_PRODUCTS[user.vipLevel]?.[currentSet]
-    if (!baseSet) return NextResponse.json({ error: 'Product set configuration missing' }, { status: 400 })
+    const vipSetLabel = `vip${user.vipLevel}set${currentSet}`.toLowerCase()
+    const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
+    if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    const productIdForThisTask = index + 1
+    // 1. Check if an admin created an active custom merge for this user in the DB
+    const activeUserMerge = await prisma.taskMerge.findFirst({
+      where: { userId, vipSet: vipSetLabel, status: 'active' },
+      orderBy: { createdAt: 'desc' }
+    })
+
     let productsToAssign = []
-    const merged = user.mergedTasks || []
+    let isMergedTask = false
 
-    if(merged.length > 0 && merged[index]) {
-      productsToAssign = merged[index]
+    // Look for edits saved by the admin in the database template cache layer
+    const masterPatch = await prisma.taskMerge.findFirst({
+      where: { vipSet: vipSetLabel, status: 'system_template' }
+    })
+    const masterPairs = masterPatch ? (typeof masterPatch.pairs === 'string' ? JSON.parse(masterPatch.pairs) : masterPatch.pairs) : []
+
+    if (activeUserMerge) {
+      // FLOW A: User has a merged task setup! Collect all target task order numbers at once
+      isMergedTask = true
+      const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
+      const targetTaskOrders = userPairs.map(p => p.taskOrder)
+
+      targetTaskOrders.forEach(tOrder => {
+        // Look for custom admin edits first
+        const adminEditMatch = masterPairs.find(m => m.taskOrder === tOrder)
+        // Fallback to the original hardcoded file data array if no custom admin edit exists
+        const fileMatch = fileSet.find(p => (p.taskOrder || p.id) === tOrder)
+
+        if (fileMatch) {
+          productsToAssign.push({
+            ...fileMatch,
+            name: adminEditMatch ? adminEditMatch.name : fileMatch.name,
+            price: adminEditMatch ? parseFloat(adminEditMatch.price) : fileMatch.price
+          })
+        }
+      })
     } else {
-      const normalProduct = baseSet.find(p => p.id === productIdForThisTask)
-      if (normalProduct) productsToAssign.push(normalProduct)
+      // FLOW B: Standard Single Task. Pulls data from your local file imports exactly like before
+      const productIdForThisTask = index + 1
+      const adminEditMatch = masterPairs.find(m => m.taskOrder === productIdForThisTask)
+      const normalProduct = fileSet.find(p => (p.taskOrder || p.id) === productIdForThisTask)
+      
+      if (normalProduct) {
+        productsToAssign.push({
+          ...normalProduct,
+          name: adminEditMatch ? adminEditMatch.name : normalProduct.name,
+          price: adminEditMatch ? parseFloat(adminEditMatch.price) : normalProduct.price
+        })
+      }
     }
 
-    if (productsToAssign.length === 0) return NextResponse.json({ error: `Product id ${productIdForThisTask} not found` }, { status: 400 })
+    if (productsToAssign.length === 0) {
+      return NextResponse.json({ error: 'No items could be assigned for this task number' }, { status: 400 })
+    }
+
+    // 2. Apply the 10x Profit Multiplier ONLY if it's a merged task group
+    const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
     let totalPrice = 0
     let totalReserveAdded = 0
@@ -52,14 +108,31 @@ export async function POST(req) {
     const taskProducts = []
 
     productsToAssign.forEach(p => {
-      const profitAmount = parseFloat((p.price * config.profit).toFixed(2))
-      const reserveAmount = parseFloat((p.price + profitAmount).toFixed(2))
-      const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${p.id}.jpg`
-      totalPrice += p.price
+      const pPrice = p.price || 0
+      const pOrder = p.taskOrder || p.id
+      const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
+      const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
+      const localImagePath = p.image || `/vip${user.vipLevel}/set${currentSet}/photo${pOrder}.jpg`
+      
+      totalPrice += pPrice
       totalReserveAdded += reserveAmount
       totalProfit += profitAmount
-      taskProducts.push({ id: p.id, name: p.name, image: localImagePath, price: p.price, profit: profitAmount, reserveAmount })
+      
+      taskProducts.push({ 
+        photoId: pOrder, 
+        dataId: pOrder, 
+        taskOrder: pOrder, 
+        name: p.name, 
+        image: localImagePath, 
+        price: pPrice, 
+        profit: profitAmount, 
+        reserveAmount 
+      })
     })
+
+    if (user.walletBalance < totalPrice) {
+      return NextResponse.json({ error: 'Insufficient balance to start this task group.' }, { status: 400 })
+    }
 
     const taskCode = generateTaskCode()
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
@@ -72,6 +145,7 @@ export async function POST(req) {
           walletBalance: newWallet,
           holdAmount: newHold,
           currentTaskProducts: taskProducts,
+          activeProducts: taskProducts
         }
       }),
       prisma.task.create({
@@ -80,13 +154,12 @@ export async function POST(req) {
           vipLevel: user.vipLevel,
           setNumber: currentSet,
           progress: `${index + 1}/${config.tasksPerSet}`,
-          productId: taskProducts[0].id,
+          productId: taskProducts[0].taskOrder,
           price: totalPrice,
           totalPrice,
           totalProfit,
           status: 'pending',
-          taskCode,
-          // products: taskProducts, <-- DELETE THIS LINE
+          taskCode
         }
       })
     ])
