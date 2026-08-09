@@ -29,7 +29,12 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    if (user.currentTaskProducts && user.currentTaskProducts.length > 0) {
+    // Check if the user already has any active pending products initialized in their profile context
+    const currentProductsArray = typeof user.currentTaskProducts === 'string' 
+      ? JSON.parse(user.currentTaskProducts || '[]') 
+      : (user.currentTaskProducts || [])
+
+    if (currentProductsArray.length > 0) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
@@ -42,7 +47,7 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    // FIX 1: Robust case-insensitive lookup loop handles variations safely ("vip1set1" vs "vip1Set1")
+    // Case-insensitive lookup loops across naming variations safely
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: { 
         userId, 
@@ -59,10 +64,7 @@ export async function POST(req) {
     let isMergedTask = false
 
     if (activeUserMerge) {
-      // FLOW A: Merged Task Mode Active
       isMergedTask = true
-      
-      // FIX 2: Pull the real names and custom prices straight out of the user's active row JSON column!
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       const targetTaskOrders = userPairs.map(p => p.taskOrder)
 
@@ -73,14 +75,12 @@ export async function POST(req) {
         if (fileMatch) {
           productsToAssign.push({
             ...fileMatch,
-            // Uses the admin's custom edited values if they exist, otherwise falls back to file baseline
             name: customAdminEdit?.name || fileMatch.name,
             price: customAdminEdit?.price ? parseFloat(customAdminEdit.price) : fileMatch.price
           })
         }
       })
     } else {
-      // FLOW B: Standard Single Task Mode Fallback
       isMergedTask = false
       const productIdForThisTask = index + 1
       const normalProduct = fileSet.find(p => (p.taskOrder || p.id) === productIdForThisTask)
@@ -93,6 +93,7 @@ export async function POST(req) {
 
     let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
     const taskProducts = []
+    const individualTaskRows = []
 
     productsToAssign.forEach(p => {
       const pPrice = p.price || 0
@@ -105,39 +106,62 @@ export async function POST(req) {
       totalReserveAdded += reserveAmount
       totalProfit += profitAmount
       
+      // 1. Build the frontend JSON model payload blocks
       taskProducts.push({ 
         photoId: pOrder, dataId: pOrder, taskOrder: pOrder, name: p.name, 
         image: localImagePath, price: pPrice, profit: profitAmount, reserveAmount 
+      })
+
+      // 2. Build distinct separate individual tracking record instances for the Task table
+      individualTaskRows.push({
+        userId,
+        vipLevel: user.vipLevel,
+        setNumber: currentSet,
+        progress: `${index + 1}/${config.tasksPerSet}`,
+        productId: pOrder,
+        price: pPrice,
+        totalPrice: pPrice,
+        totalProfit: profitAmount,
+        status: 'pending',
+        taskCode: `${generateTaskCode()}-${pOrder}`
       })
     })
 
     if (user.walletBalance < totalPrice) return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
 
-    const taskCode = generateTaskCode()
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    // Safe mathematical formatting parameters to prevent schema errors
-    const finalTotalPrice = parseFloat(totalPrice.toFixed(2))
-    const finalTotalProfit = parseFloat(totalProfit.toFixed(2))
-    const firstProductId = taskProducts.length > 0 ? taskProducts[0].taskOrder : 0
-
-    await prisma.$transaction([
+    // Prepare database transactions array elements safely
+    const databaseOperations = [
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: index },
         data: { walletBalance: newWallet, holdAmount: newHold, currentTaskProducts: taskProducts, activeProducts: taskProducts }
-      }),
-      prisma.task.create({
-        data: {
-          userId, vipLevel: user.vipLevel, setNumber: currentSet,
-          progress: `${index + 1}/${config.tasksPerSet}`,
-          productId: firstProductId,
-          price: finalTotalPrice, totalPrice: finalTotalPrice, totalProfit: finalTotalProfit, status: 'pending', taskCode
-        }
       })
-    ])
+    ]
 
-    return NextResponse.json({ success: true, user: await prisma.user.findUnique({ where: { id: userId } }), currentTaskNumber: index + 1 })
+    // 🎯 THE FIX: Generates multiple separate row columns if tasks are merged!
+    individualTaskRows.forEach(taskData => {
+      databaseOperations.push(prisma.task.create({ data: taskData }))
+    })
+
+    // If an admin merge profile was captured, mark its state tracking parameters as completed
+    if (activeUserMerge) {
+      databaseOperations.push(
+        prisma.taskMerge.update({
+          where: { id: activeUserMerge.id },
+          data: { status: 'used' }
+        })
+      );
+    }
+
+    await prisma.$transaction(databaseOperations)
+
+    return NextResponse.json({ 
+      success: true, 
+      user: await prisma.user.findUnique({ where: { id: userId } }), 
+      currentTaskNumber: index + 1 
+    })
   } catch (err) {
     console.error(err); return NextResponse.json({ error: err.message }, { status: 500 })
   }
