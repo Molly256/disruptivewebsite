@@ -230,7 +230,7 @@ const saveEdit = () => {
   <div>
     <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
       <input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Username or Phone" style={{ flex: 1, padding: 14, border: '2px solid #FF1493', borderRadius: 12, color: '#000' }} />
-      <button onClick={async () => { const q = mergeSearch.trim(); if(!q) return alert('Enter search query'); const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`); const data = await res.json(); if(res.ok) { setMergeUser(data.user); const cur = data.user.currentOrder || 1; const vip = vipList.find(v => v.id === (data.user.vipLevel || data.user.vip)); const limit = vip ? vip.tasks : 40; setActiveSet(cur <= limit ? 1 : 2); } else alert(data.error || 'User not found'); }} style={{ background: '#FF1493', border: 'none', borderRadius: 12, padding: '0 18px', fontSize: 20, cursor: 'pointer' }}>🔍</button>
+      <button onClick={async () => { const q = mergeSearch.trim(); if(!q) return alert('Enter search query'); const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`); const data = await res.json(); if(res.ok) { setMergeUser(data.user); // FIX 1: Auto-detect track using true database set progress index parameters const hasSet1Active = (data.user.setsCompleted || 0) === 0; setActiveSet(hasSet1Active ? 1 : 2); } else alert(data.error || 'User not found'); }} style={{ background: '#FF1493', border: 'none', borderRadius: 12, padding: '0 18px', fontSize: 20, cursor: 'pointer' }}>🔍</button>
     </div>
 
     {mergeUser && (
@@ -239,7 +239,7 @@ const saveEdit = () => {
         {existingMerged.length > 0 && <div style={{ background: '#111', padding: 10, borderRadius: 8, marginBottom: 12 }}><p style={{ color: '#00C853', fontWeight: 700, margin: 0 }}>⚡ {existingMerged.length} Merged Task(s) Active.</p></div>}
 
         {[1, 2].map(setNum => {
-          const vipLevel = mergeUser.vipLevel || mergeUser.vip, vip = vipList.find(v => v.id === vipLevel), limit = vip ? vip.tasks : 40, cur = mergeUser.currentOrder || 1, isActive = setNum === 1 ? (cur <= limit) : (cur > limit);
+          const vipLevel = mergeUser.vipLevel || mergeUser.vip, userSetNum = (mergeUser.setsCompleted || 0) + 1, isActive = setNum === userSetNum;
           return (
             <div key={setNum} style={{ marginTop: 16, border: '1px solid #333', borderRadius: 12, padding: 12, background: '#0a0a0a' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -277,7 +277,8 @@ const saveEdit = () => {
                   )}
 
                   {mergeView === 'photos' && selectedPhotos.length >= 2 && <button onClick={handleMerge} style={{ background: '#00C853', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: 8, cursor: 'pointer' }}>💥 Merge Selected Photos ({selectedPhotos.length})</button>}
-                  {mergeView === 'data' && selectedData.length > 0 && <button onClick={handleSaveDataFile} style={{ background: '#FF1493', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: 8, cursor: 'pointer' }}>`💾 Save Data ({selectedData.length})`</button>}
+                  {/* FIX 2: Corrected string expression formatting to make button tracking layout text interactive */}
+                  {mergeView === 'data' && selectedData.length > 0 && <button onClick={handleSaveDataFile} style={{ background: '#FF1493', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: 8, cursor: 'pointer' }}>💾 Save Data ({selectedData.length})</button>}
                 </div>
               )}
             </div>
@@ -287,6 +288,7 @@ const saveEdit = () => {
     )}
   </div>
 )}
+
 
 
         {tab === 'deposit' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{depositUser &&!showDepositInput && <button onClick={()=>setShowDepositInput(true)} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Deposit to {depositUser.username} - Balance: ${depositUser.walletBalance}</button>}{showDepositInput && (<div><input value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Deposit</button></div>)}</div>)}
