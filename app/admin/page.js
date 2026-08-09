@@ -81,10 +81,12 @@ export default function AdminPage() {
 
     let dataItems = []
     try {
-      const dataModule = await import(`@/data/vip${vipLevel}Set${setNum}.js?update=${Date.now()}`)
-      const data = dataModule.default || []
-      dataItems = data.map((p, idx) => ({ id: start + idx, type: 'data', taskOrder: start + idx, price: p.price, name: p.name }))
-    } catch(e) { alert(`Data file not found: /data/vip${vipLevel}Set${setNum}.js`) }
+      const varName = `vip${vipLevel}Set${setNum}`
+      const dataModule = await import(`@/data/${varName}.js?update=${Date.now()}`)
+      const data = dataModule[varName] || [] // FIXED: read named export
+      dataItems = data.map((p, idx) => ({ id: start + idx, type: 'data', taskOrder: start + idx, price: p.price, name: p.name, image: p.image, rating: p.rating }))
+    } catch(e) { console.error(e); alert(`Data file not found: /data/vip${vipLevel}Set${setNum}.js`) }
+
     setMergePhotos([...photos,...dataItems])
 
     const res = await fetch(`/api/admin/merged-tasks?userId=${mergeUser.id}&vipSet=${vipSet}`)
@@ -102,7 +104,7 @@ export default function AdminPage() {
     if(selectedData.length === 0) return alert('Select data items to save')
     const updatedData = selectedData.map(taskOrder => { const data = mergePhotos.find(p=>p.type==='data' && p.taskOrder===taskOrder); return { taskOrder, name: data.name, price: parseFloat(data.price) } })
     await fetch('/api/admin/save-data-file', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ vipSet: selectedMergeSet, data: updatedData }) })
-    await fetch('/api/admin/update-merged-task-data', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, updatedData, adminId: admin.id }) })
+    await fetch('/api/admin/update-merged-task-data', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, data: updatedData, adminId: admin.id }) })
     alert('Saved: /data file + DB updated'); setSelectedData([]); loadMergeSet(selectedMergeSet, selectedMergeSet.match(/set(\d)/)[1])
   }
 
@@ -123,7 +125,6 @@ export default function AdminPage() {
           <TabBtn id='deposit' label='Deposit' /><TabBtn id='withdraw' label='Withdraw' /><TabBtn id='notification' label='Notification' /><TabBtn id='bonus' label='Lucky Bonus' />
         </div>
 
-        {/* 1. UPGRADE VIP */}
         {tab === 'upgrade' && (
           <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
@@ -143,7 +144,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 2. RESET SET */}
         {tab === 'resetset' && (
           <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
@@ -154,7 +154,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 3. RESET PASSWORD */}
         {tab === 'password' && (
           <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
@@ -166,7 +165,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 4. MERGE TASKS - NEW LOGIC */}
         {tab === 'merge' && (
           <div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
@@ -179,7 +177,7 @@ export default function AdminPage() {
                 {existingMerged.length > 0 && (<div style={{background:'#111', padding:10, borderRadius:8, marginBottom:12}}><p style={{color:'#00C853', fontWeight:700}}>⚡ This user has {existingMerged.length} Merged Task(s). User will see Big Cards</p></div>)}
                 {[1,2].map(setNum => (
                   <div key={setNum} style={{ marginTop:'16px', border:'1px solid #333', borderRadius:12, padding:12 }}>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><p style={{fontWeight:800}}>Set {setNum}</p><button onClick={async ()=>{ setSelectedMergeSet(`vip${mergeUser.vipLevel}set${setNum}`); setActiveSet(setNum); setMergeView('photos'); setSelectedPhotos([]); setSelectedData([]); await loadMergeSet(`vip${mergeUser.vipLevel}set${setNum}`, setNum) }} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'10px 14px', borderRadius:'12px', fontWeight:'700' }}>Open Set {setNum}</button></div>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><p style={{fontWeight:800}}>Set {setNum}</p><button onClick={async ()=>{ setSelectedMergeSet(`vip${mergeUser.vipLevel}Set${setNum}`); setActiveSet(setNum); setMergeView('photos'); setSelectedPhotos([]); setSelectedData([]); await loadMergeSet(`vip${mergeUser.vipLevel}Set${setNum}`, setNum) }} style={{ background:'#FF0000', color:'#FFF', border:'none', padding:'10px 14px', borderRadius:'12px', fontWeight:'700' }}>Open Set {setNum}</button></div>
                     {activeSet === setNum && (
                       <div style={{ marginTop:'12px' }}>
                         <div style={{display:'flex', gap:8, marginBottom:12}}><button onClick={()=>setMergeView('photos')} style={{flex:1, background: mergeView==='photos'? '#FF1493':'#333', border:'none', padding:10, borderRadius:8, color:'#FFF', fontWeight:700}}>Photos</button><button onClick={()=>setMergeView('data')} style={{flex:1, background: mergeView==='data'? '#FF1493':'#333', border:'none', padding:10, borderRadius:8, color:'#FFF', fontWeight:700}}>Data</button></div>
@@ -203,16 +201,12 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* 5. DEPOSIT */}
         {tab === 'deposit' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{depositUser &&!showDepositInput && <button onClick={()=>setShowDepositInput(true)} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Deposit to {depositUser.username} - Balance: ${depositUser.walletBalance}</button>}{showDepositInput && (<div><input value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Deposit</button></div>)}</div>)}
 
-        {/* 6. WITHDRAW */}
         {tab === 'withdraw' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>{withdrawList.length === 0 && <p>No pending withdrawals</p>}{withdrawList.map(tx => (<div key={tx.id} style={{ border:'1px solid #333', padding:12, borderRadius:8, marginBottom:8 }}><p><b>{tx.user?.username}</b> - ${tx.amount}</p><p style={{fontSize:12}}>Status: {tx.status}</p>{tx.status === 'PENDING' && <div style={{display:'flex', gap:8}}><button onClick={()=>handleWithdraw(tx.id, 'approve')} style={{background:'#00C853', border:'none', padding:8, borderRadius:6, color:'#FFF'}}>Approve</button><button onClick={()=>handleWithdraw(tx.id, 'reject')} style={{background:'red', border:'none', padding:8, borderRadius:6, color:'#FFF'}}>Reject</button></div>}</div>))}</div>)}
 
-        {/* 7. NOTIFICATION */}
         {tab === 'notification' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={notifSearch} onChange={e => setNotifSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(notifSearch, setNotifUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{notifUser &&!showNotifInput && <button onClick={()=>setShowNotifInput(true)} style={{ background:'#FF1493', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Send Notification to {notifUser.username}</button>}{showNotifInput && (<div><textarea value={notifMessage} onChange={e => setNotifMessage(e.target.value)} placeholder="Message" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, height:80, color:'#000' }} /><button onClick={handleSendNotif} style={{ background:'#FF1493', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Send</button></div>)}</div>)}
 
-        {/* 8. LUCKY BONUS */}
         {tab === 'bonus' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={bonusSearch} onChange={e => setBonusSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(bonusSearch, setBonusUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{bonusUser &&!showBonusInput && <button onClick={()=>setShowBonusInput(true)} style={{ background:'gold', color:'#000', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Give Bonus to {bonusUser.username} - Current: ${bonusUser.specialBonus || 0}</button>}{showBonusInput && (<div><input value={bonusAmount} onChange={e => setBonusAmount(e.target.value)} placeholder="Bonus Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleGiveBonus} style={{ background:'gold', color:'#000', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Bonus</button></div>)}</div>)}
       </div>
       <BottomNav />
