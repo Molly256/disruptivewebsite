@@ -262,7 +262,12 @@ export default function StartingPage() {
   const [showToast, setShowToast] = useState(false)
 
   const setSize = vip1Set1.length
-  const setFinished = user? user.taskCompleted >= setSize : false
+  const setFinished = user ? user.taskCompleted >= setSize : false
+
+  // 🎯 THE CRITICAL FIX: Decodes the text cell into an actual product array payload seamlessly
+  const parsedTaskProducts = user && user.currentTaskProducts
+    ? (typeof user.currentTaskProducts === 'string' ? JSON.parse(user.currentTaskProducts) : user.currentTaskProducts)
+    : []
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -279,14 +284,17 @@ export default function StartingPage() {
           const todayNY = new Date(nowNY).toDateString()
           const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
           const lastResetDay = new Date(lastResetNY).toDateString()
-          if (todayNY!== lastResetDay) {
+          if (todayNY !== lastResetDay) {
             await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
             u.todayProfit = 0
             u.lastProfitReset = new Date()
           }
           setUser(u)
           localStorage.setItem('user', JSON.stringify(u))
-          if(u.currentTaskProducts && u.currentTaskProducts.length > 0) {
+
+          // 🎯 THE FIX: Decodes check during page initialization to avoid screen flashing
+          const activeArray = typeof u.currentTaskProducts === 'string' ? JSON.parse(u.currentTaskProducts || '[]') : (u.currentTaskProducts || [])
+          if(activeArray.length > 0) {
             setShowDetail(true)
           }
         } else {
@@ -306,7 +314,9 @@ export default function StartingPage() {
 
   const handleStart = async () => {
     if (setFinished) { setMsg('Set completed. Contact Customer Service to reset.'); return }
-    if(user.currentTaskProducts && user.currentTaskProducts.length > 0) {
+    
+    // 🎯 THE FIX: Uses safe parsed validation check parameters
+    if(parsedTaskProducts.length > 0) {
       setShowDetail(true)
       return
     }
@@ -319,7 +329,12 @@ export default function StartingPage() {
     setMsg('Starting...')
     const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
     const data = await res.json()
-    if(res.ok) { setUser(data.user); localStorage.setItem('user', JSON.stringify(data.user)); setShowDetail(true); setMsg('') }
+    if(res.ok) { 
+      setUser(data.user)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      setShowDetail(true)
+      setMsg('') 
+    }
     else { setMsg(data.error) }
   }
 
@@ -346,10 +361,12 @@ export default function StartingPage() {
   }
 
   if (loading || !user) return null
-  if (showDetail && user.currentTaskProducts && user.currentTaskProducts.length > 0) {
+
+  // 🎯 THE CRITICAL FIX: Passes the true parsed array items down to your component layout block
+  if (showDetail && parsedTaskProducts.length > 0) {
     return (
       <StartingDetail
-        products={user.currentTaskProducts}
+        products={parsedTaskProducts}
         onBack={() => setShowDetail(false)}
         onSubmit={handleSubmit}
         vipLevel={user.vipLevel}
@@ -358,7 +375,6 @@ export default function StartingPage() {
     )
   }
 
-  // FIXED: renamed to totalBalance
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
   const currentTaskNumber = (user.tasksInCurrentSet || 0) + 1
 
