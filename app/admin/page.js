@@ -90,25 +90,25 @@ export default function AdminPage() {
 
   let dataItems = []
   try {
-    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}Set${setNum}`
+    // FIX 1: Appended user ID so serverless database can look up the real data details
+    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}Set${setNum}&userId=${mergeUser.id}`
     console.log("FETCHING:", url) 
     const dataRes = await fetch(url)
     if(!dataRes.ok) throw new Error(`API returned ${dataRes.status}`)
     const data = await dataRes.json()
     
-    // FIX INTEGRATED: Reads p.taskOrder straight from file database structure
     dataItems = data.map((p, idx) => ({ 
       id: `data-${p.taskOrder || (start + idx)}`, 
       type: 'data', 
       taskOrder: p.taskOrder || (start + idx), 
       price: p.price, 
       name: p.name, 
-      image: p.image, 
-      rating: p.rating 
+      image: p.image || `photo${p.taskOrder || (start + idx)}.jpg`, 
+      rating: p.rating || 5 
     }))
   } catch(e) {
     console.error(e);
-    alert(`Data file not found: vip${vipLevel}Set${setNum}.js\nError: ${e.message}`)
+    alert(`Data layer error for: vip${vipLevel}Set${setNum}\nError: ${e.message}`)
   }
 
   setMergePhotos([...photos, ...dataItems])
@@ -132,7 +132,9 @@ const handleMerge = async () => {
   if(res.ok) {
     alert(`Merged ${selectedPhotos.length} photos into 1 task. Saved to DB`);
     setSelectedPhotos([]);
-    loadMergeSet(selectedMergeSet, parseInt(selectedMergeSet.match(/Set(\d)/i)[1]))
+    // FIX 2: Fixed the missing index [1] crash risk on regex matching
+    const match = selectedMergeSet.match(/Set(\d+)/i);
+    loadMergeSet(selectedMergeSet, match ? parseInt(match[1]) : 1)
   } else alert('Failed')
 }
 
@@ -154,18 +156,20 @@ const handleSaveDataFile = async () => {
   })
   alert('Saved: /data file + DB updated');
   setSelectedData([]);
-  loadMergeSet(selectedMergeSet, parseInt(selectedMergeSet.match(/Set(\d)/i)[1]))
+  // FIX 3: Fixed the missing index [1] crash risk on regex matching
+  const match = selectedMergeSet.match(/Set(\d+)/i);
+  loadMergeSet(selectedMergeSet, match ? parseInt(match[1]) : 1)
 }
 
 const editPrice = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
 
 const saveEdit = () => { 
   setMergePhotos(prev => prev.map(p => p.taskOrder === editingPhoto.taskOrder ? {...p, name: editData.name, price: parseFloat(editData.price)} : p)); 
-  // FIX INTEGRATED: queues changes automatically on click
   setSelectedData(prev => prev.includes(editingPhoto.taskOrder) ? prev : [...prev, editingPhoto.taskOrder]);
   setEditingPhoto(null); 
   alert('Edited locally. Hit "Save Data" to update file + DB');
 }
+
 
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
