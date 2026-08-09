@@ -29,7 +29,6 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    // Check if the user already has any active pending products initialized in their profile context
     const currentProductsArray = typeof user.currentTaskProducts === 'string' 
       ? JSON.parse(user.currentTaskProducts || '[]') 
       : (user.currentTaskProducts || [])
@@ -47,7 +46,6 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    // Case-insensitive lookup loops across naming variations safely
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: { 
         userId, 
@@ -66,24 +64,28 @@ export async function POST(req) {
     if (activeUserMerge) {
       isMergedTask = true
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
-      const targetTaskOrders = userPairs.map(p => p.taskOrder)
-
-      targetTaskOrders.forEach(tOrder => {
-        const fileMatch = fileSet.find(p => (p.taskOrder || p.id) === tOrder)
-        const customAdminEdit = userPairs.find(u => u.taskOrder === tOrder)
+      
+      // 🎯 FIXED LOOKUP MAP: Pulls dataId or photoId fallback options safely to cross check arrays
+      userPairs.forEach(pair => {
+        const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
+        
+        // Match against standard numerical .id identifiers specified inside vip1Set1 data files
+        const fileMatch = fileSet.find(p => Number(p.id) === targetId)
 
         if (fileMatch) {
           productsToAssign.push({
             ...fileMatch,
-            name: customAdminEdit?.name || fileMatch.name,
-            price: customAdminEdit?.price ? parseFloat(customAdminEdit.price) : fileMatch.price
+            // Override with admin customizations if provided, else keep file definitions
+            name: pair.name || fileMatch.name,
+            price: pair.price ? parseFloat(pair.price) : fileMatch.price,
+            rating: fileMatch.rating || 5.0
           })
         }
       })
     } else {
       isMergedTask = false
       const productIdForThisTask = index + 1
-      const normalProduct = fileSet.find(p => (p.taskOrder || p.id) === productIdForThisTask)
+      const normalProduct = fileSet.find(p => Number(p.id) === productIdForThisTask)
       if (normalProduct) productsToAssign.push(normalProduct)
     }
 
@@ -96,34 +98,34 @@ export async function POST(req) {
     const individualTaskRows = []
 
     productsToAssign.forEach(p => {
-      const pPrice = p.price || 0
-      const pOrder = p.taskOrder || p.id
+      const pPrice = parseFloat(p.price || 0)
+      const pId = Number(p.id)
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-      const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pOrder}.jpg`
+      const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
       
       totalPrice += pPrice
       totalReserveAdded += reserveAmount
       totalProfit += profitAmount
       
-      // 1. Build the frontend JSON model payload blocks
+      // Saves pristine original data directly into the currentTaskProducts database column!
       taskProducts.push({ 
-        photoId: pOrder, dataId: pOrder, taskOrder: pOrder, name: p.name, 
+        id: pId, photoId: pId, dataId: pId, taskOrder: pId, 
+        name: p.name, rating: p.rating || 5.0,
         image: localImagePath, price: pPrice, profit: profitAmount, reserveAmount 
       })
 
-      // 2. Build distinct separate individual tracking record instances for the Task table
       individualTaskRows.push({
         userId,
         vipLevel: user.vipLevel,
         setNumber: currentSet,
         progress: `${index + 1}/${config.tasksPerSet}`,
-        productId: pOrder,
+        productId: pId,
         price: pPrice,
         totalPrice: pPrice,
         totalProfit: profitAmount,
         status: 'pending',
-        taskCode: `${generateTaskCode()}-${pOrder}`
+        taskCode: `${generateTaskCode()}-${pId}`
       })
     })
 
@@ -132,7 +134,6 @@ export async function POST(req) {
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    // Prepare database transactions array elements safely
     const databaseOperations = [
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: index },
@@ -140,19 +141,17 @@ export async function POST(req) {
       })
     ]
 
-    // 🎯 THE FIX: Generates multiple separate row columns if tasks are merged!
     individualTaskRows.forEach(taskData => {
       databaseOperations.push(prisma.task.create({ data: taskData }))
     })
 
-    // If an admin merge profile was captured, mark its state tracking parameters as completed
     if (activeUserMerge) {
       databaseOperations.push(
         prisma.taskMerge.update({
           where: { id: activeUserMerge.id },
           data: { status: 'used' }
         })
-      );
+      )
     }
 
     await prisma.$transaction(databaseOperations)
