@@ -227,24 +227,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
           </button>
         </div>
 
-       <button
-            onClick={onSubmit}
-            disabled={isLocked}
-            style={{
-              width: '100%',
-              background: isLocked? '#CCCCCC' : '#FF0000',
-              color: '#FFF',
-              border: 'none',
-              borderRadius: 12,
-              padding: '16px',
-              fontSize: 16,
-              fontWeight: 500,
-              cursor: isLocked? 'not-allowed' : 'pointer'
-            }}
-          >
-            {isLocked? 'Insufficient Balance' : 'Submit'}
-          </button>
-        </div>
       </div>
       <BottomNav />
     </div>
