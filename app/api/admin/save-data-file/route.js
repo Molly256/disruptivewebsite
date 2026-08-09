@@ -5,23 +5,36 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req) {
   try {
-    // FIX 1: Extract the userId passed dynamically from your frontend payload
-    const { vipSet, data: updatedData, userId } = await req.json()
+    const body = await req.json()
+    const { vipSet, data: updatedData } = body
+    
+    // FIX 1: Flexibly capture the userId, user_id, or fallback inputs from the frontend
+    let userId = body.userId || body.user_id || body.id
 
-    if (!vipSet || !userId || !updatedData || updatedData.length === 0) {
-      return NextResponse.json({ error: 'Missing vipSet, userId, or data' }, { status: 400 })
+    if (!vipSet || !updatedData || updatedData.length === 0) {
+      return NextResponse.json({ error: 'Missing vipSet or data parameters' }, { status: 400 })
     }
 
     const normalizedSet = vipSet.toLowerCase()
+    let activeMerge = null
 
-    // FIX 2: Locate the target user's exact active task merge configuration row
-    const activeMerge = await prisma.taskMerge.findFirst({
-      where: { userId, vipSet: normalizedSet, status: 'active' },
-      orderBy: { createdAt: 'desc' }
-    })
+    // FIX 2: Dynamic Lookup — Search using exactly what the frontend provided
+    if (userId) {
+      // If the frontend successfully sent an ID, use it directly
+      activeMerge = await prisma.taskMerge.findFirst({
+        where: { userId, vipSet: normalizedSet, status: 'active' },
+        orderBy: { createdAt: 'desc' }
+      })
+    } else {
+      // FALLBACK: If the frontend forgot the userId, scan the DB for whichever active user is currently on this set!
+      activeMerge = await prisma.taskMerge.findFirst({
+        where: { vipSet: normalizedSet, status: 'active' },
+        orderBy: { createdAt: 'desc' }
+      })
+    }
 
     if (!activeMerge) {
-      return NextResponse.json({ error: 'Active merge instance not found for this user.' }, { status: 404 })
+      return NextResponse.json({ error: `Active merge row not found for ${vipSet}.` }, { status: 404 })
     }
     
     let pairsArray = typeof activeMerge.pairs === 'string' ? JSON.parse(activeMerge.pairs) : activeMerge.pairs
@@ -44,7 +57,7 @@ export async function POST(req) {
       data: { pairs: pairsArray }
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true, message: "Successfully synced data edits straight to active user merge track." })
   } catch (e) {
     console.error('SAVE DATA ERROR:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
