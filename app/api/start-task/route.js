@@ -13,9 +13,7 @@ const VIP_CONFIG = {
   5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 }
 }
 
-const STATIC_PRODUCTS = {
-  1: { 1: vip1Set1, 2: vip1Set2 }
-}
+const STATIC_PRODUCTS = { 1: { 1: vip1Set1, 2: vip1Set2 } }
 
 const generateTaskCode = () => {
   const date = new Date().toISOString().slice(0,10).replace(/-/g,'')
@@ -59,14 +57,13 @@ export async function POST(req) {
     const masterPairs = masterPatch ? (typeof masterPatch.pairs === 'string' ? JSON.parse(masterPatch.pairs) : masterPatch.pairs) : []
 
     if (activeUserMerge) {
-      isMergedTask = true
+      isMergedTask = true // Triggers merged status flag
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       const targetTaskOrders = userPairs.map(p => p.taskOrder)
 
       targetTaskOrders.forEach(tOrder => {
         const adminEditMatch = masterPairs.find(m => m.taskOrder === tOrder)
         const fileMatch = fileSet.find(p => (p.taskOrder || p.id) === tOrder)
-
         if (fileMatch) {
           productsToAssign.push({
             ...fileMatch,
@@ -76,10 +73,10 @@ export async function POST(req) {
         }
       })
     } else {
+      isMergedTask = false // Enforces single task status flag explicitly
       const productIdForThisTask = index + 1
       const adminEditMatch = masterPairs.find(m => m.taskOrder === productIdForThisTask)
       const normalProduct = fileSet.find(p => (p.taskOrder || p.id) === productIdForThisTask)
-      
       if (normalProduct) {
         productsToAssign.push({
           ...normalProduct,
@@ -89,15 +86,12 @@ export async function POST(req) {
       }
     }
 
-    if (productsToAssign.length === 0) {
-      return NextResponse.json({ error: 'No items could be assigned for this task number' }, { status: 400 })
-    }
+    if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
 
+    // CRITICAL MATH RULE: Multiplies profit rate by 10 ONLY if isMergedTask is true
     const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
-    let totalPrice = 0
-    let totalReserveAdded = 0
-    let totalProfit = 0
+    let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
     const taskProducts = []
 
     productsToAssign.forEach(p => {
@@ -105,8 +99,6 @@ export async function POST(req) {
       const pOrder = p.taskOrder || p.id
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-      
-      // Force correct path matching: /vip1/set1/photo1.jpg up to photo40.jpg
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pOrder}.jpg`
       
       totalPrice += pPrice
@@ -114,20 +106,12 @@ export async function POST(req) {
       totalProfit += profitAmount
       
       taskProducts.push({ 
-        photoId: pOrder, 
-        dataId: pOrder, 
-        taskOrder: pOrder, 
-        name: p.name, 
-        image: localImagePath, 
-        price: pPrice, 
-        profit: profitAmount, 
-        reserveAmount 
+        photoId: pOrder, dataId: pOrder, taskOrder: pOrder, name: p.name, 
+        image: localImagePath, price: pPrice, profit: profitAmount, reserveAmount 
       })
     })
 
-    if (user.walletBalance < totalPrice) {
-      return NextResponse.json({ error: 'Insufficient balance to start this task group.' }, { status: 400 })
-    }
+    if (user.walletBalance < totalPrice) return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
 
     const taskCode = generateTaskCode()
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
@@ -136,40 +120,20 @@ export async function POST(req) {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: index },
-        data: {
-          walletBalance: newWallet,
-          holdAmount: newHold,
-          currentTaskProducts: taskProducts,
-          activeProducts: taskProducts
-        }
+        data: { walletBalance: newWallet, holdAmount: newHold, currentTaskProducts: taskProducts, activeProducts: taskProducts }
       }),
       prisma.task.create({
         data: {
-          userId,
-          vipLevel: user.vipLevel,
-          setNumber: currentSet,
+          userId, vipLevel: user.vipLevel, setNumber: currentSet,
           progress: `${index + 1}/${config.tasksPerSet}`,
-          // FIXED: Swapped out broken .taskOrder for specific index row reference pointer array positions
           productId: taskProducts[0].taskOrder,
-          price: totalPrice,
-          totalPrice,
-          totalProfit,
-          status: 'pending',
-          taskCode
+          price: totalPrice, totalPrice, totalProfit, status: 'pending', taskCode
         }
       })
     ])
 
-    const finalUser = await prisma.user.findUnique({ where: { id: userId } })
-    return NextResponse.json({
-      success: true,
-      user: finalUser,
-      currentTaskNumber: index + 1
-    })
-
+    return NextResponse.json({ success: true, user: await prisma.user.findUnique({ where: { id: userId } }), currentTaskNumber: index + 1 })
   } catch (err) {
-    console.error('start-task error:', err)
-    if (err.code === 'P2025') return NextResponse.json({ error: 'Task processing conflict. Please wait.' }, { status: 409 })
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error(err); return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
