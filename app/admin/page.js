@@ -81,11 +81,12 @@ export default function AdminPage() {
 
     let dataItems = []
     try {
-      const varName = `vip${vipLevel}Set${setNum}`
-      const dataModule = await import(`@/data/${varName}.js?update=${Date.now()}`)
-      const data = dataModule[varName] || [] // FIXED: read named export
+      // FIXED: fetch from API instead of import because /data is in root
+      const dataRes = await fetch(`/api/admin/get-data-file?vipSet=vip${vipLevel}Set${setNum}`)
+      if(!dataRes.ok) throw new Error('File not found')
+      const data = await dataRes.json()
       dataItems = data.map((p, idx) => ({ id: start + idx, type: 'data', taskOrder: start + idx, price: p.price, name: p.name, image: p.image, rating: p.rating }))
-    } catch(e) { console.error(e); alert(`Data file not found: /data/vip${vipLevel}Set${setNum}.js`) }
+    } catch(e) { console.error(e); alert(`Data file not found: vip${vipLevel}Set${setNum}.js`) }
 
     setMergePhotos([...photos,...dataItems])
 
@@ -97,7 +98,7 @@ export default function AdminPage() {
   const handleMerge = async () => {
     if(selectedPhotos.length < 2) return alert('Select at least 2 photos to merge')
     const res = await fetch('/api/admin/merge-products', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, photoTaskOrders: selectedPhotos, adminId: admin.id }) })
-    if(res.ok) { alert(`Merged ${selectedPhotos.length} photos into 1 task. Saved to DB`); setSelectedPhotos([]); loadMergeSet(selectedMergeSet, selectedMergeSet.match(/set(\d)/)[1]) } else alert('Failed')
+    if(res.ok) { alert(`Merged ${selectedPhotos.length} photos into 1 task. Saved to DB`); setSelectedPhotos([]); loadMergeSet(selectedMergeSet, selectedMergeSet.match(/Set(\d)/i)[1]) } else alert('Failed')
   }
 
   const handleSaveDataFile = async () => {
@@ -105,7 +106,7 @@ export default function AdminPage() {
     const updatedData = selectedData.map(taskOrder => { const data = mergePhotos.find(p=>p.type==='data' && p.taskOrder===taskOrder); return { taskOrder, name: data.name, price: parseFloat(data.price) } })
     await fetch('/api/admin/save-data-file', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ vipSet: selectedMergeSet, data: updatedData }) })
     await fetch('/api/admin/update-merged-task-data', { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: mergeUser.id, vipSet: selectedMergeSet, data: updatedData, adminId: admin.id }) })
-    alert('Saved: /data file + DB updated'); setSelectedData([]); loadMergeSet(selectedMergeSet, selectedMergeSet.match(/set(\d)/)[1])
+    alert('Saved: /data file + DB updated'); setSelectedData([]); loadMergeSet(selectedMergeSet, selectedMergeSet.match(/Set(\d)/i)[1])
   }
 
   const editPrice = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
