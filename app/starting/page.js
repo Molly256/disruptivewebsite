@@ -128,13 +128,19 @@ const formatMoney = (n) => {
 }
 
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
-  const profitRate = 0.005
+  // Base single product tracking calculation rules
+  const baseProfitRate = 0.005
 
   // SAFETY: prevent crash if products is empty
   if (!products || products.length === 0) return null
 
+  // DYNAMIC MERGE IDENTIFICATION LAYER: Detect if this is a merged task configuration group
+  const isMergedTask = products.length > 1
+  const activeProfitRate = isMergedTask ? (baseProfitRate * 10) : baseProfitRate
+
+  // Math updates: Using precise multipliers to calculate absolute price + reward totals
   const totalPrice = Math.round(products.reduce((s, p) => s + Number(p.price || 0), 0) * 100) / 100
-  const totalProfit = Math.round(products.reduce((s, p) => s + (Number(p.price || 0) * profitRate), 0) * 100) / 100
+  const totalProfit = Math.round(products.reduce((s, p) => s + (Number(p.price || 0) * activeProfitRate), 0) * 100) / 100
   const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
 
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}${String(products[0]?.id || 0).padStart(10, '0')}`
@@ -153,28 +159,47 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Starting Detail</h1>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px' }}>
-        {products.map(product => (
-          <div key={product.id} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
-            <img src={product.image || `/vip${vipLevel}/set1/photo${product.id}.jpg`} alt="" style={{ width: '100%', height: 220, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, lineHeight: 1.4 }}>{product.name}</div>
-              <div style={{ marginBottom: 4 }}>⭐ {product.rating}</div>
-              <div style={{ fontWeight: 700, marginBottom: 16 }}>{formatMoney(product.price)} x1 USD</div>
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
+        
+        {/* --- 1 GLOBAL OUTSIDE CARD CONTAINER WRAPPER --- */}
+        <div style={{ background: isMergedTask ? '#FFF' : 'transparent', margin: '16px 0', borderRadius: 16, padding: isMergedTask ? '16px' : '0', border: isMergedTask ? '3px solid #FF1493' : 'none' }}>
+          
+          {isMergedTask && (
+            <div style={{ background: '#FF1493', color: '#FFF', padding: '8px 12px', borderRadius: '8px', textAlign: 'center', fontWeight: '800', marginBottom: '16px', fontSize: '14px' }}>
+              🔥 PREMIUM MERGED TASK DETECTED! (10X BONUS PROFITS INSIDE)
             </div>
-            <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '140px', border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>TOTAL AMOUNT</div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{formatMoney(product.price)} <span style={{fontSize:12}}>USD</span></div>
-              </div>
-              <div style={{ flex: 1, minWidth: '140px', border: '1px solid #EEE', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-                <div style={{ color: '#FF6A00', fontWeight: 700, fontSize: 12 }}>PROFIT {(profitRate * 100).toFixed(1)}%</div>
-                <div style={{ fontSize: 16, fontWeight: 800 }}>{formatMoney(product.price * profitRate)} <span style={{fontSize:12}}>USD</span></div>
-              </div>
-            </div>
-          </div>
-        ))}
+          )}
 
+          {/* Loop through each product as sub cards nested cleanly inside the layout wrapper */}
+          {products.map((product, idx) => (
+            /* --- INNER SUB-CARD WITH DISTINCT DATA REVIEWS --- */
+            <div key={product.id || idx} style={{ background: isMergedTask ? '#FAFAFA' : '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px', border: isMergedTask ? '1px solid #E0E0E0' : 'none' }}>
+              <p style={{ color: '#FF1493', fontWeight: '800', fontSize: '12px', margin: '0 0 8px 0' }}>Item Attachment Row #{idx + 1}</p>
+              
+              <img src={product.image || `/vip${vipLevel}/set1/photo${product.id}.jpg`} alt="" style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
+              
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4, color: '#333' }}>{product.name}</div>
+                <div style={{ marginBottom: 4 }}>⭐ {product.rating || 5.0}</div>
+                <div style={{ fontWeight: 700, marginBottom: 16, color: '#000' }}>{formatMoney(product.price)} x1 USD</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '120px', border: '1px solid #EEE', borderRadius: 8, padding: 10, textAlign: 'center', background: '#FFF' }}>
+                  <div style={{ color: '#666', fontWeight: 700, fontSize: 11 }}>PRODUCT COST</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#000' }}>{formatMoney(product.price)} <span style={{fontSize:10}}>USD</span></div>
+                </div>
+                <div style={{ flex: 1, minWidth: '120px', border: '1px solid #EEE', borderRadius: 8, padding: 10, textAlign: 'center', background: '#FFF' }}>
+                  <div style={{ color: '#00C853', fontWeight: 700, fontSize: 11 }}>PROFIT {(activeProfitRate * 100).toFixed(1)}%</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#00C853' }}>{formatMoney(product.price * activeProfitRate)} <span style={{fontSize:10}}>USD</span></div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+        </div>
+
+        {/* --- BOTTOM FINANCIAL OVERVIEW LEDGER BLOCK --- */}
         <div style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
           <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
@@ -188,11 +213,21 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
 
             <hr style={{margin: '8px 0'}}/>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#FF6A00' }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#00C853' }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: isLocked? '#FF0000' : '#000' }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
           </div>
 
-          <button
+          {/* Submit Action handler trigger mapping */}
+          <button 
+            disabled={isLocked}
+            onClick={onSubmit}
+            style={{ width: '100%', background: isLocked ? '#CCC' : '#00C853', color: '#FFF', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '900', fontSize: '16px', cursor: isLocked ? 'not-allowed' : 'pointer' }}
+          >
+            {isMergedTask ? "Submit Both Assignments Now" : "Submit Assignment"}
+          </button>
+        </div>
+
+       <button
             onClick={onSubmit}
             disabled={isLocked}
             style={{
