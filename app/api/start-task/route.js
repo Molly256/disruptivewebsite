@@ -39,56 +39,56 @@ export async function POST(req) {
 
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
-    const vipSetLabel = `vip${user.vipLevel}set${currentSet}`.toLowerCase()
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
+    // FIX 1: Robust case-insensitive lookup loop handles variations safely ("vip1set1" vs "vip1Set1")
     const activeUserMerge = await prisma.taskMerge.findFirst({
-      where: { userId, vipSet: vipSetLabel, status: 'active' },
+      where: { 
+        userId, 
+        OR: [
+          { vipSet: `vip${user.vipLevel}set${currentSet}` },
+          { vipSet: `vip${user.vipLevel}Set${currentSet}` }
+        ],
+        status: 'active' 
+      },
       orderBy: { createdAt: 'desc' }
     })
 
     let productsToAssign = []
     let isMergedTask = false
 
-    const masterPatch = await prisma.taskMerge.findFirst({
-      where: { vipSet: vipSetLabel, status: 'system_template' }
-    })
-    const masterPairs = masterPatch ? (typeof masterPatch.pairs === 'string' ? JSON.parse(masterPatch.pairs) : masterPatch.pairs) : []
-
     if (activeUserMerge) {
-      isMergedTask = true // Triggers merged status flag
+      // FLOW A: Merged Task Mode Active
+      isMergedTask = true
+      
+      // FIX 2: Pull the real names and custom prices straight out of the user's active row JSON column!
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       const targetTaskOrders = userPairs.map(p => p.taskOrder)
 
       targetTaskOrders.forEach(tOrder => {
-        const adminEditMatch = masterPairs.find(m => m.taskOrder === tOrder)
         const fileMatch = fileSet.find(p => (p.taskOrder || p.id) === tOrder)
+        const customAdminEdit = userPairs.find(u => u.taskOrder === tOrder)
+
         if (fileMatch) {
           productsToAssign.push({
             ...fileMatch,
-            name: adminEditMatch ? adminEditMatch.name : fileMatch.name,
-            price: adminEditMatch ? parseFloat(adminEditMatch.price) : fileMatch.price
+            // Uses the admin's custom edited values if they exist, otherwise falls back to file baseline
+            name: customAdminEdit?.name || fileMatch.name,
+            price: customAdminEdit?.price ? parseFloat(customAdminEdit.price) : fileMatch.price
           })
         }
       })
     } else {
-      isMergedTask = false // Enforces single task status flag explicitly
+      // FLOW B: Standard Single Task Mode Fallback
+      isMergedTask = false
       const productIdForThisTask = index + 1
-      const adminEditMatch = masterPairs.find(m => m.taskOrder === productIdForThisTask)
       const normalProduct = fileSet.find(p => (p.taskOrder || p.id) === productIdForThisTask)
-      if (normalProduct) {
-        productsToAssign.push({
-          ...normalProduct,
-          name: adminEditMatch ? adminEditMatch.name : normalProduct.name,
-          price: adminEditMatch ? parseFloat(adminEditMatch.price) : normalProduct.price
-        })
-      }
+      if (normalProduct) productsToAssign.push(normalProduct)
     }
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
 
-    // CRITICAL MATH RULE: Multiplies profit rate by 10 ONLY if isMergedTask is true
     const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
     let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
@@ -117,6 +117,11 @@ export async function POST(req) {
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
+    // Safe mathematical formatting parameters to prevent schema errors
+    const finalTotalPrice = parseFloat(totalPrice.toFixed(2))
+    const finalTotalProfit = parseFloat(totalProfit.toFixed(2))
+    const firstProductId = taskProducts.length > 0 ? taskProducts[0].taskOrder : 0
+
     await prisma.$transaction([
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: index },
@@ -126,8 +131,8 @@ export async function POST(req) {
         data: {
           userId, vipLevel: user.vipLevel, setNumber: currentSet,
           progress: `${index + 1}/${config.tasksPerSet}`,
-          productId: taskProducts[0].taskOrder,
-          price: totalPrice, totalPrice, totalProfit, status: 'pending', taskCode
+          productId: firstProductId,
+          price: finalTotalPrice, totalPrice: finalTotalPrice, totalProfit: finalTotalProfit, status: 'pending', taskCode
         }
       })
     ])
