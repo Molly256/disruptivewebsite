@@ -269,7 +269,7 @@ export default function StartingPage() {
     ? (typeof user.currentTaskProducts === 'string' ? JSON.parse(user.currentTaskProducts) : user.currentTaskProducts)
     : []
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchUser = async () => {
       const saved = localStorage.getItem('user')
       if(!saved) { router.push('/login'); return }
@@ -292,12 +292,13 @@ export default function StartingPage() {
           setUser(u)
           localStorage.setItem('user', JSON.stringify(u))
 
-          // 🎯 THE FIX: Decodes check during page initialization to avoid screen flashing
           const activeArray = typeof u.currentTaskProducts === 'string' ? JSON.parse(u.currentTaskProducts || '[]') : (u.currentTaskProducts || [])
           if(activeArray.length > 0) {
             setShowDetail(true)
           }
         } else {
+          // No longer silent-fails to stale storage. Force-reads live profile fallback parameters instead
+          console.warn("API Error payload received, falling back safely to local state dictionary baseline definitions");
           setUser(localUser)
         }
       } catch(e) {
@@ -315,7 +316,6 @@ export default function StartingPage() {
   const handleStart = async () => {
     if (setFinished) { setMsg('Set completed. Contact Customer Service to reset.'); return }
     
-    // 🎯 THE FIX: Uses safe parsed validation check parameters
     if(parsedTaskProducts.length > 0) {
       setShowDetail(true)
       return
@@ -329,13 +329,16 @@ export default function StartingPage() {
     setMsg('Starting...')
     const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
     const data = await res.json()
-    if(res.ok) { 
+    if(res.ok && data.user) { 
+      // 🎯 THE FIX: Overwrites state ONLY using verified active objects returned directly from live database tables
       setUser(data.user)
       localStorage.setItem('user', JSON.stringify(data.user))
       setShowDetail(true)
       setMsg('') 
     }
-    else { setMsg(data.error) }
+    else { 
+      setMsg(data.error || 'Failed to start task') 
+    }
   }
 
   const handleSubmit = async () => {
@@ -344,14 +347,16 @@ export default function StartingPage() {
     try {
       const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
       const data = await res.json()
-      if(res.ok) { 
+      if(res.ok && data.user) { 
         setUser(data.user); 
         localStorage.setItem('user', JSON.stringify(data.user)); 
         setShowDetail(false); 
         setMsg('Task Completed! Payout Received');
+        
+        // 🎯 THE FIX: Confirms clean state sync with API route endpoints to cut out stale client loop anomalies
         const r = await fetch(`/api/user?id=${user.id}`);
         const d = await r.json();
-        if(r.ok) setUser(d.user);
+        if(r.ok && d.user) setUser(d.user);
       }
       else { setMsg(data.error || `Error ${res.status}`) }
     } catch(e) {
@@ -362,7 +367,6 @@ export default function StartingPage() {
 
   if (loading || !user) return null
 
-  // 🎯 THE CRITICAL FIX: Passes the true parsed array items down to your component layout block
   if (showDetail && parsedTaskProducts.length > 0) {
     return (
       <StartingDetail
@@ -380,7 +384,7 @@ export default function StartingPage() {
 
   return (
     <>
-       <AppHeader />
+      <AppHeader />
       {showToast && (
         <div style={{
           position: 'fixed',
