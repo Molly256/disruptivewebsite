@@ -24,7 +24,7 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const isMergedTask = userTaskProducts.length > 1
     
-    // CRITICAL MATH RULE: Multiplies profit rate by 10 ONLY if isMergedTask is true
+    // Profit rate multiplies by 10 strictly on merged status triggers
     const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
     const currentSetNumber = (user.setsCompleted || 0) + 1
@@ -34,18 +34,27 @@ export async function POST(req) {
     const masterPairs = masterPatch ? (typeof masterPatch.pairs === 'string' ? JSON.parse(masterPatch.pairs) : masterPatch.pairs) : []
 
     const enrichedProducts = userTaskProducts.map(ut => {
-      const match = masterPairs.find(m => m.taskOrder === ut.taskOrder)
-      const basePrice = match ? parseFloat(match.price) : (user.vipLevel === 2 ? 200.00 : 100.00)
-      const baseName = match ? match.name : `Premium Product ${ut.taskOrder}`
+      // FIX 1: Robust fallback matching checks taskOrder, photoId, or id to map properly
+      const targetId = ut.taskOrder || ut.photoId || ut.id;
+      const match = masterPairs.find(m => (m.taskOrder === targetId || m.id === targetId))
+      
+      // Fallback fallback safeguards using original active arrays from start-task to prevent fake money injections
+      const basePrice = match ? parseFloat(match.price) : parseFloat(ut.price || (user.vipLevel === 2 ? 200.00 : 100.00))
+      const baseName = match ? match.name : (ut.name || `Product ${targetId}`)
+      
       return {
-        id: ut.taskOrder, taskOrder: ut.taskOrder, price: basePrice, name: baseName,
+        id: targetId, 
+        taskOrder: targetId, 
+        price: basePrice, 
+        name: baseName,
         profit: parseFloat((basePrice * activeProfitRate).toFixed(2))
       }
     })
 
-    const totalPrice = enrichedProducts.reduce((sum, p) => sum + p.price, 0)
-    const totalProfit = enrichedProducts.reduce((sum, p) => sum + p.profit, 0)
-    const totalReserve = totalPrice + totalProfit
+    // Secure arithmetic parsing
+    const totalPrice = parseFloat(enrichedProducts.reduce((sum, p) => sum + p.price, 0).toFixed(2))
+    const totalProfit = parseFloat(enrichedProducts.reduce((sum, p) => sum + p.profit, 0).toFixed(2))
+    const totalReserve = parseFloat((totalPrice + totalProfit).toFixed(2))
     const tasksCompletedInThisSubmit = enrichedProducts.length
 
     const currentIndex = user.tasksInCurrentSet || 0
@@ -60,8 +69,11 @@ export async function POST(req) {
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: currentIndex },
         data: {
-          walletBalance: { increment: totalReserve }, holdAmount: 0.00, todayProfit: { increment: totalProfit },
-          currentTaskProducts: [], activeProducts: [],
+          walletBalance: { increment: totalReserve }, 
+          holdAmount: 0.00, 
+          todayProfit: { increment: totalProfit },
+          currentTaskProducts: [], 
+          activeProducts: [],
           completedProducts: [...(user.completedProducts || []), ...enrichedProducts],
           tasksInCurrentSet: isSetComplete ? 0 : nextTaskCount,
           setsCompleted: isSetComplete ? (user.setsCompleted || 0) + 1 : (user.setsCompleted || 0),
@@ -71,12 +83,14 @@ export async function POST(req) {
     ]
 
     if (pendingTask) {
+      // FIX 2: Corrected variables from enrichedProducts[0] arrays to update the pending row properly
       tx.push(prisma.task.update({
         where: { id: pendingTask.id },
         data: {
-          status: 'completed', completedAt: new Date(),
+          status: 'completed', 
+          completedAt: new Date(),
           productId: enrichedProducts[0].taskOrder,
-          price: totalPrice,
+          price: enrichedProducts[0].price,
           totalPrice: totalPrice,
           totalProfit: totalProfit,
           progress: `${nextTaskCount}/${config.tasksPerSet}`
