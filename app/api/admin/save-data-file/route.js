@@ -5,41 +5,43 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req) {
   try {
-    const { vipSet, data: updatedData } = await req.json()
+    // FIX 1: Extract the userId passed dynamically from your frontend payload
+    const { vipSet, data: updatedData, userId } = await req.json()
 
-    if (!vipSet || !updatedData || updatedData.length === 0) {
-      return NextResponse.json({ error: 'Missing vipSet or data' }, { status: 400 })
+    if (!vipSet || !userId || !updatedData || updatedData.length === 0) {
+      return NextResponse.json({ error: 'Missing vipSet, userId, or data' }, { status: 400 })
     }
 
     const normalizedSet = vipSet.toLowerCase()
 
-    // 1. Find the master inventory record in the database
-    const masterData = await prisma.taskMerge.findFirst({
-      where: { vipSet: normalizedSet, status: 'system_template' }
+    // FIX 2: Locate the target user's exact active task merge configuration row
+    const activeMerge = await prisma.taskMerge.findFirst({
+      where: { userId, vipSet: normalizedSet, status: 'active' },
+      orderBy: { createdAt: 'desc' }
     })
 
-    if (!masterData) {
-      return NextResponse.json({ error: 'Master product template not found in DB.' }, { status: 404 })
+    if (!activeMerge) {
+      return NextResponse.json({ error: 'Active merge instance not found for this user.' }, { status: 404 })
     }
     
-    let productsArray = typeof masterData.pairs === 'string' ? JSON.parse(masterData.pairs) : masterData.pairs
+    let pairsArray = typeof activeMerge.pairs === 'string' ? JSON.parse(activeMerge.pairs) : activeMerge.pairs
 
-    // 2. Update the name and price changes directly inside the database array
+    // Update the specific name and price variables directly inside the array keys
     updatedData.forEach(updatedItem => {
-      const idx = productsArray.findIndex(item => item.taskOrder === parseInt(updatedItem.taskOrder))
+      const idx = pairsArray.findIndex(item => item.taskOrder === parseInt(updatedItem.taskOrder))
       if (idx !== -1) {
-        productsArray[idx] = {
-          ...productsArray[idx],
+        pairsArray[idx] = {
+          ...pairsArray[idx],
           name: updatedItem.name,
           price: parseFloat(updatedItem.price)
         }
       }
     })
 
-    // 3. Save the modified product rules back into the database template
+    // FIX 3: Overwrite the updated price rule snapshots directly back to that specific row entry
     await prisma.taskMerge.update({
-      where: { id: masterData.id },
-      data: { pairs: productsArray }
+      where: { id: activeMerge.id },
+      data: { pairs: pairsArray }
     })
 
     return NextResponse.json({ success: true })
