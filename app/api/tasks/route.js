@@ -29,32 +29,32 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSetNumber = (user.setsCompleted || 0) + 1
-    
-    // 🎯 THE DISPLAY TEXT FIX: Calculates current task number string dynamically based on active VIP config limits
-    const currentTaskNum = (user.tasksInCurrentSet || 0) + 1
-    const progressLabelString = `${currentTaskNum}/${config.tasksPerSet}`
 
-    // 2. CHECK IF THERE ARE MULTIPLE PENDING TASKS FOR THIS EXACT STEP STEP (MERGED)
-    // 🎯 THE FILTER FIX: Explicitly checks progress string matching 'index + 1' label boundaries 
-    // to keep old historic steps from leaking into your current combo card layout loop!
+    // 2. CHECK IF THERE ARE ANY ACTIVE PENDING TASKS FOR THIS SET
+    // 🎯 THE FIX: Removed the progress string lock so it successfully catches "5-6/40" or "5/40" alike!
     const activeTasks = await prisma.task.findMany({
       where: {
         userId: userId,
         status: 'pending',
-        setNumber: currentSetNumber,
-        progress: progressLabelString
+        setNumber: currentSetNumber
       },
       orderBy: { createdAt: 'desc' }
     })
 
     // If we have active pending database entries, send them immediately to the frontend
     if (activeTasks.length > 0) {
+      // 🎯 THE FIX: Read the inner JSON array bundle snapshot of the active card row
+      const firstActiveCard = activeTasks[0]
+      const productsArraySnapshot = typeof firstActiveCard.products === 'string'
+        ? JSON.parse(firstActiveCard.products || '[]')
+        : (firstActiveCard.products || [])
+
       return NextResponse.json({ 
         success: true, 
         tasks: activeTasks,
-        isMerged: activeTasks.length > 1 
+        // 🎯 Properly flags as a merged task bundle if the inner JSON contains multiple items!
+        isMerged: productsArraySnapshot.length > 1 
       })
     }
 
