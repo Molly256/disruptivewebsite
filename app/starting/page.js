@@ -319,7 +319,11 @@ export default function StartingPage() {
       return
     }
     const balance = parseFloat(user.walletBalance || 0)
-    if(balance < 50){
+    const tasksDone = parseInt(user.taskCompleted || 0)
+
+    // 🎯 THE FIX: Uses floating threshold padding to accept exactly $50 cleanly,
+    // and ONLY blocks users if they are brand new accounts (0 tasks completed).
+    if (tasksDone === 0 && balance < 49.95) {
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2000)
       return
