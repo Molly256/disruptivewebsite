@@ -134,13 +134,32 @@ const handleMerge = async () => {
   const targetUserId = mergeUser.id || mergeUser._id;
   if(!targetUserId) return alert('Error: Missing tracking user parameter ID value.')
 
+  // 🎯 THE FIX: Automatically maps and attaches the real data objects before sending to the backend
+  const populatedPairs = selectedPhotos.map(taskOrder => {
+    // Find matching metadata inside your mergePhotos state
+    const dataMatch = mergePhotos.find(p => p.type === 'data' && p.taskOrder === taskOrder) || {}
+    
+    return {
+      photoId: taskOrder,
+      dataId: taskOrder,
+      taskOrder: taskOrder,
+      name: dataMatch.name || `Product Item #${taskOrder}`,
+      price: dataMatch.price ? parseFloat(dataMatch.price) : 0
+    }
+  })
+
   const res = await fetch('/api/admin/merge-products', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ userId: targetUserId, vipSet: selectedMergeSet, photoTaskOrders: selectedPhotos, adminId: admin.id || admin._id || 'system' })
+    body: JSON.stringify({ 
+      userId: targetUserId, 
+      vipSet: selectedMergeSet, 
+      pairs: populatedPairs, // 🎯 Sends the complete list that start-task requires
+      adminId: admin.id || admin._id || 'system' 
+    })
   })
   if(res.ok) {
-    alert(`Merged ${selectedPhotos.length} photos into 1 task. Saved to DB`);
+    alert(`Merged ${selectedPhotos.length} photos with real prices into 1 task. Saved to DB`);
     setSelectedPhotos([]);
     const match = selectedMergeSet.match(/Set(\d+)/i);
     loadMergeSet(selectedMergeSet, match ? parseInt(match[1]) : 1)
