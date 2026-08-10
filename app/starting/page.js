@@ -186,7 +186,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
                     {formatMoney(product.price)} x1 USD
                   </div>
                 </div>
-
                 <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: '120px', border: '1px solid #EEE', borderRadius: 8, padding: 10, textAlign: 'center', background: '#FFF' }}>
                     <div style={{ color: '#666', fontWeight: 700, fontSize: 11 }}>PRODUCT COST</div>

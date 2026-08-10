@@ -62,27 +62,28 @@ export async function POST(req) {
     let isMergedTask = false
 
     if (activeUserMerge) {
-      isMergedTask = true
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
-      
-      // 🎯 FIXED LOOKUP MAP: Pulls dataId or photoId fallback options safely to cross check arrays
-      userPairs.forEach(pair => {
-        const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
-        
-        // Match against standard numerical .id identifiers specified inside vip1Set1 data files
-        const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+      const lowestIdInMerge = Math.min(...userPairs.map(p => Number(p.dataId || p.photoId || p.id || p.taskOrder)))
 
-        if (fileMatch) {
-          productsToAssign.push({
-            ...fileMatch,
-            // Override with admin customizations if provided, else keep file definitions
-            name: pair.name || fileMatch.name,
-            price: pair.price ? parseFloat(pair.price) : fileMatch.price,
-            rating: fileMatch.rating || 5.0
-          })
-        }
-      })
-    } else {
+      if (Number(index + 1) === lowestIdInMerge) {
+        isMergedTask = true
+        userPairs.forEach(pair => {
+          const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
+          const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+
+          if (fileMatch) {
+            productsToAssign.push({
+              ...fileMatch,
+              name: pair.name || fileMatch.name,
+              price: pair.price ? parseFloat(pair.price) : fileMatch.price,
+              rating: fileMatch.rating || 5.0
+            })
+          }
+        })
+      }
+    }
+
+    if (productsToAssign.length === 0) {
       isMergedTask = false
       const productIdForThisTask = index + 1
       const normalProduct = fileSet.find(p => Number(p.id) === productIdForThisTask)
@@ -108,7 +109,6 @@ export async function POST(req) {
       totalReserveAdded += reserveAmount
       totalProfit += profitAmount
       
-      // Saves pristine original data directly into the currentTaskProducts database column!
       taskProducts.push({ 
         id: pId, photoId: pId, dataId: pId, taskOrder: pId, 
         name: p.name, rating: p.rating || 5.0,
@@ -129,7 +129,15 @@ export async function POST(req) {
       })
     })
 
-    if (user.walletBalance < totalPrice) return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
+    // 🎯 THE CONDITIONAL SECURITY CHECK FIX:
+    // We check user.taskCompleted. If it is exactly 0, it means they are brand new.
+    // New users MUST have a balance of $50 or more to start.
+    if ((user.taskCompleted || 0) === 0) {
+      if (parseFloat(user.walletBalance || 0) < 50) {
+        return NextResponse.json({ error: 'Balance below 50 unable to continue trading' }, { status: 400 })
+      }
+    }
+    // 💡 Existing users skip this check entirely and drop straight into negative amounts below!
 
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
@@ -145,7 +153,7 @@ export async function POST(req) {
       databaseOperations.push(prisma.task.create({ data: taskData }))
     })
 
-    if (activeUserMerge) {
+    if (activeUserMerge && isMergedTask) {
       databaseOperations.push(
         prisma.taskMerge.update({
           where: { id: activeUserMerge.id },
@@ -156,10 +164,13 @@ export async function POST(req) {
 
     await prisma.$transaction(databaseOperations)
 
+    const stepsCompleted = productsToAssign.length
+    const finalDisplayNumber = index + stepsCompleted
+
     return NextResponse.json({ 
       success: true, 
       user: await prisma.user.findUnique({ where: { id: userId } }), 
-      currentTaskNumber: index + 1 
+      currentTaskNumber: finalDisplayNumber
     })
   } catch (err) {
     console.error(err); return NextResponse.json({ error: err.message }, { status: 500 })
