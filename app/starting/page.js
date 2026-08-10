@@ -144,8 +144,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
-  // 🎯 THE FIX: Condition adjusted strictly to check the actual walletBalance state 
-  // since backend deductions apply immediately when the task initialized!
+  // Lock interaction if the live wallet pool state drops below zero.
   const isLocked = walletBalance < 0
 
   return (
@@ -167,7 +166,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
             const calculatedImgPath = `/vip${vipLevel || 1}/${currentSetFolder}/photo${itemId}.jpg`
 
             return (
-
               <div key={product.id || idx} style={{ background: isMergedTask ? '#FAFAFA' : '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px', border: isMergedTask ? '1px solid #E0E0E0' : 'none' }}>
                 
                 {/* Product Image Asset Container */}
@@ -194,7 +192,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
                     </div>
                   </div>
                   <div style={{ flex: 1, minWidth: '120px', border: '1px solid #EEE', borderRadius: 8, padding: 10, textAlign: 'center', background: '#FFF' }}>
-                    {/* FIXED STYLE: Changed text color reference parameter metrics from red/green to Black */}
                     <div style={{ color: '#000', fontWeight: 700, fontSize: 11 }}>PROFIT {(activeProfitRate * 100).toFixed(1)}%</div>
                     <div style={{ fontSize: 14, fontWeight: 800, color: '#000' }}>
                       {formatMoney(product.profit || (product.price * activeProfitRate))} <span style={{fontSize:10}}>USD</span>
@@ -213,21 +210,13 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
 
-            {/* FIXED THE CONDITIONAL BANNER BUG: Checks raw dynamic walletBalance levels directly to stop premature locks */}
-            {isLocked && (
-              <div style={{marginTop: 8, padding: 8, background: '#FFF3F3', border: '1px solid #FFCCCC', borderRadius: 6, fontSize: 12, color: '#FF0000', fontWeight: 600}}>
-                Balance is negative. Shortfall gap: {formatMoney(walletBalance)} USD. Please deposit funds to enable submit.
-              </div>
-            )}
-
             <hr style={{margin: '8px 0', borderColor: '#EEE'}}/>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
-            {/* FIXED STYLE: Changed total profit line text description from hot red back to black */}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#000' }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: isLocked ? '#FF0000' : '#000' }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
           </div>
 
-          {/* KEEP RED: Submit button background color is solid hot red (#FF0000) when active */}
+          {/* Submit button background color is solid hot red (#FF0000) when active */}
           <button 
             disabled={isLocked}
             onClick={onSubmit}
