@@ -144,10 +144,9 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
-  const balanceAfterPurchase = Math.round((walletBalance - totalPrice) * 100) / 100
-  
-  // STRICT RULE ENFORCEMENT: Lock button immediately if user lacks wallet balance
-  const isLocked = balanceAfterPurchase < 0
+  // 🎯 THE FIX: Since funds are already deducted on task start, 
+  // only lock the interaction if the live wallet pool state drops below zero.
+  const isLocked = walletBalance < 0
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
@@ -168,6 +167,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
             const calculatedImgPath = `/vip${vipLevel || 1}/${currentSetFolder}/photo${itemId}.jpg`
 
             return (
+
               <div key={product.id || idx} style={{ background: isMergedTask ? '#FAFAFA' : '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px', border: isMergedTask ? '1px solid #E0E0E0' : 'none' }}>
                 
                 {/* Product Image Asset Container */}
