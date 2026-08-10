@@ -40,7 +40,7 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSet = (user.setsCompleted || 0) + 1
     const index = user.tasksInCurrentSet || 0 
-    const userCurrentTaskNumber = index + 1 // 🎯 Current step tracker (e.g., 5)
+    const userCurrentTaskNumber = index + 1 // Current step tracker (e.g., 5)
 
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
@@ -65,12 +65,9 @@ export async function POST(req) {
     if (activeUserMerge) {
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       
-      // 🎯 TIMING FIX: Map all target taskOrder step positions inside this merge row
       const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id))
       const mergeTriggerStepNumber = Math.min(...mergedTaskOrders)
 
-      // 🎯 TIMING FIX: Combo triggers ONLY when the user's progress reaches the first item in the merge bundle.
-      // If user is on task 5 but merge is for 7 & 8, this evaluates to FALSE. It bypasses and loads normal single task 5!
       if (userCurrentTaskNumber === mergeTriggerStepNumber) {
         isMergedTask = true
         userPairs.forEach(pair => {
@@ -89,7 +86,6 @@ export async function POST(req) {
       }
     }
 
-    // FALLBACK: Triggers single task mode if no merge exists OR if it's too early for the merge to load yet (e.g. step 5 or 6)
     if (productsToAssign.length === 0) {
       isMergedTask = false
       const productIdForThisTask = userCurrentTaskNumber
@@ -102,8 +98,7 @@ export async function POST(req) {
     const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
     let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
-    const taskProducts = []
-    const dbProductsSnapshot = [] // 🎯 Holds inner JSON product data bundle array snapshots safely
+    const innerItemsSnapshot = [] 
 
     productsToAssign.forEach(p => {
       const pPrice = parseFloat(p.price || 0)
@@ -116,17 +111,17 @@ export async function POST(req) {
       totalReserveAdded += reserveAmount
       totalProfit += profitAmount
       
-      taskProducts.push({ 
-        id: pId, photoId: pId, dataId: pId, taskOrder: pId, 
-        name: p.name, rating: p.rating || 5.0,
-        image: localImagePath, price: pPrice, profit: profitAmount, reserveAmount 
-      })
-
-      dbProductsSnapshot.push({
+      innerItemsSnapshot.push({
+        id: pId,
         productId: pId,
+        photoId: pId,
+        dataId: pId,
+        taskOrder: pId,
         name: p.name,
+        rating: p.rating || 5.0,
         price: pPrice,
         profit: profitAmount,
+        reserveAmount: reserveAmount,
         image: localImagePath
       })
     })
@@ -137,23 +132,42 @@ export async function POST(req) {
       }
     }
 
-    // 🎯 MATH FIX: Strict separate reduction layer isolates total product prices from hold values.
     const cleanTotalPrice = parseFloat(totalPrice.toFixed(2))
     const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    // Progress text formatter dynamically setups cards progress label boundaries ("5/40" vs "5-6/40")
     const stepsCompleted = productsToAssign.length
     const progressLabelString = stepsCompleted > 1 
       ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
       : `${userCurrentTaskNumber}/${config.tasksPerSet}`
 
-    // 🎯 THE COMPACT FIXED TRANSACTION BLOCK:
-    // Creates exactly ONE single pending card row using your new products array layout [INDEX].
+    // 🎯 THE CORE TRANSACTION FIX:
+    // Bundles the multiple products cleanly inside an single-item list payload array
+    // so that the frontend code reads it as ONE single active session and blocks task separation entirely!
+    const unifiedTaskPayload = isMergedTask 
+      ? innerItemsSnapshot // If it's a merge, keep the array structured as an active package list
+      : [{ 
+          id: innerItemsSnapshot[0].id, 
+          photoId: innerItemsSnapshot[0].id, 
+          dataId: innerItemsSnapshot[0].id, 
+          taskOrder: innerItemsSnapshot[0].id,
+          name: innerItemsSnapshot[0].name, 
+          rating: innerItemsSnapshot[0].rating, 
+          image: innerItemsSnapshot[0].image, 
+          price: cleanTotalPrice, 
+          profit: totalProfit, 
+          reserveAmount: totalReserveAdded 
+        }]
+
     const databaseOperations = [
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: index },
-        data: { walletBalance: newWallet, holdAmount: newHold, currentTaskProducts: taskProducts, activeProducts: taskProducts }
+        data: { 
+          walletBalance: newWallet, 
+          holdAmount: newHold, 
+          currentTaskProducts: unifiedTaskPayload, // Saves unified list format
+          activeProducts: unifiedTaskPayload 
+        }
       }),
       prisma.task.create({
         data: {
@@ -162,13 +176,12 @@ export async function POST(req) {
           setNumber: currentSet,
           progress: progressLabelString,
           status: 'pending',
-          products: dbProductsSnapshot, // Safe snapshot storage injection field mapping
+          products: innerItemsSnapshot, 
           taskCode: generateTaskCode()
         }
       })
     ]
 
-    // Only set the merge status to 'used' if the combo task was actually initialized on this step!
     if (activeUserMerge && isMergedTask) {
       databaseOperations.push(
         prisma.taskMerge.update({
