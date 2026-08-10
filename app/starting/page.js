@@ -301,13 +301,15 @@ export default function StartingPage() {
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
-  const handleStart = async () => {
+    const handleStart = async () => {
     if (setFinished) { setMsg('Set completed. Contact Customer Service to reset.'); return }
     
-    if(parsedTaskProducts.length > 0) {
+    // Check local parsed products first
+    if (typeof parsedTaskProducts !== 'undefined' && parsedTaskProducts.length > 0) {
       setShowDetail(true)
       return
     }
+    
     const balance = parseFloat(user.walletBalance || 0)
     const tasksDone = parseInt(user.taskCompleted || 0)
 
@@ -318,20 +320,35 @@ export default function StartingPage() {
       setTimeout(() => setShowToast(false), 2000)
       return
     }
+    
     setMsg('Starting...')
     const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
     const data = await res.json()
+    
     if(res.ok && data.user) { 
-      // 🎯 THE FIX: Overwrites state ONLY using verified active objects returned directly from live database tables
-      setUser(data.user)
+      // 1. Immediately write the fresh data parameters straight down to storage
       localStorage.setItem('user', JSON.stringify(data.user))
-      setShowDetail(true)
-      setMsg('') 
+      setUser(data.user)
+      
+      // 2. 🎯 THE INSTANT RE-RENDER FIX: Parse the true combo array straight off the server response body right now!
+      const freshProductsList = typeof data.user.currentTaskProducts === 'string'
+        ? JSON.parse(data.user.currentTaskProducts || '[]')
+        : (data.user.currentTaskProducts || [])
+
+      // 3. 🎯 Force the screen to open ONLY using verified incoming network objects
+      // Locks the side-by-side cards together instantly with NO manual refreshes!
+      if (freshProductsList.length > 0) {
+        setMsg('') 
+        setShowDetail(true) 
+      } else {
+        window.location.reload()
+      }
     }
     else { 
       setMsg(data.error || 'Failed to start task') 
     }
   }
+
 
   const handleSubmit = async () => {
     if(!user || !user.id) { setMsg('User not loaded. Refresh page.'); return }
