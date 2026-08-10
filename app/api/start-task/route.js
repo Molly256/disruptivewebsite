@@ -107,7 +107,7 @@ export async function POST(req) {
       const pPrice = parseFloat(p.price || 0)
       const pId = Number(p.id)
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
-      const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
+      const reserveAmount = pPrice
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
       
       totalPrice += pPrice
