@@ -263,7 +263,7 @@ const saveEdit = () => {
           </div>
         )}
 
-       {tab === 'merge' && (
+      {tab === 'merge' && (
   <div>
     <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
       <input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Username or Phone" style={{ flex: 1, padding: 14, border: '2px solid #FF1493', borderRadius: 12, color: '#000' }} />
@@ -292,31 +292,31 @@ const saveEdit = () => {
 
                   {mergeView && (
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, maxHeight: 400, overflowY: 'auto' }}>
-                      {mergePhotos.filter(p => p.type === 'photos').sort((a, b) => a.taskOrder - b.taskOrder).map(p => {
-                        const isSel = selectedPhotos.includes(p.taskOrder);
+                      {mergePhotos.filter(p => p.type === 'photos').sort((a, b) => Number(a.taskOrder) - Number(b.taskOrder)).map(p => {
+                        // 🎯 THE FIX: Force strict numerical type parsing to avoid string-number comparison leaks
+                        const currentOrder = Number(p.taskOrder);
+                        const isSel = selectedPhotos.includes(currentOrder);
                         
-                        // 🎯 FIXED DATA LOOKUP ENGINE
-                        // Finds the corresponding metadata entry (name/price) for this exact item inside the server response payload array
-                        const companionData = mergePhotos.find(d => d.type === 'data' && d.taskOrder === p.taskOrder) || {};
+                        // 🎯 THE FIX: Use explicit type and numerical order matching rules
+                        const companionData = mergePhotos.find(d => d.type === 'data' && Number(d.taskOrder) === currentOrder) || {};
 
                         return (
-                          <div key={p.taskOrder} style={{ width: 130, background: '#111', padding: 6, borderRadius: 8, position: 'relative', border: isSel ? '2px solid #FF0000' : '1px solid #222' }}>
+                          <div key={currentOrder} style={{ width: 130, background: '#111', padding: 6, borderRadius: 8, position: 'relative', border: isSel ? '2px solid #FF0000' : '1px solid #222' }}>
                             <div onClick={() => { 
-                              // 🎯 FIXED SELECTION HANDLER
-                              // Selecting a photo now automatically captures and locks its corresponding price/name parameters into the active payload matrix!
-                              setSelectedPhotos(v => v.includes(p.taskOrder) ? v.filter(x => x !== p.taskOrder) : [...v, p.taskOrder]);
-                              setSelectedData(v => v.includes(p.taskOrder) ? v.filter(x => x !== p.taskOrder) : [...v, p.taskOrder]);
+                              // 🎯 THE FIX: Saves both properties perfectly to separate cache buckets under clean numbers
+                              setSelectedPhotos(v => v.includes(currentOrder) ? v.filter(x => x !== currentOrder) : [...v, currentOrder]);
+                              setSelectedData(v => v.includes(currentOrder) ? v.filter(x => x !== currentOrder) : [...v, currentOrder]);
                             }} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel ? '#FF0000' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}>{isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}</div>
                             
                             <img src={p.url} onError={e => e.target.src='data:image/svg+xml;utf8,<svg xmlns="http://w3.org" width="100" height="90" viewBox="0 0 100 90"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10">Missing</text></svg>'} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
                             
                             {/* Renders data right underneath the image preview slot natively */}
                             <div style={{ marginTop: 4, background: '#222', borderRadius: 6, padding: 4, textAlign: 'center' }}>
-                              <p style={{ fontSize: 11, margin: 0, fontWeight: '800', color: '#00C853' }}>${companionData.price || '0.00'}</p>
+                              <p style={{ fontSize: 11, margin: 0, fontWeight: '800', color: '#00C853' }}>${companionData.price !== undefined ? parseFloat(companionData.price).toFixed(2) : '0.00'}</p>
                               <p style={{ fontSize: 9, margin: '2px 0 0 0', color: '#CCC', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>{companionData.name || 'No Name Found'}</p>
                             </div>
 
-                            <p style={{ fontSize: 10, margin: '4px 0 0 0', textAlign: 'center', fontWeight: 'bold' }}>Task {p.taskOrder}</p>
+                            <p style={{ fontSize: 10, margin: '4px 0 0 0', textAlign: 'center', fontWeight: 'bold' }}>Task {currentOrder}</p>
                           </div>
                         );
                       })}
@@ -337,6 +337,7 @@ const saveEdit = () => {
     )}
   </div>
 )}
+
 
    
    {tab === 'deposit' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{depositUser &&!showDepositInput && <button onClick={()=>setShowDepositInput(true)} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Deposit to {depositUser.username} - Balance: ${depositUser.walletBalance}</button>}{showDepositInput && (<div><input value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Deposit</button></div>)}</div>)}

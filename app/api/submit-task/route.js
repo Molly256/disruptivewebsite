@@ -1,13 +1,14 @@
-export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 const VIP_CONFIG = {
- 1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
- 2: { tasksPerSet: 60, totalSets: 2, profit: 0.01 },
- 3: { tasksPerSet: 80, totalSets: 2, profit: 0.015 },
- 4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
- 5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 },
+  1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
+  2: { tasksPerSet: 60, totalSets: 2, profit: 0.01 },
+  3: { tasksPerSet: 80, totalSets: 2, profit: 0.015 },
+  4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
+  5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 },
 }
 
 export async function POST(req) {
@@ -18,7 +19,6 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    // Read the active item block from the User model JSON storage layer
     const userTaskProducts = typeof user.currentTaskProducts === 'string'
       ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
@@ -33,9 +33,8 @@ export async function POST(req) {
 
     const currentSetNumber = (user.setsCompleted || 0) + 1
     const vipSetLabel = `vip${user.vipLevel}set${currentSetNumber}`.toLowerCase()
+    const currentIndex = user.tasksInCurrentSet || 0
 
-    // 🎯 SECURE MATHEMATICAL RE-VERIFICATION LAYER
-    // Calculate total money calculations based on the authenticated snapshot stored during initialization
     let totalPrice = 0
     let totalProfit = 0
     const enrichedProducts = []
@@ -47,33 +46,37 @@ export async function POST(req) {
       totalProfit += pProfit
 
       enrichedProducts.push({
-        id: ut.dataId || ut.photoId,
+        productId: ut.id || ut.productId || ut.photoId,
         taskOrder: ut.taskOrder,
         price: pPrice,
         name: ut.name || `Product ${ut.dataId}`,
-        profit: pProfit
+        profit: pProfit,
+        image: ut.image || `/vip${user.vipLevel}/set${currentSetNumber}/photo${ut.id}.jpg`
       })
     })
 
     const totalReserve = parseFloat((totalPrice + totalProfit).toFixed(2))
     const tasksCompletedInThisSubmit = enrichedProducts.length
 
-    const currentIndex = user.tasksInCurrentSet || 0
     const nextTaskCount = currentIndex + tasksCompletedInThisSubmit
     const isSetComplete = nextTaskCount >= config.tasksPerSet
 
-    // 🎯 FIND ALL PENDING DATABASE ROWS INITIALIZED FOR THIS TASK PACK
-    const pendingTasks = await prisma.task.findMany({
-      where: { userId: userId, status: 'pending', setNumber: currentSetNumber }
+    // 🎯 THE FIX: Fetch exactly ONE single pending database task card block generated on initialization step hooks
+    const activePendingTaskCard = await prisma.task.findFirst({
+      where: { 
+        userId: userId, 
+        status: 'pending', 
+        setNumber: currentSetNumber 
+      },
+      orderBy: { createdAt: 'desc' }
     })
 
     const tx = [
-      // 1. Update the User Financial Balance cleanly
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: currentIndex },
         data: {
           walletBalance: { increment: totalReserve }, 
-          holdAmount: { decrement: totalReserve >= user.holdAmount ? user.holdAmount : totalReserve }, // Decrement safely
+          holdAmount: { decrement: totalReserve >= user.holdAmount ? user.holdAmount : totalReserve }, 
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
           currentTaskProducts: [], 
           activeProducts: [],
@@ -85,37 +88,35 @@ export async function POST(req) {
       })
     ]
 
-    // 2. 🎯 THE FIX: Update ALL matching pending rows to completed status simultaneously
-    if (pendingTasks.length > 0) {
-      const pendingTaskIds = pendingTasks.map(t => t.id)
-      
+    // 🎯 THE FIX: Mark exactly that ONE active task record row status parameter as completed!
+    // This stops combo blocks from splitting apart into individual single history cards.
+    if (activePendingTaskCard) {
       tx.push(
-        prisma.task.updateMany({
-          where: {
-            id: { in: pendingTaskIds }
-          },
+        prisma.task.update({
+          where: { id: activePendingTaskCard.id },
           data: {
             status: 'completed',
             completedAt: new Date(),
-            progress: `${nextTaskCount}/${config.tasksPerSet}`
+            products: enrichedProducts // Overwrites snapshot cache with real prices into JSON field
           }
         })
       )
     } else {
-      // Emergency Fallback: If no pending rows were generated somehow, log them here as safety backup
-      enrichedProducts.forEach((product, idx) => {
-        tx.push(prisma.task.create({
-          data: {
-            userId, status: 'completed', vipLevel: user.vipLevel, setNumber: currentSetNumber,
-            progress: `${currentIndex + (idx + 1)}/${config.tasksPerSet}`,
-            productId: product.taskOrder, price: product.price, totalPrice: product.price, totalProfit: product.profit,
-            completedAt: new Date(), taskCode: `T${Date.now()}${idx}${userId.slice(-4)}`
-          }
-        }))
-      })
+      // Emergency Fallback if card layout row was not found
+      tx.push(prisma.task.create({
+        data: {
+          userId,
+          status: 'completed',
+          vipLevel: user.vipLevel,
+          setNumber: currentSetNumber,
+          progress: isMergedTask ? `${currentIndex + 1}-${nextTaskCount}/${config.tasksPerSet}` : `${currentIndex + 1}/${config.tasksPerSet}`,
+          products: enrichedProducts,
+          taskCode: `T${Date.now()}${userId.slice(-4)}`,
+          completedAt: new Date()
+        }
+      }))
     }
 
-    // 3. Close the validation check block inside the task merges routing panel
     tx.push(
       prisma.taskMerge.updateMany({ 
         where: { userId, vipSet: vipSetLabel, status: 'active' }, 

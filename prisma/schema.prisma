@@ -4,60 +4,58 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model User {
-  id String @id @default(cuid())
-  username String @unique
-  phone String @unique
-  countryCode String
-  countryName String
-  loginPassword String
+  id                  String   @id @default(cuid())
+  username            String   @unique
+  phone               String   @unique
+  countryCode         String
+  countryName         String
+  loginPassword       String
   transactionPassword String
-  gender String
+  gender              String
 
-  inviteCode String @unique // THIS IS THEIR OWN CODE TO SHARE
+  inviteCode String  @unique // THIS IS THEIR OWN CODE TO SHARE
   referredBy String? // THIS STORES WHO INVITED THEM. ex: 345678DI
 
   avatar String?
 
   // VIP & TASK FIELDS
-  vipLevel Int @default(1)
-  vipId Int @default(1)
-
-  setsCompleted Int @default(0) // 0 = Set1 active, 1 = Set2 active. Only admin changes this
+  vipLevel          Int @default(1)
+  vipId             Int @default(1)
+  setsCompleted     Int @default(0) // 0 = Set1 active, 1 = Set2 active. Only admin changes this
   tasksInCurrentSet Int @default(0) // 0-40. This is what moves 0/40 on button
-
-  taskCompleted Int @default(0) // total tasks done ever. for history
-  totalTasks Int @default(40) // for display
+  taskCompleted     Int @default(0) // total tasks done ever. for history
+  totalTasks        Int @default(40) // for display
 
   // MONEY FIELDS
-  walletBalance Float @default(0.00)
-  holdAmount Float @default(0.00)
-  freezeAmount Float @default(0.00) // for withdraw page freeze
-  bonus Float @default(0.00)
-  specialBonus Float @default(0.00)
-  todayProfit Float @default(0.00)
+  walletBalance   Float    @default(0.00)
+  holdAmount      Float    @default(0.00)
+  freezeAmount    Float    @default(0.00) // for withdraw page freeze
+  bonus           Float    @default(0.00)
+  specialBonus    Float    @default(0.00)
+  todayProfit     Float    @default(0.00)
   lastProfitReset DateTime @default(now())
-  creditScore Int @default(100)
-  isAdmin Boolean @default(false)
+  creditScore     Int      @default(100)
+  isAdmin         Boolean  @default(false)
 
   // TASK DATA
   currentTaskProducts Json @default("[]") // [{photoId, dataId, taskOrder, status}]
-  activeProducts Json @default("[]")
-  completedProducts Json @default("[]")
-  mergedTasks Json @default("[]") // [{vipSet, pairs:[{photoId, dataId, taskOrder}]}]
+  activeProducts      Json @default("[]")
+  completedProducts   Json @default("[]")
+  mergedTasks         Json @default("[]") // [{vipSet, pairs:[{photoId, dataId, taskOrder}]}]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transactions Transaction[]
-  tasks Task[]
-  merges TaskMerge[]
+  transactions  Transaction[]
+  tasks         Task[]
+  merges        TaskMerge[]
   notifications Notification[]
-  adminLogs AdminLog[]
+  adminLogs     AdminLog[]
 
   @@index([username])
   @@index([phone])
@@ -65,35 +63,31 @@ model User {
 
 // NEW: Task table for Records page
 model Task {
-  id String @id @default(cuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  vipLevel Int // so we know which vip folder to pull images from
-  setNumber Int // 1 or 2
-  progress String // "3/40"
-  productId Int // index from vip1Set1.js
-
-  price Float // snapshot price at time of task
-  totalPrice Float
-  totalProfit Float
-
-  status String @default("pending") // "pending" | "completed"
-
-  taskCode String @unique // 202607290000016
-
-  createdAt DateTime @default(now())
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vipLevel    Int // so we know which vip folder to pull images from
+  setNumber   Int // 1 or 2
+  progress    String // "3/40" or "5-6/40" for combo rows
+  status      String    @default("pending") // "pending" | "completed"
+  taskCode    String    @unique // 202607290000016
+  createdAt   DateTime  @default(now())
   completedAt DateTime?
+
+  // 🎯 THE CORE ARCHITECTURAL FIX: 
+  // Combined the columns into a nested JSON array bundle [{productId, name, price, profit, image}]
+  // This lets both single and merged tasks save exactly ONE single row card tracking element here.
+  products Json @default("[]")
 }
 
 model Transaction {
-  id String @id @default(cuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type String // deposit, withdraw, special_bonus
-  amount Float
-  status String @default("pending") // pending, completed, rejected
-  account String? // wallet address for withdraw
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // deposit, withdraw, special_bonus
+  amount    Float
+  status    String   @default("pending") // pending, completed, rejected
+  account   String? // wallet address for withdraw
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -103,12 +97,12 @@ model Transaction {
 }
 
 model TaskMerge {
-  id String @id @default(cuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vipSet String // vip1set1
-  pairs Json // [{photoId, dataId, taskOrder}]
-  status String @default("active") // active, used
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vipSet    String // vip1set1
+  pairs     Json // [{photoId, dataId, taskOrder}]
+  status    String   @default("active") // active, used
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -116,18 +110,18 @@ model TaskMerge {
 }
 
 model Notification {
-  id String @id @default(cuid())
-  userId String
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  message String
-  isRead Boolean @default(false)
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
 model AdminLog {
-  id String @id @default(cuid())
-  adminId String
-  action String
+  id        String   @id @default(cuid())
+  adminId   String
+  action    String
   createdAt DateTime @default(now())
-  user User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  user      User?    @relation(fields: [adminId], references: [id], onDelete: SetNull)
 }

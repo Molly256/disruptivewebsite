@@ -26,18 +26,18 @@ async function main() {
       // MONEY
       walletBalance: 5000,
       holdAmount: 0,
-      freezeAmount: 0, // <-- ADDED
+      freezeAmount: 0, 
       bonus: 0,
       specialBonus: 0,
       todayProfit: 0,
       lastProfitReset: new Date(),
       creditScore: 100,
 
-      // JSON ARRAYS
+      // 🎯 THE FIX: Uses structured valid JSON array markers for Prisma inputs
       currentTaskProducts: [],
       activeProducts: [],
       completedProducts: [],
-      mergedTasks: [], // <-- ADDED
+      mergedTasks: [], 
     },
     create: {
       username: 'Admin256',
@@ -69,7 +69,7 @@ async function main() {
       lastProfitReset: new Date(),
       creditScore: 100,
 
-      // JSON ARRAYS
+      // 🎯 THE FIX: Uses structured valid JSON array markers for Prisma inputs
       currentTaskProducts: [],
       activeProducts: [],
       completedProducts: [],

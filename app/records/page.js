@@ -50,27 +50,7 @@ export default function RecordsPage() {
     }
   }
 
-  // GET REAL PRODUCT DATA BASED ON VIP + SET + PROGRESS
-  const getProductData = (task) => {
-    if(!user) return null
-
-    let productArray = []
-    // Map vip + set to correct data file
-    if(user.vipLevel === 1 && task.setNumber === 1) productArray = vip1Set1
-    if(user.vipLevel === 1 && task.setNumber === 2) productArray = vip1Set2 // ADDED
-    // add vip2 later
-
-    const progressNum = parseInt(task.progress.split('/')[0]) // "3/40" -> 3
-    const product = productArray[progressNum - 1] // arrays start at 0
-
-    if(!product) return null
-
-    return {
-     ...product,
-      image: `/vip${task.vipLevel}/set${task.setNumber}/photo${product.id}.jpg`, // FIX: use task.vipLevel
-      progressDisplay: `[${progressNum}]`
-    }
-  }
+  // REMOVED UNUSED SINGLE BACKUP ASSIGNMENT: Handled directly out of schema data layout arrays securely
 
   const filteredTasks = tasks.filter(task => {
     if(activeTab === 'All') return true
@@ -117,7 +97,7 @@ export default function RecordsPage() {
               cursor: 'pointer'
             }}
           >
-            {tab}
+            {t(tab)}
           </button>
         ))}
       </div>
@@ -130,9 +110,13 @@ export default function RecordsPage() {
           </div>
         ) : (
           filteredTasks.map(task => {
-            const product = getProductData(task)
-            if(!product) return null
-            const profit = task.totalProfit || (product.price * 0.005) // FIX: use real profit from DB
+            // 🎯 THE CORE ARCHITECTURAL FIX:
+            // Safely unpacks single items and merged combo task bundles array properties natively
+            const productsList = typeof task.products === 'string' ? JSON.parse(task.products) : (task.products || [])
+            
+            // Calculates accurate aggregated top summaries totals directly from the schema layout row
+            const totalCostSum = productsList.reduce((s, p) => s + parseFloat(p.price || 0), 0)
+            const totalProfitSum = productsList.reduce((s, p) => s + parseFloat(p.profit || 0), 0)
 
             return (
               <div key={task.id} style={{ background: '#FFF', borderRadius: '12px', padding: '16px', marginBottom: '12px', position: 'relative' }}>
@@ -148,7 +132,8 @@ export default function RecordsPage() {
                     fontSize: '12px',
                     fontWeight: '700',
                     background: '#FF0000',
-                    color: '#000'
+                    color: '#000',
+                    zIndex: 2
                   }}>
                     Completed
                   </div>
@@ -173,34 +158,45 @@ export default function RecordsPage() {
                   )}
                 </div>
 
-                {/* Row 2: Product Image + Details FROM REAL DATA */}
-                <div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}>
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    style={{ width: '80px', height: '80px', objectFit: 'contain', background: '#F5F5F5', borderRadius: '8px' }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#000', marginBottom: '4px' }}>
-                      {product.progressDisplay} {product.name}
+                {/* 🎯 Row 2: NESTED SUB-CARDS LOOP CONTAINER WRAPPER */}
+                {/* Loops over products arrays inside exactly ONE single history row card wrapper block! */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
+                  {productsList.map((product, innerIdx) => (
+                    <div key={product.productId || innerIdx} style={{ display: 'flex', gap: '12px', background: '#FAFAFA', padding: '10px', borderRadius: '8px', border: '1px solid #E0E0E0' }}>
+                      <img
+                        src={product.image || `/vip${task.vipLevel}/set${task.setNumber}/photo${product.productId}.jpg`}
+                        alt=""
+                        style={{ width: '80px', height: '80px', objectFit: 'contain', background: '#F5F5F5', borderRadius: '8px' }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#000', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          [{task.progress}] {product.name}
+                        </div>
+                        <div style={{ fontSize: '14px', fontWeight: '700', color: '#000' }}>
+                          {parseFloat(product.price).toFixed(2)} x1 USD
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ fontSize: '14px', fontWeight: '700', color: '#000', marginBottom: '4px' }}>
-                      {product.price.toFixed(2)} x1 USD
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#666' }}>Code: {task.taskCode}</div> {/* ADDED */}
-                  </div>
+                  ))}
                 </div>
+
+                {/* Info task code layout block label text marker indicator */}
+                <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>Code: {task.taskCode}</div>
 
                 {/* Row 3: Total + Profit + Submit Button */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', gap: '24px' }}>
                     <div>
                       <div style={{ fontSize: '12px', color: '#666' }}>Total Amount</div>
-                      <div style={{ fontSize: '15px', fontWeight: '800', color: '#000' }}>{task.totalPrice.toFixed(2)} <span style={{fontSize:12}}>USD</span></div> {/* FIX: use task.totalPrice */}
+                      <div style={{ fontSize: '15px', fontWeight: '800', color: '#000' }}>
+                        {totalCostSum.toFixed(2)} <span style={{fontSize:12}}>USD</span>
+                      </div>
                     </div>
                     <div>
                       <div style={{ fontSize: '12px', color: '#666' }}>Profit</div>
-                      <div style={{ fontSize: '15px', fontWeight: '800', color: '#000' }}>{profit.toFixed(2)} <span style={{fontSize:12}}>USD</span></div>
+                      <div style={{ fontSize: '15px', fontWeight: '800', color: '#2E7D32' }}>
+                        {totalProfitSum.toFixed(2)} <span style={{fontSize:12}}>USD</span>
+                      </div>
                     </div>
                   </div>
 
@@ -209,12 +205,12 @@ export default function RecordsPage() {
                       onClick={() => handleSubmitTask(task.id)}
                       style={{
                         background: '#FF0000',
-                        color: '#FFF',
+                        color: '#000',
                         border: 'none',
-                        borderRadius: '8px',
                         padding: '8px 16px',
-                        fontSize: '14px',
+                        borderRadius: '6px',
                         fontWeight: '700',
+                        fontSize: '14px',
                         cursor: 'pointer'
                       }}
                     >
@@ -228,7 +224,6 @@ export default function RecordsPage() {
           })
         )}
       </div>
-
       <BottomNav />
     </div>
   )

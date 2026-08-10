@@ -40,13 +40,13 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSet = (user.setsCompleted || 0) + 1
     const index = user.tasksInCurrentSet || 0 
+    const userCurrentTaskNumber = index + 1 // 🎯 Current step tracker (e.g., 5)
 
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    // Forces safe case-insensitive lookup to find active administrative updates
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: { 
         userId, 
@@ -62,31 +62,37 @@ export async function POST(req) {
     let productsToAssign = []
     let isMergedTask = false
 
-    // 🎯 THE FIX: Removed the restrictive step check! 
-    // If an active merge is found for this user set, load it immediately.
     if (activeUserMerge) {
-      isMergedTask = true
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       
-      userPairs.forEach(pair => {
-        const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
-        const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+      // 🎯 TIMING FIX: Map all target taskOrder step positions inside this merge row
+      const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id))
+      const mergeTriggerStepNumber = Math.min(...mergedTaskOrders)
 
-        if (fileMatch) {
-          productsToAssign.push({
-            ...fileMatch,
-            name: pair.name || fileMatch.name,
-            price: pair.price ? parseFloat(pair.price) : fileMatch.price,
-            rating: fileMatch.rating || 5.0
-          })
-        }
-      })
+      // 🎯 TIMING FIX: Combo triggers ONLY when the user's progress reaches the first item in the merge bundle.
+      // If user is on task 5 but merge is for 7 & 8, this evaluates to FALSE. It bypasses and loads normal single task 5!
+      if (userCurrentTaskNumber === mergeTriggerStepNumber) {
+        isMergedTask = true
+        userPairs.forEach(pair => {
+          const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
+          const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+
+          if (fileMatch) {
+            productsToAssign.push({
+              ...fileMatch,
+              name: pair.name || fileMatch.name,
+              price: pair.price ? parseFloat(pair.price) : fileMatch.price,
+              rating: fileMatch.rating || 5.0
+            })
+          }
+        })
+      }
     }
 
-    // FALLBACK: Only triggers single task mode if no active admin merge exists
+    // FALLBACK: Triggers single task mode if no merge exists OR if it's too early for the merge to load yet (e.g. step 5 or 6)
     if (productsToAssign.length === 0) {
       isMergedTask = false
-      const productIdForThisTask = index + 1
+      const productIdForThisTask = userCurrentTaskNumber
       const normalProduct = fileSet.find(p => Number(p.id) === productIdForThisTask)
       if (normalProduct) productsToAssign.push(normalProduct)
     }
@@ -120,7 +126,7 @@ export async function POST(req) {
         userId,
         vipLevel: user.vipLevel,
         setNumber: currentSet,
-        progress: `${index + 1}/${config.tasksPerSet}`,
+        progress: `${userCurrentTaskNumber}/${config.tasksPerSet}`,
         productId: pId,
         price: pPrice,
         totalPrice: pPrice,
@@ -136,7 +142,7 @@ export async function POST(req) {
       }
     }
 
-    // Deduct ONLY raw total product costs from wallet. Profit is not used here.
+    // 🎯 MATH FIX: Strict separate reduction layer isolates total product prices from hold values.
     const cleanTotalPrice = parseFloat(totalPrice.toFixed(2))
     const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
@@ -152,6 +158,7 @@ export async function POST(req) {
       databaseOperations.push(prisma.task.create({ data: taskData }))
     })
 
+    // Only set the merge status to 'used' if the combo task was actually initialized on this step!
     if (activeUserMerge && isMergedTask) {
       databaseOperations.push(
         prisma.taskMerge.update({

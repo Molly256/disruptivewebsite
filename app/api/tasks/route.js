@@ -1,7 +1,15 @@
-export const dynamic = 'force-dynamic'
-
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
+
+const VIP_CONFIG = { 
+  1: { tasksPerSet: 40 },
+  2: { tasksPerSet: 60 },
+  3: { tasksPerSet: 80 },
+  4: { tasksPerSet: 100 },
+  5: { tasksPerSet: 120 }
+}
 
 export async function GET(req) {
   try {
@@ -21,15 +29,22 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSetNumber = (user.setsCompleted || 0) + 1
-    const progressLabel = `${user.tasksInCurrentSet}/40`
+    
+    // 🎯 THE DISPLAY TEXT FIX: Calculates current task number string dynamically based on active VIP config limits
+    const currentTaskNum = (user.tasksInCurrentSet || 0) + 1
+    const progressLabelString = `${currentTaskNum}/${config.tasksPerSet}`
 
-    // 2. CHECK IF THERE ARE MULTIPLE PENDING TASKS FOR THIS STEP (MERGED)
+    // 2. CHECK IF THERE ARE MULTIPLE PENDING TASKS FOR THIS EXACT STEP STEP (MERGED)
+    // 🎯 THE FILTER FIX: Explicitly checks progress string matching 'index + 1' label boundaries 
+    // to keep old historic steps from leaking into your current combo card layout loop!
     const activeTasks = await prisma.task.findMany({
       where: {
         userId: userId,
         status: 'pending',
-        setNumber: currentSetNumber
+        setNumber: currentSetNumber,
+        progress: progressLabelString
       },
       orderBy: { createdAt: 'desc' }
     })
