@@ -97,14 +97,15 @@ model Transaction {
 }
 
 model TaskMerge {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vipSet    String // vip1set1
-  pairs     Json // [{photoId, dataId, taskOrder}]
-  status    String   @default("active") // active, used
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vipSet String // vip1set1
+  pairs Json // [{photoId, dataId, taskOrder}]
+  status String @default("active") // active, used
   createdAt DateTime @default(now())
 
+  @@map("TaskMerge") // <-- ADD THIS LINE
   @@index([userId])
   @@index([vipSet])
 }
