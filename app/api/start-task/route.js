@@ -46,6 +46,7 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
+    // Forces safe case-insensitive lookup to find active administrative updates
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: { 
         userId, 
@@ -61,28 +62,28 @@ export async function POST(req) {
     let productsToAssign = []
     let isMergedTask = false
 
+    // 🎯 THE FIX: Removed the restrictive step check! 
+    // If an active merge is found for this user set, load it immediately.
     if (activeUserMerge) {
+      isMergedTask = true
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
-      const lowestIdInMerge = Math.min(...userPairs.map(p => Number(p.dataId || p.photoId || p.id || p.taskOrder)))
+      
+      userPairs.forEach(pair => {
+        const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
+        const fileMatch = fileSet.find(p => Number(p.id) === targetId)
 
-      if (Number(index + 1) === lowestIdInMerge) {
-        isMergedTask = true
-        userPairs.forEach(pair => {
-          const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
-          const fileMatch = fileSet.find(p => Number(p.id) === targetId)
-
-          if (fileMatch) {
-            productsToAssign.push({
-              ...fileMatch,
-              name: pair.name || fileMatch.name,
-              price: pair.price ? parseFloat(pair.price) : fileMatch.price,
-              rating: fileMatch.rating || 5.0
-            })
-          }
-        })
-      }
+        if (fileMatch) {
+          productsToAssign.push({
+            ...fileMatch,
+            name: pair.name || fileMatch.name,
+            price: pair.price ? parseFloat(pair.price) : fileMatch.price,
+            rating: fileMatch.rating || 5.0
+          })
+        }
+      })
     }
 
+    // FALLBACK: Only triggers single task mode if no active admin merge exists
     if (productsToAssign.length === 0) {
       isMergedTask = false
       const productIdForThisTask = index + 1
@@ -135,9 +136,7 @@ export async function POST(req) {
       }
     }
 
-    // 🎯 THE STRICT MATHEMATICAL FIX:
-    // Forces clean decimal isolation. Only the absolute raw product price (totalPrice) 
-    // reduces the user wallet. Profit is never added here.
+    // Deduct ONLY raw total product costs from wallet. Profit is not used here.
     const cleanTotalPrice = parseFloat(totalPrice.toFixed(2))
     const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
