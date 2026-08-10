@@ -179,9 +179,9 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
                 
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4, color: '#333' }}>
-                    {product.name || `Product Assignment Item #${itemId}`}
+                    {product.name}
                   </div>
-                  <div style={{ marginBottom: 4, color: '#000' }}>⭐ {product.rating || 5.0}</div>
+                  <div style={{ marginBottom: 4, color: '#000' }}>⭐ {product.rating}</div>
                   <div style={{ fontWeight: 700, marginBottom: 16, color: '#000' }}>
                     {formatMoney(product.price)} x1 USD
                   </div>
@@ -214,7 +214,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
 
-            {/* ALERT: Displays strict warnings if the purchase values push balance below 0 */}
             {isLocked && (
               <div style={{marginTop: 8, padding: 8, background: '#FFF3F3', border: '1px solid #FFCCCC', borderRadius: 6, fontSize: 12, color: '#FF0000', fontWeight: 600}}>
                 Balance is negative. Shortfall gap: {formatMoney(balanceAfterPurchase)} USD. Please deposit funds to enable submit.
