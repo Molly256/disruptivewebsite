@@ -103,7 +103,7 @@ export async function POST(req) {
 
     let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
     const taskProducts = []
-    const individualTaskRows = []
+    const dbProductsSnapshot = [] // 🎯 Holds inner JSON product data bundle array snapshots safely
 
     productsToAssign.forEach(p => {
       const pPrice = parseFloat(p.price || 0)
@@ -122,17 +122,12 @@ export async function POST(req) {
         image: localImagePath, price: pPrice, profit: profitAmount, reserveAmount 
       })
 
-      individualTaskRows.push({
-        userId,
-        vipLevel: user.vipLevel,
-        setNumber: currentSet,
-        progress: `${userCurrentTaskNumber}/${config.tasksPerSet}`,
+      dbProductsSnapshot.push({
         productId: pId,
+        name: p.name,
         price: pPrice,
-        totalPrice: pPrice,
-        totalProfit: profitAmount,
-        status: 'pending',
-        taskCode: `${generateTaskCode()}-${pId}`
+        profit: profitAmount,
+        image: localImagePath
       })
     })
 
@@ -147,16 +142,31 @@ export async function POST(req) {
     const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
+    // Progress text formatter dynamically setups cards progress label boundaries ("5/40" vs "5-6/40")
+    const stepsCompleted = productsToAssign.length
+    const progressLabelString = stepsCompleted > 1 
+      ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
+      : `${userCurrentTaskNumber}/${config.tasksPerSet}`
+
+    // 🎯 THE COMPACT FIXED TRANSACTION BLOCK:
+    // Creates exactly ONE single pending card row using your new products array layout [INDEX].
     const databaseOperations = [
       prisma.user.update({
         where: { id: userId, tasksInCurrentSet: index },
         data: { walletBalance: newWallet, holdAmount: newHold, currentTaskProducts: taskProducts, activeProducts: taskProducts }
+      }),
+      prisma.task.create({
+        data: {
+          userId: userId,
+          vipLevel: user.vipLevel,
+          setNumber: currentSet,
+          progress: progressLabelString,
+          status: 'pending',
+          products: dbProductsSnapshot, // Safe snapshot storage injection field mapping
+          taskCode: generateTaskCode()
+        }
       })
     ]
-
-    individualTaskRows.forEach(taskData => {
-      databaseOperations.push(prisma.task.create({ data: taskData }))
-    })
 
     // Only set the merge status to 'used' if the combo task was actually initialized on this step!
     if (activeUserMerge && isMergedTask) {
@@ -170,7 +180,6 @@ export async function POST(req) {
 
     await prisma.$transaction(databaseOperations)
 
-    const stepsCompleted = productsToAssign.length
     const finalDisplayNumber = index + stepsCompleted
 
     return NextResponse.json({ 
