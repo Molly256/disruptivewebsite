@@ -40,7 +40,7 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG
     const currentSet = (user.setsCompleted || 0) + 1
     const index = user.tasksInCurrentSet || 0 
-    const userCurrentTaskNumber = index + 1 // Current step tracker
+    const userCurrentTaskNumber = index + 1 // 🎯 If tasksInCurrentSet is 6, this is exactly 7
 
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
@@ -66,8 +66,10 @@ export async function POST(req) {
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id))
       
+      // Timing gate finds the lowest requested id inside the active array row bundle (e.g. 7)
       const mergeTriggerStepNumber = Math.min(...mergedTaskOrders)
 
+      // 🎯 THE TIMING CHECK GATING: Combo fires only when progress aligns to the first item (7 === 7)
       if (userCurrentTaskNumber === mergeTriggerStepNumber) {
         isMergedTask = true
         userPairs.forEach(pair => {
@@ -86,6 +88,7 @@ export async function POST(req) {
       }
     }
 
+    // FALLBACK OVERRIDE: Triggers standard single tasks if no merge matches yet
     if (productsToAssign.length === 0) {
       isMergedTask = false
       const productIdForThisTask = userCurrentTaskNumber
@@ -97,13 +100,8 @@ export async function POST(req) {
 
     const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
-    let totalReserveAdded = 0
+    let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
     const innerItemsSnapshot = [] 
-
-    // 🎯 THE CORE MATHEMATICAL ISOLATION FIX:
-    // Extract raw float prices independently so they cannot be corrupted by profit addition lines.
-    const rawCostsArray = productsToAssign.map(p => parseFloat(p.price || 0))
-    const cleanTotalPriceSum = rawCostsArray.reduce((sum, val) => sum + val, 0)
 
     productsToAssign.forEach(p => {
       const pPrice = parseFloat(p.price || 0)
@@ -112,7 +110,9 @@ export async function POST(req) {
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
       
+      totalPrice += pPrice
       totalReserveAdded += reserveAmount
+      totalProfit += profitAmount
       
       innerItemsSnapshot.push({
         id: pId, productId: pId, photoId: pId, dataId: pId, taskOrder: pId,
@@ -128,10 +128,9 @@ export async function POST(req) {
       }
     }
 
-    // 🎯 WALLET MATHEMATICAL CALCULATIONS FIX:
-    // Deduct ONLY the total item price cost ($107.99) from the balance ($56.97).
-    // This forces the shortfall output to land at exactly -$51.02 on your screen!
-    const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
+    // Exact balance deduction math operations
+    const cleanTotalPrice = parseFloat(totalPrice.toFixed(2))
+    const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
     const stepsCompleted = productsToAssign.length
@@ -141,9 +140,11 @@ export async function POST(req) {
 
     const unifiedTaskPayload = innerItemsSnapshot
 
+    // 🎯 THE TRANSACTION ALIGNMENT FIX:
+    // Targeting where: { id: userId } directly avoids atomic stale count tracking blocks entirely!
     const databaseOperations = [
       prisma.user.update({
-        where: { id: userId }, 
+        where: { id: userId }, // 🎯 Removed strict lock to allow instant updates
         data: { 
           walletBalance: newWallet, 
           holdAmount: newHold, 
