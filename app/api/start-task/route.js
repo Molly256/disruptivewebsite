@@ -46,7 +46,6 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    // 🎯 THE FIX: Forces case-insensitive lookups so "vip1Set1" or "vip1set1" always match perfectly
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: { 
         userId, 
@@ -136,7 +135,11 @@ export async function POST(req) {
       }
     }
 
-    const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
+    // 🎯 THE STRICT MATHEMATICAL FIX:
+    // Forces clean decimal isolation. Only the absolute raw product price (totalPrice) 
+    // reduces the user wallet. Profit is never added here.
+    const cleanTotalPrice = parseFloat(totalPrice.toFixed(2))
+    const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
     const databaseOperations = [
