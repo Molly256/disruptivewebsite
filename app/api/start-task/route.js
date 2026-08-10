@@ -46,13 +46,14 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
+    // 🎯 THE FIX: Forces case-insensitive lookups so "vip1Set1" or "vip1set1" always match perfectly
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: { 
         userId, 
-        OR: [
-          { vipSet: `vip${user.vipLevel}set${currentSet}` },
-          { vipSet: `vip${user.vipLevel}Set${currentSet}` }
-        ],
+        vipSet: {
+          equals: `vip${user.vipLevel}set${currentSet}`,
+          mode: 'insensitive'
+        },
         status: 'active' 
       },
       orderBy: { createdAt: 'desc' }
@@ -129,15 +130,11 @@ export async function POST(req) {
       })
     })
 
-    // 🎯 THE CONDITIONAL SECURITY CHECK FIX:
-    // We check user.taskCompleted. If it is exactly 0, it means they are brand new.
-    // New users MUST have a balance of $50 or more to start.
     if ((user.taskCompleted || 0) === 0) {
       if (parseFloat(user.walletBalance || 0) < 50) {
         return NextResponse.json({ error: 'Balance below 50 unable to continue trading' }, { status: 400 })
       }
     }
-    // 💡 Existing users skip this check entirely and drop straight into negative amounts below!
 
     const newWallet = parseFloat((user.walletBalance - totalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
