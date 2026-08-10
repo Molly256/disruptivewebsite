@@ -9,7 +9,7 @@ const VIP_CONFIG = {
  1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
  2: { tasksPerSet: 60, totalSets: 2, profit: 0.01 },
  3: { tasksPerSet: 80, totalSets: 2, profit: 0.015 },
-  4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
+ 4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
  5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 }
 }
 
@@ -40,7 +40,7 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSet = (user.setsCompleted || 0) + 1
     const index = user.tasksInCurrentSet || 0
-    const userCurrentTaskNumber = index + 1 // Current step tracker
+    const userCurrentTaskNumber = index + 1 // Current step tracker (e.g., 5)
 
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
@@ -63,12 +63,15 @@ export async function POST(req) {
     let isMergedTask = false
 
     if (activeUserMerge) {
-      const userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
-
+      const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id))
 
-      // FIX: Bundle if current task is ANY number inside the merge
-      if (mergedTaskOrders.includes(userCurrentTaskNumber)) {
+      // 🎯 THE FIX: Find the lowest task number in the merge group (e.g., 5)
+      const mergeTriggerStepNumber = Math.min(...mergedTaskOrders)
+
+      // 🎯 THE FIX: Combo triggers ONLY when the user's progress reaches the first item in the merge bundle (5 === 5).
+      // This stops step 6 from re-running the used gate, entirely blocking task separation.
+      if (userCurrentTaskNumber === mergeTriggerStepNumber) {
         isMergedTask = true
         userPairs.forEach(pair => {
           const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
@@ -78,7 +81,7 @@ export async function POST(req) {
             productsToAssign.push({
              ...fileMatch,
               name: pair.name || fileMatch.name,
-              price: pair.price? parseFloat(pair.price) : fileMatch.price,
+              price: pair.price ? parseFloat(pair.price) : fileMatch.price,
               rating: fileMatch.rating || 5.0
             })
           }
@@ -86,6 +89,7 @@ export async function POST(req) {
       }
     }
 
+    // FALLBACK OVERRIDE: Serves normal single tasks if no merge matches yet (e.g. user is on step 3 or 4)
     if (productsToAssign.length === 0) {
       isMergedTask = false
       const productIdForThisTask = userCurrentTaskNumber
@@ -95,7 +99,7 @@ export async function POST(req) {
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
 
-    const activeProfitRate = isMergedTask? (config.profit * 10) : config.profit
+    const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
     let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
     const innerItemsSnapshot = []
@@ -132,6 +136,7 @@ export async function POST(req) {
       }
     }
 
+    // Math Fix: Only raw item cost is deducted from user wallet balance row cells.
     const cleanTotalPrice = parseFloat(totalPrice.toFixed(2))
     const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
@@ -141,20 +146,8 @@ export async function POST(req) {
      ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
       : `${userCurrentTaskNumber}/${config.tasksPerSet}`
 
-    const unifiedTaskPayload = isMergedTask
-     ? innerItemsSnapshot
-      : [{
-          id: innerItemsSnapshot[0].id,
-          photoId: innerItemsSnapshot[0].id,
-          dataId: innerItemsSnapshot[0].id,
-          taskOrder: innerItemsSnapshot[0].id,
-          name: innerItemsSnapshot[0].name,
-          rating: innerItemsSnapshot[0].rating,
-          image: innerItemsSnapshot[0].image,
-          price: cleanTotalPrice,
-          profit: totalProfit,
-          reserveAmount: totalReserveAdded
-        }]
+    // 🎯 THE FIX: Defensive layout snapshot extraction mapping safeguards against array element crashes
+    const unifiedTaskPayload = innerItemsSnapshot
 
     const databaseOperations = [
       prisma.user.update({

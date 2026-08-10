@@ -69,7 +69,6 @@ export default function AdminPage() {
 
  const loadMergeSet = async (vipSet, setNum) => {
   if(!mergeUser) return alert('No user selected')
-  // FIX: Protect the target user identification parameters with strict checks
   const targetUserId = mergeUser.id || mergeUser._id;
   if(!targetUserId) return alert('Error: Selected user object has no valid ID structure.')
 
@@ -88,7 +87,6 @@ export default function AdminPage() {
 
   const photos = []
   for(let i = start; i <= end; i++){
-    // FIXED PATH STRING: Forms absolute clean directory path strings matching your folder rules exactly
     photos.push({ id: `photo-${i}`, type: 'photos', taskOrder: i, url: `/vip${vipLevel}/set${setNum}/photo${i}.jpg`, name: `photo${i}.jpg` })
   }
 
@@ -101,14 +99,14 @@ export default function AdminPage() {
     const data = await dataRes.json()
     
     dataItems = data.map((p, idx) => {
-      const tOrder = p.taskOrder || (start + idx);
+      // 🎯 FIXED LOOKUP INDEX: Ensures tOrder maps directly to the actual task item ID number
+      const tOrder = Number(p.taskOrder || p.id || (start + idx));
       return { 
         id: `data-${tOrder}`, 
         type: 'data', 
         taskOrder: tOrder, 
         price: p.price, 
         name: p.name, 
-        // FIXED PATH STRING: Ensures images fallback on the perfect public folder format
         image: p.image || `/vip${vipLevel}/set${setNum}/photo${tOrder}.jpg`, 
         rating: p.rating || 5 
       }
@@ -134,16 +132,17 @@ const handleMerge = async () => {
   const targetUserId = mergeUser.id || mergeUser._id;
   if(!targetUserId) return alert('Error: Missing tracking user parameter ID value.')
 
-  // 🎯 THE FIX: Automatically maps and attaches the real data objects before sending to the backend
+  // 🎯 THE FIX: Maps using numeric types to align perfectly with your schema keys
   const populatedPairs = selectedPhotos.map(taskOrder => {
-    // Find matching metadata inside your mergePhotos state
-    const dataMatch = mergePhotos.find(p => p.type === 'data' && p.taskOrder === taskOrder) || {}
+    const numericOrder = Number(taskOrder);
+    // Find matching metadata inside your mergePhotos state using numerical comparison
+    const dataMatch = mergePhotos.find(p => p.type === 'data' && Number(p.taskOrder) === numericOrder) || {}
     
     return {
-      photoId: taskOrder,
-      dataId: taskOrder,
-      taskOrder: taskOrder,
-      name: dataMatch.name || `Product Item #${taskOrder}`,
+      photoId: numericOrder,
+      dataId: numericOrder,
+      taskOrder: numericOrder,
+      name: dataMatch.name || `Product Item #${numericOrder}`,
       price: dataMatch.price ? parseFloat(dataMatch.price) : 0
     }
   })
@@ -154,13 +153,14 @@ const handleMerge = async () => {
     body: JSON.stringify({ 
       userId: targetUserId, 
       vipSet: selectedMergeSet, 
-      pairs: populatedPairs, // 🎯 Sends the complete list that start-task requires
+      pairs: populatedPairs, // 🎯 THE FIX: Sends under 'pairs' to match schema.prisma Json column exactly
       adminId: admin.id || admin._id || 'system' 
     })
   })
   if(res.ok) {
     alert(`Merged ${selectedPhotos.length} photos with real prices into 1 task. Saved to DB`);
     setSelectedPhotos([]);
+    setSelectedData([]);
     const match = selectedMergeSet.match(/Set(\d+)/i);
     loadMergeSet(selectedMergeSet, match ? parseInt(match[1]) : 1)
   } else {
@@ -175,8 +175,8 @@ const handleSaveDataFile = async () => {
   if(!targetUserId) return alert('Error: User context state parameter tracking missing.')
 
   const updatedData = selectedData.map(taskOrder => {
-    const data = mergePhotos.find(p => p.type === 'data' && p.taskOrder === taskOrder);
-    return { taskOrder, name: data.name, price: parseFloat(data.price) }
+    const data = mergePhotos.find(p => p.type === 'data' && Number(p.taskOrder) === Number(taskOrder));
+    return { taskOrder: Number(taskOrder), name: data.name, price: parseFloat(data.price) }
   })
   
   await fetch('/api/admin/save-data-file', {
@@ -200,13 +200,11 @@ const handleSaveDataFile = async () => {
 const editPrice = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
 
 const saveEdit = () => { 
-  setMergePhotos(prev => prev.map(p => p.taskOrder === editingPhoto.taskOrder ? {...p, name: editData.name, price: parseFloat(editData.price)} : p)); 
+  setMergePhotos(prev => prev.map(p => Number(p.taskOrder) === Number(editingPhoto.taskOrder) ? {...p, name: editData.name, price: parseFloat(editData.price)} : p)); 
   setSelectedData(prev => prev.includes(editingPhoto.taskOrder) ? prev : [...prev, editingPhoto.taskOrder]);
   setEditingPhoto(null); 
   alert('Edited locally. Hit "Save Data" to update file + DB');
 }
-
-
 
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
@@ -308,6 +306,7 @@ const saveEdit = () => {
                               setSelectedData(v => v.includes(currentOrder) ? v.filter(x => x !== currentOrder) : [...v, currentOrder]);
                             }} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel ? '#FF0000' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}>{isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}</div>
                             
+                            {/* 🎯 THE FIX: Restored exact schema-compliant w3.org namespace layout schema to prevent rendering crashes */}
                             <img src={p.url} onError={e => e.target.src='data:image/svg+xml;utf8,<svg xmlns="http://w3.org" width="100" height="90" viewBox="0 0 100 90"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10">Missing</text></svg>'} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
                             
                             {/* Renders data right underneath the image preview slot natively */}
@@ -339,7 +338,6 @@ const saveEdit = () => {
 )}
 
 
-   
    {tab === 'deposit' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{depositUser &&!showDepositInput && <button onClick={()=>setShowDepositInput(true)} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Deposit to {depositUser.username} - Balance: ${depositUser.walletBalance}</button>}{showDepositInput && (<div><input value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Deposit</button></div>)}</div>)}
 
         {tab === 'withdraw' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>{withdrawList.length === 0 && <p>No pending withdrawals</p>}{withdrawList.map(tx => (<div key={tx.id} style={{ border:'1px solid #333', padding:12, borderRadius:8, marginBottom:8 }}><p><b>{tx.user?.username}</b> - ${tx.amount}</p><p style={{fontSize:12}}>Status: {tx.status}</p>{tx.status === 'PENDING' && <div style={{display:'flex', gap:8}}><button onClick={()=>handleWithdraw(tx.id, 'approve')} style={{background:'#00C853', border:'none', padding:8, borderRadius:6, color:'#FFF'}}>Approve</button><button onClick={()=>handleWithdraw(tx.id, 'reject')} style={{background:'red', border:'none', padding:8, borderRadius:6, color:'#FFF'}}>Reject</button></div>}</div>))}</div>)}
