@@ -9,8 +9,8 @@ const VIP_CONFIG = {
  1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
  2: { tasksPerSet: 60, totalSets: 2, profit: 0.01 },
  3: { tasksPerSet: 80, totalSets: 2, profit: 0.015 },
-  4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
-  5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 }
+ 4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
+ 5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 }
 }
 
 const STATIC_PRODUCTS = { 1: { 1: vip1Set1, 2: vip1Set2 } }
@@ -34,67 +34,87 @@ export async function POST(req) {
       : (user.currentTaskProducts || [])
 
     if (currentProductsArray.length > 0) {
+      console.log('[DEBUG] BLOCKED: Active task exists')
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
-    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1] // FIX 1
+    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSet = (user.setsCompleted || 0) + 1
     const index = user.tasksInCurrentSet || 0
-    const userCurrentTaskNumber = index + 1 // 🎯 If tasksInCurrentSet is 6, this is exactly 7
+    const userCurrentTaskNumber = index + 1
+
+    console.log('[DEBUG] INPUTS:', { userId, vip: user.vipLevel, currentSet, index, userCurrentTaskNumber })
 
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
+    console.log('[DEBUG] FILESET_IDS:', fileSet.map(p => p.id))
+
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: {
         userId,
-        vipSet: {
-          equals: `vip${user.vipLevel}set${currentSet}`,
-          mode: 'insensitive'
-        },
+        vipSet: { equals: `vip${user.vipLevel}set${currentSet}`, mode: 'insensitive' },
         status: 'active'
       },
       orderBy: { createdAt: 'desc' }
     })
 
+    console.log('[DEBUG] MERGE_ROW_FOUND:', activeUserMerge? { id: activeUserMerge.id, vipSet: activeUserMerge.vipSet, status: activeUserMerge.status } : 'NULL')
+
     let productsToAssign = []
     let isMergedTask = false
+    let failReason = 'NO_MERGE_ROW'
 
     if (activeUserMerge) {
       const userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
-      const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id))
+      console.log('[DEBUG] MERGE_PAIRS_RAW:', userPairs)
 
-      // Timing gate finds the lowest requested id inside the active array row bundle (e.g. 7)
-      const mergeTriggerStepNumber = Math.min(...mergedTaskOrders)
+      const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n =>!isNaN(n))
+      console.log('[DEBUG] MERGE_TASK_ORDERS:', mergedTaskOrders)
 
-      // 🎯 THE TIMING CHECK GATING: Combo fires only when progress aligns to the first item (7 === 7)
-      if (userCurrentTaskNumber === mergeTriggerStepNumber) {
-        isMergedTask = true
-        userPairs.forEach(pair => {
-          const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
-          const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+      if (mergedTaskOrders.length > 0) {
+        const mergeTriggerStepNumber = Math.min(...mergedTaskOrders)
+        const gatePasses = userCurrentTaskNumber === mergeTriggerStepNumber
 
-          if (fileMatch) {
-            productsToAssign.push({
-             ...fileMatch,
-              name: pair.name || fileMatch.name,
-              price: pair.price? parseFloat(pair.price) : fileMatch.price,
-              rating: fileMatch.rating || 5.0
-            })
-          }
-        })
+        console.log('[DEBUG] GATE_CHECK:', { mergeTriggerStepNumber, userCurrentTaskNumber, gatePasses })
+
+        if (gatePasses) {
+          isMergedTask = true
+          failReason = 'MATCHED_BUT_NO_FILE_FOUND'
+
+          userPairs.forEach(pair => {
+            const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
+            const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+
+            if (fileMatch) {
+              productsToAssign.push({
+               ...fileMatch,
+                name: pair.name || fileMatch.name,
+                price: pair.price? parseFloat(pair.price) : fileMatch.price,
+                rating: fileMatch.rating || 5.0
+              })
+            } else {
+              console.log('[DEBUG] FILE_ID_MISS:', { targetId, availableIds: fileSet.map(f => Number(f.id)) })
+            }
+          })
+        } else {
+          failReason = `GATE_FAIL: ${userCurrentTaskNumber}!= ${mergeTriggerStepNumber}`
+        }
+      } else {
+        failReason = 'PAIRS_EMPTY_AFTER_PARSE'
       }
     }
 
-    // FALLBACK OVERRIDE: Triggers standard single tasks if no merge matches yet
     if (productsToAssign.length === 0) {
       isMergedTask = false
-      const productIdForThisTask = userCurrentTaskNumber
-      const normalProduct = fileSet.find(p => Number(p.id) === productIdForThisTask)
+      const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
       if (normalProduct) productsToAssign.push(normalProduct)
+      console.log('[DEBUG] FALLBACK_TO_SINGLE:', { reason: failReason, singleId: userCurrentTaskNumber, found:!!normalProduct })
     }
+
+    console.log('[DEBUG] FINAL_DECISION:', { isMergedTask, productsCount: productsToAssign.length, productIds: productsToAssign.map(p => p.id) })
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
 
@@ -128,7 +148,6 @@ export async function POST(req) {
       }
     }
 
-    // Exact balance deduction math operations
     const cleanTotalPrice = parseFloat(totalPrice.toFixed(2))
     const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
@@ -140,16 +159,15 @@ export async function POST(req) {
 
     const unifiedTaskPayload = innerItemsSnapshot
 
-    // 🎯 THE TRANSACTION ALIGNMENT FIX:
     const databaseOperations = [
       prisma.user.update({
-        where: { id: userId, tasksInCurrentSet: index }, // FIX 2: atomic lock
+        where: { id: userId, tasksInCurrentSet: index },
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
           currentTaskProducts: unifiedTaskPayload,
           activeProducts: unifiedTaskPayload,
-          tasksInCurrentSet: index + stepsCompleted // FIX 2: move progress forward
+          tasksInCurrentSet: index + stepsCompleted
         }
       }),
       prisma.task.create({
@@ -168,7 +186,7 @@ export async function POST(req) {
     if (activeUserMerge && isMergedTask) {
       databaseOperations.push(
         prisma.taskMerge.update({
-          where: { id: activeUserMerge.id },
+          where: { id: activeUserMerge.id, status: 'active' },
           data: { status: 'used' }
         })
       )
@@ -182,6 +200,7 @@ export async function POST(req) {
       currentTaskNumber: index + stepsCompleted
     })
   } catch (err) {
-    console.error(err); return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error('[DEBUG] CRASH:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
