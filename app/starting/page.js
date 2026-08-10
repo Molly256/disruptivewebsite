@@ -144,8 +144,8 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
-  // 🎯 THE FIX: Since funds are already deducted on task start, 
-  // only lock the interaction if the live wallet pool state drops below zero.
+  // 🎯 THE FIX: Condition adjusted strictly to check the actual walletBalance state 
+  // since backend deductions apply immediately when the task initialized!
   const isLocked = walletBalance < 0
 
   return (
@@ -213,9 +213,10 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
 
+            {/* FIXED THE CONDITIONAL BANNER BUG: Checks raw dynamic walletBalance levels directly to stop premature locks */}
             {isLocked && (
               <div style={{marginTop: 8, padding: 8, background: '#FFF3F3', border: '1px solid #FFCCCC', borderRadius: 6, fontSize: 12, color: '#FF0000', fontWeight: 600}}>
-                Balance is negative. Shortfall gap: {formatMoney(balanceAfterPurchase)} USD. Please deposit funds to enable submit.
+                Balance is negative. Shortfall gap: {formatMoney(walletBalance)} USD. Please deposit funds to enable submit.
               </div>
             )}
 
