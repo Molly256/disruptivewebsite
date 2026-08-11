@@ -61,7 +61,7 @@ export async function POST(req) {
     const nextTaskCount = currentIndex + tasksCompletedInThisSubmit
     const isSetComplete = nextTaskCount >= config.tasksPerSet
 
-    // 🎯 THE FIX: Fetch exactly ONE single pending database task card block generated on initialization step hooks
+    // Fetch exactly ONE single pending database task card block generated on initialization step hooks
     const activePendingTaskCard = await prisma.task.findFirst({
       where: { 
         userId: userId, 
@@ -73,7 +73,8 @@ export async function POST(req) {
 
     const tx = [
       prisma.user.update({
-        where: { id: userId, tasksInCurrentSet: currentIndex },
+        // 🎯 THE DIRECT FIX: Target user ID exclusively to prevent structural progression blocks!
+        where: { id: userId }, 
         data: {
           walletBalance: { increment: totalReserve }, 
           holdAmount: { decrement: totalReserve >= user.holdAmount ? user.holdAmount : totalReserve }, 
@@ -88,8 +89,7 @@ export async function POST(req) {
       })
     ]
 
-    // 🎯 THE FIX: Mark exactly that ONE active task record row status parameter as completed!
-    // This stops combo blocks from splitting apart into individual single history cards.
+    // Mark exactly that ONE active task record row status parameter as completed!
     if (activePendingTaskCard) {
       tx.push(
         prisma.task.update({

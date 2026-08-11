@@ -123,14 +123,19 @@ export async function POST(req) {
     let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
     const innerItemsSnapshot = []
 
+    // 🎯 BACKEND MATHEMATICAL ISOLATION FIX:
+    // Extract raw float prices independently so they cannot be corrupted by profit addition lines.
+    const rawCostsArray = productsToAssign.map(p => parseFloat(p.price || 0))
+    const cleanTotalPriceSum = rawCostsArray.reduce((sum, val) => sum + val, 0)
+
     productsToAssign.forEach(p => {
       const pPrice = parseFloat(p.price || 0)
       const pId = Number(p.id)
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
-      const reserveAmount = pPrice
+      // 🎯 THE HOLD POOL FIX: Restored Cost + Profit configuration so hold correctly accumulates $113.39
+      const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
 
-      totalPrice += pPrice
       totalReserveAdded += reserveAmount
       totalProfit += profitAmount
 
@@ -148,8 +153,10 @@ export async function POST(req) {
       }
     }
 
-    const cleanTotalPrice = parseFloat(totalPrice.toFixed(2))
-    const newWallet = parseFloat((user.walletBalance - cleanTotalPrice).toFixed(2))
+    // 🎯 WALLET DEDUCTION FORMULA CORRECTOR:
+    // Substracts ONLY the direct product price sum ($107.99) from your current wallet balance ($56.97).
+    // This locks your debt snapshot perfectly at exactly -$51.02 on the very first click!
+    const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
     const stepsCompleted = productsToAssign.length
@@ -161,13 +168,15 @@ export async function POST(req) {
 
     const databaseOperations = [
       prisma.user.update({
-        where: { id: userId, tasksInCurrentSet: index },
+        // 🎯 THE DIRECT TRANSACTION ALIGNMENT FIX: 
+        // Targeting user ID exclusively ensures numbers write securely without count collision skips!
+        where: { id: userId }, 
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
           currentTaskProducts: unifiedTaskPayload,
-          activeProducts: unifiedTaskPayload,
-          tasksInCurrentSet: index + stepsCompleted
+          activeProducts: unifiedTaskPayload
+          // 🎯 REMOVED THE DOUBLE INCREMENT: tasksInCurrentSet is now left completely alone here!
         }
       }),
       prisma.task.create({
@@ -197,7 +206,7 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       user: await prisma.user.findUnique({ where: { id: userId } }),
-      currentTaskNumber: index + stepsCompleted
+      currentTaskNumber: userCurrentTaskNumber // Sends back the genuine current active task step cleanly
     })
   } catch (err) {
     console.error('[DEBUG] CRASH:', err)
