@@ -92,14 +92,14 @@ export default function AdminPage() {
 
   let dataItems = []
   try {
-    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}Set${setNum}&userId=${targetUserId}`
+    // 🎯 FIX: Force lowercase on the vipSet query string parameter to match your DB expectations
+    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}set${setNum}&userId=${targetUserId}`
     console.log("FETCHING:", url) 
     const dataRes = await fetch(url)
     if(!dataRes.ok) throw new Error(`API returned ${dataRes.status}`)
     const data = await dataRes.json()
     
     dataItems = data.map((p, idx) => {
-      // 🎯 FIXED LOOKUP INDEX: Ensures tOrder maps directly to the actual task item ID number
       const tOrder = Number(p.taskOrder || p.id || (start + idx));
       return { 
         id: `data-${tOrder}`, 
@@ -113,13 +113,14 @@ export default function AdminPage() {
     })
   } catch(e) {
     console.error(e);
-    alert(`Data layer error for: vip${vipLevel}Set${setNum}\nError: ${e.message}`)
+    alert(`Data layer error for: vip${vipLevel}set${setNum}\nError: ${e.message}`)
   }
 
   setMergePhotos([...photos, ...dataItems])
 
   try {
-    const res = await fetch(`/api/admin/merged-tasks?userId=${targetUserId}&vipSet=${vipSet}`)
+    // 🎯 FIX: Force lowercase on layout retrieval route strings
+    const res = await fetch(`/api/admin/merged-tasks?userId=${targetUserId}&vipSet=${String(vipSet).toLowerCase()}`)
     const mData = await res.json()
     setExistingMerged(mData.tasks || [])
   } catch(e) {
@@ -132,18 +133,24 @@ const handleMerge = async () => {
   const targetUserId = mergeUser.id || mergeUser._id;
   if(!targetUserId) return alert('Error: Missing tracking user parameter ID value.')
 
-  // 🎯 THE FIX: Maps using numeric types to align perfectly with your schema keys
   const populatedPairs = selectedPhotos.map(taskOrder => {
     const numericOrder = Number(taskOrder);
-    // Find matching metadata inside your mergePhotos state using numerical comparison
     const dataMatch = mergePhotos.find(p => p.type === 'data' && Number(p.taskOrder) === numericOrder) || {}
     
+    // 🎯 FIX: Pull the matching item from your state array layout to get its actual image URL
+    const photoMatch = mergePhotos.find(p => p.type === 'photos' && Number(p.taskOrder) === numericOrder) || {}
+    
+    const userVipLevel = mergeUser.vipLevel || mergeUser.vip || 1;
+    const currentActiveSet = activeSet || 1;
+
     return {
       photoId: numericOrder,
       dataId: numericOrder,
       taskOrder: numericOrder,
       name: dataMatch.name || `Product Item #${numericOrder}`,
-      price: dataMatch.price ? parseFloat(dataMatch.price) : 0
+      price: dataMatch.price ? parseFloat(dataMatch.price) : 0,
+      // 🎯 FIX: Explicitly pass the full image URL down to your database row entry
+      image: photoMatch.url || `/vip${userVipLevel}/set${currentActiveSet}/photo${numericOrder}.jpg`
     }
   })
 
@@ -152,8 +159,9 @@ const handleMerge = async () => {
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ 
       userId: targetUserId, 
-      vipSet: selectedMergeSet, 
-      pairs: populatedPairs, // 🎯 THE FIX: Sends under 'pairs' to match schema.prisma Json column exactly
+      // 🎯 FIX: Convert 'selectedMergeSet' string value to pure lowercase format
+      vipSet: String(selectedMergeSet).toLowerCase().trim(), 
+      pairs: populatedPairs, 
       adminId: admin.id || admin._id || 'system' 
     })
   })
@@ -162,7 +170,7 @@ const handleMerge = async () => {
     setSelectedPhotos([]);
     setSelectedData([]);
     const match = selectedMergeSet.match(/Set(\d+)/i);
-    loadMergeSet(selectedMergeSet, match ? parseInt(match[1]) : 1)
+    loadMergeSet(selectedMergeSet.toLowerCase(), match ? parseInt(match[1]) : 1)
   } else {
     const errText = await res.json();
     alert(`Failed: ${errText.error || 'Check server logs'}`);
@@ -182,19 +190,19 @@ const handleSaveDataFile = async () => {
   await fetch('/api/admin/save-data-file', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ vipSet: selectedMergeSet, data: updatedData })
+    body: JSON.stringify({ vipSet: selectedMergeSet.toLowerCase().trim(), data: updatedData })
   })
   
   await fetch('/api/admin/update-merged-task-data', {
     method: 'PUT',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ userId: targetUserId, vipSet: selectedMergeSet, data: updatedData, adminId: admin.id || admin._id })
+    body: JSON.stringify({ userId: targetUserId, vipSet: selectedMergeSet.toLowerCase().trim(), data: updatedData, adminId: admin.id || admin._id })
   })
   
   alert('Saved: /data file + DB updated');
   setSelectedData([]);
   const match = selectedMergeSet.match(/Set(\d+)/i);
-  loadMergeSet(selectedMergeSet, match ? parseInt(match[1]) : 1)
+  loadMergeSet(selectedMergeSet.toLowerCase(), match ? parseInt(match[1]) : 1)
 }
 
 const editPrice = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
@@ -205,8 +213,7 @@ const saveEdit = () => {
   setEditingPhoto(null); 
   alert('Edited locally. Hit "Save Data" to update file + DB');
 }
-
-  const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
+ const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
   const handleSendNotif = async () => { if(!notifMessage) return alert('Enter message'); const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) }); if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed') }
   const handleGiveBonus = async () => { if(!bonusAmount) return alert('Enter amount'); const res = await fetch('/api/admin/give-bonus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: bonusUser.id, amount: parseFloat(bonusAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setBonusUser({...bonusUser, specialBonus: data.newBonus}); alert('Bonus Given'); setShowBonusInput(false); setBonusAmount('') } else alert('Failed') }
