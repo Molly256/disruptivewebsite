@@ -71,17 +71,22 @@ export async function POST(req) {
       orderBy: { createdAt: 'desc' }
     })
 
+    // 🎯 BACKEND MATHEMATICAL ISOLATION FIX:
+    // Extract raw conditional calculations from runtime logic pools out to clean JS variables.
+    // This stops Prisma from crashing on variable arithmetic parameters!
+    const rawDecrementValue = totalReserve >= (user.holdAmount || 0) ? (user.holdAmount || 0) : totalReserve;
+    const cleanDecrementAmount = parseFloat(rawDecrementValue.toFixed(2));
+
     const tx = [
       prisma.user.update({
-        // 🎯 THE DIRECT FIX: Target user ID exclusively to prevent structural progression blocks!
         where: { id: userId }, 
         data: {
           walletBalance: { increment: totalReserve }, 
-          holdAmount: { decrement: totalReserve >= user.holdAmount ? user.holdAmount : totalReserve }, 
+          holdAmount: { decrement: cleanDecrementAmount }, 
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
           currentTaskProducts: [], 
           activeProducts: [],
-          completedProducts: [...(user.completedProducts || []), ...enrichedProducts],
+          completedProducts: [...(Array.isArray(user.completedProducts) ? user.completedProducts : []), ...enrichedProducts],
           tasksInCurrentSet: isSetComplete ? 0 : nextTaskCount,
           setsCompleted: isSetComplete ? (user.setsCompleted || 0) + 1 : (user.setsCompleted || 0),
           taskCompleted: { increment: tasksCompletedInThisSubmit }
