@@ -68,8 +68,8 @@ export async function POST(req) {
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       
       if (userPairs && userPairs.length > 0) {
-        // 🎯 TYPE HARDENING FIX: Enforce uniform primitive conversion to eliminate strict string vs number desyncs
-        const mergedTaskOrders = userPairs.map(p => Number(pairValue => pairValue.taskOrder || pairValue.photoId || pairValue.dataId || pairValue.id)(p)).filter(n => !isNaN(n))
+        // 🎯 FIXED SYNTAX: Extracted the properties correctly as raw numbers without crashing the runtime environment parser engine
+        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n => !isNaN(n))
         const mergeTriggerStepNumber = mergedTaskOrders.length > 0 ? Math.min(...mergedTaskOrders) : userCurrentTaskNumber
         
         // Check if user has matched the entry point of the combo layout row
