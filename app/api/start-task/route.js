@@ -68,11 +68,10 @@ export async function POST(req) {
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       
       if (userPairs && userPairs.length > 0) {
-        // 🎯 FIXED SYNTAX: Extracted the properties correctly as raw numbers without crashing the runtime environment parser engine
         const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n => !isNaN(n))
         const mergeTriggerStepNumber = mergedTaskOrders.length > 0 ? Math.min(...mergedTaskOrders) : userCurrentTaskNumber
         
-        // Check if user has matched the entry point of the combo layout row
+        // 🔒 SCHEDULE-FOR-LATER GATEKEEPER: Gate opens ONLY when the user reaches the combo trigger step number
         const gatePasses = Number(userCurrentTaskNumber) === Number(mergeTriggerStepNumber)
 
         console.log('[DEBUG] SYNCHRONIZED_GATE_CHECK:', { userCurrentTaskNumber, mergeTriggerStepNumber, gatePasses })
@@ -122,7 +121,7 @@ export async function POST(req) {
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
       
-      // Keep custom remote links intact or map them natively to asset templates
+      // 🎯 FIXED IMAGE BINDING OVERWRITE: Use the verified image property directly to prevent broken links
       const imagePathString = p.image || `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
 
       totalReserveAdded += reserveAmount
