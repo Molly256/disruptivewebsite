@@ -120,65 +120,6 @@ export default function AdminPage() {
   try {
     const res = await fetch(`/api/admin/merged-tasks?userId=${targetUserId}&vipSet=${String(vipSet).toLowerCase()}`)
     const mData = await res.json()
-    setExistingMerged(mData.tasks || [])
-  } catch(e) {
-    console.error("merged-tasks error:", e)
-  }
-}
-
-const loadMergeSet = async (vipSet, setNum) => {
-  if(!mergeUser) return alert('No user selected')
-  const targetUserId = mergeUser.id || mergeUser._id;
-  if(!targetUserId) return alert('Error: Selected user object has no valid ID structure.')
-
-  const vipLevel = mergeUser.vipLevel || mergeUser.vip
-  if(!vipLevel) return alert('Error: User has no vip level')
-  if(!setNum) return alert('Error: setNum missing')
-
-  console.log("Loading Set:", {vipLevel, setNum, vipSet}) 
-
-  const vipData = vipList.find(v => v.id === vipLevel)
-  if(!vipData) return alert(`VIP level ${vipLevel} not found in vipList`)
-  const taskCount = vipData.tasks
-
-  const start = setNum === 1 ? 1 : taskCount + 1
-  const end = setNum === 1 ? taskCount : taskCount * 2
-
-  const photos = []
-  for(let i = start; i <= end; i++){
-    photos.push({ id: `photo-${i}`, type: 'photos', taskOrder: i, url: `/vip${vipLevel}/set${setNum}/photo${i}.jpg`, name: `photo${i}.jpg` })
-  }
-
-  let dataItems = []
-  try {
-    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}set${setNum}&userId=${targetUserId}`
-    console.log("FETCHING:", url) 
-    const dataRes = await fetch(url)
-    if(!dataRes.ok) throw new Error(`API returned ${dataRes.status}`)
-    const data = await dataRes.json()
-    
-    dataItems = data.map((p, idx) => {
-      const tOrder = Number(p.taskOrder || p.id || (start + idx));
-      return { 
-        id: `data-${tOrder}`, 
-        type: 'data', 
-        taskOrder: tOrder, 
-        price: p.price, 
-        name: p.name, 
-        image: p.image || `/vip${vipLevel}/set${setNum}/photo${tOrder}.jpg`, 
-        rating: p.rating || 5 
-      }
-    })
-  } catch(e) {
-    console.error(e);
-    alert(`Data layer error for: vip${vipLevel}set${setNum}\nError: ${e.message}`)
-  }
-
-  setMergePhotos([...photos, ...dataItems])
-
-  try {
-    const res = await fetch(`/api/admin/merged-tasks?userId=${targetUserId}&vipSet=${String(vipSet).toLowerCase()}`)
-    const mData = await res.json()
     // 🎯 FIX: Formats tasks array properly if your backend wraps it inside nested structures
     setExistingMerged(mData.tasks || mData.merges || [])
   } catch(e) {
@@ -272,7 +213,6 @@ const saveEdit = () => {
   setEditingPhoto(null); 
   alert('Edited locally. Hit "Save Data" to update file + DB');
 }
-
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
   const handleSendNotif = async () => { if(!notifMessage) return alert('Enter message'); const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) }); if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed') }
