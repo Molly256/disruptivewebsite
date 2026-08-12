@@ -92,7 +92,7 @@ export default function AdminPage() {
 
   let dataItems = []
   try {
-    // 🎯 FIX: Force lowercase on the vipSet query string parameter to match your DB expectations
+    // 🎯 FIX: Explicit lowercased route format parameter matching
     const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}set${setNum}&userId=${targetUserId}`
     console.log("FETCHING:", url) 
     const dataRes = await fetch(url)
@@ -119,7 +119,7 @@ export default function AdminPage() {
   setMergePhotos([...photos, ...dataItems])
 
   try {
-    // 🎯 FIX: Force lowercase on layout retrieval route strings
+    // 🎯 FIX: Force lowercase transform parameters on active list fetches
     const res = await fetch(`/api/admin/merged-tasks?userId=${targetUserId}&vipSet=${String(vipSet).toLowerCase()}`)
     const mData = await res.json()
     setExistingMerged(mData.tasks || [])
@@ -137,7 +137,7 @@ const handleMerge = async () => {
     const numericOrder = Number(taskOrder);
     const dataMatch = mergePhotos.find(p => p.type === 'data' && Number(p.taskOrder) === numericOrder) || {}
     
-    // 🎯 FIX: Pull the matching item from your state array layout to get its actual image URL
+    // 🎯 FIX: Locate the photo record container item to capture real image paths directly
     const photoMatch = mergePhotos.find(p => p.type === 'photos' && Number(p.taskOrder) === numericOrder) || {}
     
     const userVipLevel = mergeUser.vipLevel || mergeUser.vip || 1;
@@ -149,18 +149,21 @@ const handleMerge = async () => {
       taskOrder: numericOrder,
       name: dataMatch.name || `Product Item #${numericOrder}`,
       price: dataMatch.price ? parseFloat(dataMatch.price) : 0,
-      // 🎯 FIX: Explicitly pass the full image URL down to your database row entry
       image: photoMatch.url || `/vip${userVipLevel}/set${currentActiveSet}/photo${numericOrder}.jpg`
     }
   })
+
+  // Parse regex values before modifying strings down to lowercase format structures
+  const match = selectedMergeSet.match(/Set(\d+)/i);
+  const parsedSetNumber = match ? parseInt(match[1]) : 1;
+  const cleanVipSetString = String(selectedMergeSet).toLowerCase().trim();
 
   const res = await fetch('/api/admin/merge-products', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify({ 
       userId: targetUserId, 
-      // 🎯 FIX: Convert 'selectedMergeSet' string value to pure lowercase format
-      vipSet: String(selectedMergeSet).toLowerCase().trim(), 
+      vipSet: cleanVipSetString, 
       pairs: populatedPairs, 
       adminId: admin.id || admin._id || 'system' 
     })
@@ -169,8 +172,8 @@ const handleMerge = async () => {
     alert(`Merged ${selectedPhotos.length} photos with real prices into 1 task. Saved to DB`);
     setSelectedPhotos([]);
     setSelectedData([]);
-    const match = selectedMergeSet.match(/Set(\d+)/i);
-    loadMergeSet(selectedMergeSet.toLowerCase(), match ? parseInt(match[1]) : 1)
+    // 🎯 FIX: Passes clean, unified parsing variables down to your callback handler
+    loadMergeSet(cleanVipSetString, parsedSetNumber)
   } else {
     const errText = await res.json();
     alert(`Failed: ${errText.error || 'Check server logs'}`);
@@ -187,22 +190,26 @@ const handleSaveDataFile = async () => {
     return { taskOrder: Number(taskOrder), name: data.name, price: parseFloat(data.price) }
   })
   
+  const match = selectedMergeSet.match(/Set(\d+)/i);
+  const parsedSetNumber = match ? parseInt(match[1]) : 1;
+  const cleanVipSetString = selectedMergeSet.toLowerCase().trim();
+
   await fetch('/api/admin/save-data-file', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ vipSet: selectedMergeSet.toLowerCase().trim(), data: updatedData })
+    body: JSON.stringify({ vipSet: cleanVipSetString, data: updatedData })
   })
   
   await fetch('/api/admin/update-merged-task-data', {
     method: 'PUT',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ userId: targetUserId, vipSet: selectedMergeSet.toLowerCase().trim(), data: updatedData, adminId: admin.id || admin._id })
+    body: JSON.stringify({ userId: targetUserId, vipSet: cleanVipSetString, data: updatedData, adminId: admin.id || admin._id })
   })
   
   alert('Saved: /data file + DB updated');
   setSelectedData([]);
-  const match = selectedMergeSet.match(/Set(\d+)/i);
-  loadMergeSet(selectedMergeSet.toLowerCase(), match ? parseInt(match[1]) : 1)
+  // 🎯 FIX: Passes clean, verified parameters safely down to your screen updates
+  loadMergeSet(cleanVipSetString, parsedSetNumber)
 }
 
 const editPrice = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
@@ -213,7 +220,7 @@ const saveEdit = () => {
   setEditingPhoto(null); 
   alert('Edited locally. Hit "Save Data" to update file + DB');
 }
- const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
+  const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
   const handleSendNotif = async () => { if(!notifMessage) return alert('Enter message'); const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) }); if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed') }
   const handleGiveBonus = async () => { if(!bonusAmount) return alert('Enter amount'); const res = await fetch('/api/admin/give-bonus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: bonusUser.id, amount: parseFloat(bonusAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setBonusUser({...bonusUser, specialBonus: data.newBonus}); alert('Bonus Given'); setShowBonusInput(false); setBonusAmount('') } else alert('Failed') }
@@ -286,7 +293,8 @@ const saveEdit = () => {
             <div key={setNum} style={{ marginTop: 16, border: '1px solid #333', borderRadius: 12, padding: 12, background: '#0a0a0a' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <p style={{ fontWeight: 800, margin: 0 }}>Set {setNum} {isActive && <span style={{ color: '#FF0000' }}>✔️ (Current)</span>}</p>
-                <button onClick={async () => { setSelectedMergeSet(`vip${vipLevel}Set${setNum}`); setActiveSet(setNum); setMergeView('photos'); setSelectedPhotos([]); setSelectedData([]); await loadMergeSet(`vip${vipLevel}Set${setNum}`, setNum); }} style={{ background: '#FF0000', color: '#FFF', border: 'none', padding: '10px 14px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Merge Task</button>
+                {/* 🎯 THE EXACT SYNC FIX: Generates clean, lowercase formatting ('vip1set1') natively to prevent lookup failures */}
+                <button onClick={async () => { const targetSetKey = `vip${vipLevel}set${setNum}`; setSelectedMergeSet(targetSetKey); setActiveSet(setNum); setMergeView('photos'); setSelectedPhotos([]); setSelectedData([]); await loadMergeSet(targetSetKey, setNum); }} style={{ background: '#FF0000', color: '#FFF', border: 'none', padding: '10px 14px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Merge Task</button>
               </div>
 
               {activeSet === setNum && (
@@ -298,25 +306,19 @@ const saveEdit = () => {
                   {mergeView && (
                     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, maxHeight: 400, overflowY: 'auto' }}>
                       {mergePhotos.filter(p => p.type === 'photos').sort((a, b) => Number(a.taskOrder) - Number(b.taskOrder)).map(p => {
-                        // 🎯 THE FIX: Force strict numerical type parsing to avoid string-number comparison leaks
                         const currentOrder = Number(p.taskOrder);
                         const isSel = selectedPhotos.includes(currentOrder);
-                        
-                        // 🎯 THE FIX: Use explicit type and numerical order matching rules
                         const companionData = mergePhotos.find(d => d.type === 'data' && Number(d.taskOrder) === currentOrder) || {};
 
                         return (
                           <div key={currentOrder} style={{ width: 130, background: '#111', padding: 6, borderRadius: 8, position: 'relative', border: isSel ? '2px solid #FF0000' : '1px solid #222' }}>
                             <div onClick={() => { 
-                              // 🎯 THE FIX: Saves both properties perfectly to separate cache buckets under clean numbers
                               setSelectedPhotos(v => v.includes(currentOrder) ? v.filter(x => x !== currentOrder) : [...v, currentOrder]);
                               setSelectedData(v => v.includes(currentOrder) ? v.filter(x => x !== currentOrder) : [...v, currentOrder]);
                             }} style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel ? '#FF0000' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 2 }}>{isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}</div>
                             
-                            {/* 🎯 THE FIX: Restored exact schema-compliant w3.org namespace layout schema to prevent rendering crashes */}
                             <img src={p.url} onError={e => e.target.src='data:image/svg+xml;utf8,<svg xmlns="http://w3.org" width="100" height="90" viewBox="0 0 100 90"><rect width="100%" height="100%" fill="%23222"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="10">Missing</text></svg>'} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
                             
-                            {/* Renders data right underneath the image preview slot natively */}
                             <div style={{ marginTop: 4, background: '#222', borderRadius: 6, padding: 4, textAlign: 'center' }}>
                               <p style={{ fontSize: 11, margin: 0, fontWeight: '800', color: '#00C853' }}>${companionData.price !== undefined ? parseFloat(companionData.price).toFixed(2) : '0.00'}</p>
                               <p style={{ fontSize: 9, margin: '2px 0 0 0', color: '#CCC', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>{companionData.name || 'No Name Found'}</p>
@@ -343,6 +345,7 @@ const saveEdit = () => {
     )}
   </div>
 )}
+
 
 
    {tab === 'deposit' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{depositUser &&!showDepositInput && <button onClick={()=>setShowDepositInput(true)} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Deposit to {depositUser.username} - Balance: ${depositUser.walletBalance}</button>}{showDepositInput && (<div><input value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Deposit</button></div>)}</div>)}
