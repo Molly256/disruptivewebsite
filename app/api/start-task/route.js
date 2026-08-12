@@ -30,7 +30,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const currentProductsArray = typeof user.currentTaskProducts === 'string'
-    ? JSON.parse(user.currentTaskProducts || '[]')
+   ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (currentProductsArray.length > 0) {
@@ -64,8 +64,8 @@ export async function POST(req) {
         const comboStart = Math.min(...mergedTaskOrders)
         const comboEnd = Math.max(...mergedTaskOrders)
 
-        // NEW GATE: If current task is anywhere in combo range, give all combo products
-        const gatePasses = Number(userCurrentTaskNumber) >= comboStart && Number(userCurrentTaskNumber) <= comboEnd
+        // CORRECT GATE: Only fire when we hit the first task of the combo
+        const gatePasses = Number(userCurrentTaskNumber) === comboStart
 
         if (gatePasses) {
           isMergedTask = true
@@ -150,8 +150,6 @@ export async function POST(req) {
         data: { userId: userId, vipLevel: user.vipLevel, setNumber: currentSet, progress: progressLabelString, status: 'pending', products: innerItemsSnapshot, taskCode: generateTaskCode() }
       })
     ]
-
-    // REMOVED: taskMerge update from here because we mark it used above
 
     await prisma.$transaction(databaseOperations)
 
