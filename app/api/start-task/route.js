@@ -30,7 +30,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const currentProductsArray = typeof user.currentTaskProducts === 'string'
-  ? JSON.parse(user.currentTaskProducts || '[]')
+ ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (currentProductsArray.length > 0) {
@@ -40,7 +40,7 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSet = (user.setsCompleted || 0) + 1
     const index = user.tasksInCurrentSet || 0
-    const userCurrentTaskNumber = index // CHANGED: no +1
+    const userCurrentTaskNumber = index + 1 // BACK TO +1 FOR DISPLAY
 
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
@@ -64,19 +64,18 @@ export async function POST(req) {
         const comboStart = Math.min(...mergedTaskOrders)
         const comboEnd = Math.max(...mergedTaskOrders)
 
-        // CORRECT GATE: Only fire when we hit the first task of the combo
-        const gatePasses = Number(userCurrentTaskNumber) === comboStart
+        const gatePasses = Number(userCurrentTaskNumber) === comboStart // Check against +1 number
 
         if (gatePasses) {
           isMergedTask = true
           await prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } })
 
-          userPairs.forEach((pair, idx) => {
+          userPairs.forEach((pair) => {
             const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
             const fileMatch = fileSet.find(p => Number(p.id) === targetId)
             productsToAssign.push({
               id: targetId,
-              name: pair.name || (fileMatch? fileMatch.name : `Combo Item #${idx + 1}`),
+              name: pair.name || (fileMatch? fileMatch.name : `Combo Item #${targetId}`),
               price: pair.price? parseFloat(pair.price) : (fileMatch? parseFloat(fileMatch.price) : 0.00),
               rating: fileMatch? (fileMatch.rating || 5.0) : 5.0,
               image: `${basePath}/photo${targetId}.jpg`
@@ -131,8 +130,8 @@ export async function POST(req) {
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
     const stepsCompleted = isMergedTask? productsToAssign.length : 1
-    const newTasksInCurrentSet = index + stepsCompleted
-    const progressLabelString = isMergedTask? `${userCurrentTaskNumber}-${newTasksInCurrentSet}/${config.tasksPerSet}` : `${userCurrentTaskNumber}/${config.tasksPerSet}`
+    const newTasksInCurrentSet = index + stepsCompleted // Store raw index
+    const progressLabelString = isMergedTask? `${userCurrentTaskNumber}-${userCurrentTaskNumber + stepsCompleted - 1}/${config.tasksPerSet}` : `${userCurrentTaskNumber}/${config.tasksPerSet}`
     const unifiedTaskPayload = innerItemsSnapshot
 
     const databaseOperations = [
@@ -147,7 +146,7 @@ export async function POST(req) {
 
     await prisma.$transaction(databaseOperations)
 
-    return NextResponse.json({ success: true, user: await prisma.user.findUnique({ where: { id: userId } }), currentTaskNumber: userCurrentTaskNumber })
+    return NextResponse.json({ success: true, isMerged: isMergedTask, productsGiven: productsToAssign.map(p=>p.id) })
   } catch (err) {
     console.error('[DEBUG] CRASH:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
