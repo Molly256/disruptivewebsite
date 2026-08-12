@@ -15,6 +15,15 @@ const VIP_CONFIG = {
 
 const STATIC_PRODUCTS = { 1: { 1: vip1Set1, 2: vip1Set2 } }
 
+const safeParse = (data) => {
+  if (!data) return []
+  if (Array.isArray(data)) return data
+  if (typeof data === 'string') {
+    try { return JSON.parse(data) } catch { return [] }
+  }
+  return []
+}
+
 const generateTaskCode = () => {
   const date = new Date().toISOString().slice(0,10).replace(/-/g,'')
   const rand = Math.floor(Math.random() * 10000000).toString().padStart(10, '0')
@@ -29,16 +38,15 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    if ((user.currentTaskProducts || []).length > 0) {
+    const currentProductsArray = safeParse(user.currentTaskProducts)
+    if (currentProductsArray.length > 0) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentSet = (user.setsCompleted || 0) + 1
-    const index = user.tasksInCurrentSet || 0
+    const index = Number(user.tasksInCurrentSet) || 0
     const userCurrentTaskNumber = index + 1
-
-    console.log('[START TASK]', {userCurrentTaskNumber, index, vip: user.vipLevel, set: currentSet})
 
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
@@ -55,50 +63,51 @@ export async function POST(req) {
     let productsToAssign = []
     let isMergedTask = false
     let stepsCompleted = 1
-    let mergeWasConsumed = false
 
-    // CASE 1: CHECK MERGE
+    // SAFE MERGE CHECK
     if (activeUserMerge) {
-      const userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs || []
+      const userPairs = safeParse(activeUserMerge.pairs)
 
       if (userPairs.length > 0) {
-        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.id)).filter(n =>!isNaN(n))
-        const comboStart = Math.min(...mergedTaskOrders)
+        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.id)).filter(n =>!isNaN(n) && n > 0)
 
-        console.log('[MERGE FOUND]', {comboStart, userCurrentTaskNumber, pairs: mergedTaskOrders})
+        if (mergedTaskOrders.length > 0) {
+          const comboStart = Math.min(...mergedTaskOrders)
 
-        if (userCurrentTaskNumber === comboStart) {
-          isMergedTask = true
-          stepsCompleted = userPairs.length
-          mergeWasConsumed = true
+          if (userCurrentTaskNumber === comboStart) {
+            isMergedTask = true
+            stepsCompleted = userPairs.length
 
-          if (stepsCompleted > 1) {
-            await prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } })
-          }
+            if (stepsCompleted > 1) {
+              await prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } })
+            }
 
-          userPairs.forEach((pair) => {
-            const targetId = Number(pair.taskOrder || pair.id)
-            const fileMatch = fileSet.find(p => Number(p.id) === targetId)
-            productsToAssign.push({
-              id: targetId,
-              name: pair.name || fileMatch?.name || `Combo #${targetId}`,
-              price: parseFloat(pair.price || fileMatch?.price || 0),
-              rating: fileMatch?.rating || 5.0,
-              image: `${basePath}/photo${targetId}.jpg`
+            userPairs.forEach((pair) => {
+              const targetId = Number(pair.taskOrder || pair.id)
+              const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+              if (fileMatch) {
+                productsToAssign.push({
+                  id: targetId,
+                  name: pair.name || fileMatch.name,
+                  price: parseFloat(pair.price || fileMatch.price || 0),
+                  rating: fileMatch.rating || 5.0,
+                  image: `${basePath}/photo${targetId}.jpg`
+                })
+              }
             })
-          })
+          }
         }
       }
     }
 
-    // CASE 2: NO MERGE CONSUMED = FALL BACK TO SINGLE FROM products
+    // FALLBACK TO SINGLE
     if (productsToAssign.length === 0) {
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
-      if (!normalProduct) return NextResponse.json({ error: `No product found for id ${userCurrentTaskNumber}` }, { status: 400 })
+      if (!normalProduct) return NextResponse.json({ error: `No product found for id ${userCurrentTaskNumber}` }, { status: 404 })
 
       productsToAssign.push({
         id: userCurrentTaskNumber,
-        name: normalProduct.name || `Product #${userCurrentTaskNumber}`,
+        name: normalProduct.name,
         price: parseFloat(normalProduct.price || 0),
         rating: normalProduct.rating || 5.0,
         image: `${basePath}/photo${userCurrentTaskNumber}.jpg`
@@ -138,9 +147,9 @@ export async function POST(req) {
       })
     ])
 
-    return NextResponse.json({ success: true, isMerged: isMergedTask, productsGiven: productsToAssign.map(p=>p.id), progress: progressLabelString })
+    return NextResponse.json({ success: true, isMerged: isMergedTask, productsGiven: productsToAssign.map(p=>p.id) })
   } catch (err) {
-    console.error('[DEBUG] CRASH:', err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error('[CRASH]', err)
+    return NextResponse.json({ error: 'Server error: ' + err.message }, { status: 500 })
   }
 }
