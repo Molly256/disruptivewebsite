@@ -30,7 +30,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const currentProductsArray = typeof user.currentTaskProducts === 'string'
-     ? JSON.parse(user.currentTaskProducts || '[]')
+    ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (currentProductsArray.length > 0) {
@@ -90,7 +90,7 @@ export async function POST(req) {
 
             if (fileMatch) {
               productsToAssign.push({
-               ...fileMatch,
+              ...fileMatch,
                 name: pair.name || fileMatch.name,
                 price: pair.price? parseFloat(pair.price) : fileMatch.price,
                 rating: fileMatch.rating || 5.0
@@ -99,16 +99,16 @@ export async function POST(req) {
               console.log('[DEBUG] FILE_ID_MISS:', { targetId, availableIds: fileSet.map(f => Number(f.id)) })
             }
           })
-        }  } else {
+        } else { // <-- FIXED: else now correctly belongs to gatePasses
           failReason = `GATE_FAIL: ${userCurrentTaskNumber}!= ${mergeTriggerStepNumber}`
         }
       } else {
         failReason = 'PAIRS_EMPTY_AFTER_PARSE'
       }
-    }
+    } // <-- FIXED: this closes the "if (activeUserMerge)" block
 
     // 🎯 FIX: Only drop back to single task if this isn't a valid, matching combo task
-    if (productsToAssign.length === 0 && !isMergedTask) {
+    if (productsToAssign.length === 0 &&!isMergedTask) {
       isMergedTask = false
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
       if (normalProduct) productsToAssign.push(normalProduct)
@@ -151,21 +151,19 @@ export async function POST(req) {
       }
     }
 
-    // 🎯 FIX: Re-declared variables safely using local block scope keywords
     const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    // 🎯 FIX: Calculate step differences cleanly based on real active arrays
-    const stepsCompleted = isMergedTask ? productsToAssign.length : 1
+    const stepsCompleted = isMergedTask? productsToAssign.length : 1
     const progressLabelString = stepsCompleted > 1
-     ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
+    ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
       : `${userCurrentTaskNumber}/${config.tasksPerSet}`
 
     const unifiedTaskPayload = innerItemsSnapshot
 
     const databaseOperations = [
       prisma.user.update({
-        where: { id: userId }, 
+        where: { id: userId },
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
@@ -186,7 +184,6 @@ export async function POST(req) {
       })
     ]
 
-    // 🎯 FIX: Look up active row exclusively using its unique model tracking ID descriptor key
     if (activeUserMerge && isMergedTask) {
       databaseOperations.push(
         prisma.taskMerge.update({
@@ -208,4 +205,3 @@ export async function POST(req) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
-
