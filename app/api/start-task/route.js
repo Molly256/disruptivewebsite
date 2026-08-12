@@ -52,7 +52,7 @@ export async function POST(req) {
 
     console.log('[DEBUG] FILESET_IDS:', fileSet.map(p => p.id))
 
-        // 1. Core query mapping matching your model keys explicitly
+    // 1. Core query mapping matching your model keys explicitly
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: {
         userId: userId,
@@ -74,15 +74,20 @@ export async function POST(req) {
       if (userPairs && userPairs.length > 0) {
         isMergedTask = true
 
-        userPairs.forEach(pair => {
-          const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId)
+        userPairs.forEach((pair, idx) => {
+          const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
           const fileMatch = fileSet.find(p => Number(p.id) === targetId)
 
-          if (fileMatch) {
-            productsToAssign.push(fileMatch)
-          } else {
-            console.log('[DEBUG] STATIC_LOOKUP_MISS:', targetId)
-          }
+          // 🎯 THE CORE ARCHITECTURAL SYNC FIX:
+          // Instead of stripping details back to fileSet defaults, use the rich name, 
+          // custom prices, and custom image properties directly from the admin row!
+          productsToAssign.push({
+            id: targetId,
+            name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
+            price: pair.price ? parseFloat(pair.price) : (fileMatch ? parseFloat(fileMatch.price) : 0.00),
+            rating: fileMatch ? fileMatch.rating : 5.0,
+            image: pair.image || (fileMatch ? fileMatch.image : `/vip${user.vipLevel}/set${currentSet}/photo${targetId}.jpg`)
+          })
         })
       }
     }
@@ -111,7 +116,7 @@ export async function POST(req) {
       const pId = Number(p.id)
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-      const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
+      const localImagePath = p.image || `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
 
       totalReserveAdded += reserveAmount
 
@@ -130,8 +135,8 @@ export async function POST(req) {
     const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    const stepsCompleted = productsToAssign.length
-    const progressLabelString = stepsCompleted > 1
+    const stepsCompleted = isMergedTask ? productsToAssign.length : 1
+    const progressLabelString = isMergedTask
      ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
       : `${userCurrentTaskNumber}/${config.tasksPerSet}`
 

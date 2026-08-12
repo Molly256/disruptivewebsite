@@ -126,21 +126,88 @@ export default function AdminPage() {
   }
 }
 
+const loadMergeSet = async (vipSet, setNum) => {
+  if(!mergeUser) return alert('No user selected')
+  const targetUserId = mergeUser.id || mergeUser._id;
+  if(!targetUserId) return alert('Error: Selected user object has no valid ID structure.')
+
+  const vipLevel = mergeUser.vipLevel || mergeUser.vip
+  if(!vipLevel) return alert('Error: User has no vip level')
+  if(!setNum) return alert('Error: setNum missing')
+
+  console.log("Loading Set:", {vipLevel, setNum, vipSet}) 
+
+  const vipData = vipList.find(v => v.id === vipLevel)
+  if(!vipData) return alert(`VIP level ${vipLevel} not found in vipList`)
+  const taskCount = vipData.tasks
+
+  const start = setNum === 1 ? 1 : taskCount + 1
+  const end = setNum === 1 ? taskCount : taskCount * 2
+
+  const photos = []
+  for(let i = start; i <= end; i++){
+    photos.push({ id: `photo-${i}`, type: 'photos', taskOrder: i, url: `/vip${vipLevel}/set${setNum}/photo${i}.jpg`, name: `photo${i}.jpg` })
+  }
+
+  let dataItems = []
+  try {
+    const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}set${setNum}&userId=${targetUserId}`
+    console.log("FETCHING:", url) 
+    const dataRes = await fetch(url)
+    if(!dataRes.ok) throw new Error(`API returned ${dataRes.status}`)
+    const data = await dataRes.json()
+    
+    dataItems = data.map((p, idx) => {
+      const tOrder = Number(p.taskOrder || p.id || (start + idx));
+      return { 
+        id: `data-${tOrder}`, 
+        type: 'data', 
+        taskOrder: tOrder, 
+        price: p.price, 
+        name: p.name, 
+        image: p.image || `/vip${vipLevel}/set${setNum}/photo${tOrder}.jpg`, 
+        rating: p.rating || 5 
+      }
+    })
+  } catch(e) {
+    console.error(e);
+    alert(`Data layer error for: vip${vipLevel}set${setNum}\nError: ${e.message}`)
+  }
+
+  setMergePhotos([...photos, ...dataItems])
+
+  try {
+    const res = await fetch(`/api/admin/merged-tasks?userId=${targetUserId}&vipSet=${String(vipSet).toLowerCase()}`)
+    const mData = await res.json()
+    // 🎯 FIX: Formats tasks array properly if your backend wraps it inside nested structures
+    setExistingMerged(mData.tasks || mData.merges || [])
+  } catch(e) {
+    console.error("merged-tasks error:", e)
+  }
+}
+
 const handleMerge = async () => {
   if(selectedPhotos.length < 2) return alert('Select at least 2 photos to merge')
   const targetUserId = mergeUser.id || mergeUser._id;
   if(!targetUserId) return alert('Error: Missing tracking user parameter ID value.')
 
+  // 🎯 FIX: Populate the actual text, prices, and image details directly inside the payload array snapshot!
   const populatedPairs = selectedPhotos.map(taskOrder => {
     const numericOrder = Number(taskOrder);
+    const dataMatch = mergePhotos.find(p => p.type === 'data' && Number(p.taskOrder) === numericOrder) || {}
+    const photoMatch = mergePhotos.find(p => p.type === 'photos' && Number(p.taskOrder) === numericOrder) || {}
+    
     return {
+      id: numericOrder,
       photoId: numericOrder,
       dataId: numericOrder,
-      taskOrder: numericOrder
+      taskOrder: numericOrder,
+      name: dataMatch.name || `Product Item #${numericOrder}`,
+      price: dataMatch.price ? parseFloat(dataMatch.price) : 0,
+      image: photoMatch.url || `/vip${mergeUser.vipLevel || mergeUser.vip}/set${activeSet || 1}/photo${numericOrder}.jpg`
     }
   })
 
-  // 🎯 REGEX ARRAY INDEX FIX: Extracted match[1] to pull the correct digit safely
   const match = selectedMergeSet.match(/Set(\d+)/i);
   const parsedSetNumber = match && match[1] ? parseInt(match[1]) : 1;
   const cleanVipSetString = String(selectedMergeSet).toLowerCase().trim();
@@ -151,12 +218,12 @@ const handleMerge = async () => {
     body: JSON.stringify({ 
       userId: targetUserId, 
       vipSet: cleanVipSetString, 
-      pairs: populatedPairs, 
+      pairs: populatedPairs, // 🎯 FIXED: Sends real structured objects matching your data properties
       adminId: admin.id || admin._id || 'system' 
     })
   })
   if(res.ok) {
-    alert(`Merged ${selectedPhotos.length} photos directly into schema-aligned DB combo layout.`);
+    alert(`Merged ${selectedPhotos.length} photos with real prices into 1 task. Saved to DB`);
     setSelectedPhotos([]);
     setSelectedData([]);
     loadMergeSet(cleanVipSetString, parsedSetNumber)
@@ -176,7 +243,6 @@ const handleSaveDataFile = async () => {
     return { taskOrder: Number(taskOrder), name: data.name, price: parseFloat(data.price) }
   })
   
-  // 🎯 REGEX ARRAY INDEX FIX: Extracted match[1] to pull the correct digit safely
   const match = selectedMergeSet.match(/Set(\d+)/i);
   const parsedSetNumber = match && match[1] ? parseInt(match[1]) : 1;
   const cleanVipSetString = selectedMergeSet.toLowerCase().trim();
