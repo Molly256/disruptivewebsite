@@ -38,6 +38,8 @@ export async function POST(req) {
     const index = user.tasksInCurrentSet || 0
     const userCurrentTaskNumber = index + 1
 
+    console.log('[START TASK]', {userCurrentTaskNumber, index, vip: user.vipLevel, set: currentSet})
+
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
@@ -53,8 +55,9 @@ export async function POST(req) {
     let productsToAssign = []
     let isMergedTask = false
     let stepsCompleted = 1
+    let mergeWasConsumed = false
 
-    // CASE 1: THERE IS AN ACTIVE MERGE IN pairs jsonb
+    // CASE 1: CHECK MERGE
     if (activeUserMerge) {
       const userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs || []
 
@@ -62,17 +65,17 @@ export async function POST(req) {
         const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.id)).filter(n =>!isNaN(n))
         const comboStart = Math.min(...mergedTaskOrders)
 
-        // ONLY TAKE FROM pairs jsonb IF WE ARE ON THE START TASK
+        console.log('[MERGE FOUND]', {comboStart, userCurrentTaskNumber, pairs: mergedTaskOrders})
+
         if (userCurrentTaskNumber === comboStart) {
           isMergedTask = true
           stepsCompleted = userPairs.length
+          mergeWasConsumed = true
 
-          // SAFE: only mark used if we are actually consuming the pairs
           if (stepsCompleted > 1) {
             await prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } })
           }
 
-          // BUILD FROM pairs jsonb
           userPairs.forEach((pair) => {
             const targetId = Number(pair.taskOrder || pair.id)
             const fileMatch = fileSet.find(p => Number(p.id) === targetId)
@@ -85,13 +88,13 @@ export async function POST(req) {
             })
           })
         }
-        // ELSE: gate failed. Do nothing. Leave pairs active. Don't fall to single.
       }
     }
-    // CASE 2: NO ACTIVE MERGE, SO TAKE FROM products jsonb
-    else {
+
+    // CASE 2: NO MERGE CONSUMED = FALL BACK TO SINGLE FROM products
+    if (productsToAssign.length === 0) {
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
-      if (!normalProduct) return NextResponse.json({ error: 'No items found' }, { status: 400 })
+      if (!normalProduct) return NextResponse.json({ error: `No product found for id ${userCurrentTaskNumber}` }, { status: 400 })
 
       productsToAssign.push({
         id: userCurrentTaskNumber,
@@ -100,10 +103,6 @@ export async function POST(req) {
         rating: normalProduct.rating || 5.0,
         image: `${basePath}/photo${userCurrentTaskNumber}.jpg`
       })
-    }
-
-    if (productsToAssign.length === 0) {
-      return NextResponse.json({ error: 'No task available. Wait for correct task number.' }, { status: 400 })
     }
 
     const activeProfitRate = isMergedTask? (config.profit * 10) : config.profit
@@ -139,7 +138,7 @@ export async function POST(req) {
       })
     ])
 
-    return NextResponse.json({ success: true, isMerged: isMergedTask, productsGiven: productsToAssign.map(p=>p.id) })
+    return NextResponse.json({ success: true, isMerged: isMergedTask, productsGiven: productsToAssign.map(p=>p.id), progress: progressLabelString })
   } catch (err) {
     console.error('[DEBUG] CRASH:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
