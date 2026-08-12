@@ -92,7 +92,6 @@ export default function AdminPage() {
 
   let dataItems = []
   try {
-    // 🎯 FIX: Explicit lowercased route format parameter matching
     const url = `/api/admin/get-data-file?vipSet=vip${vipLevel}set${setNum}&userId=${targetUserId}`
     console.log("FETCHING:", url) 
     const dataRes = await fetch(url)
@@ -119,7 +118,6 @@ export default function AdminPage() {
   setMergePhotos([...photos, ...dataItems])
 
   try {
-    // 🎯 FIX: Force lowercase transform parameters on active list fetches
     const res = await fetch(`/api/admin/merged-tasks?userId=${targetUserId}&vipSet=${String(vipSet).toLowerCase()}`)
     const mData = await res.json()
     setExistingMerged(mData.tasks || [])
@@ -135,27 +133,16 @@ const handleMerge = async () => {
 
   const populatedPairs = selectedPhotos.map(taskOrder => {
     const numericOrder = Number(taskOrder);
-    const dataMatch = mergePhotos.find(p => p.type === 'data' && Number(p.taskOrder) === numericOrder) || {}
-    
-    // 🎯 FIX: Locate the photo record container item to capture real image paths directly
-    const photoMatch = mergePhotos.find(p => p.type === 'photos' && Number(p.taskOrder) === numericOrder) || {}
-    
-    const userVipLevel = mergeUser.vipLevel || mergeUser.vip || 1;
-    const currentActiveSet = activeSet || 1;
-
     return {
       photoId: numericOrder,
       dataId: numericOrder,
-      taskOrder: numericOrder,
-      name: dataMatch.name || `Product Item #${numericOrder}`,
-      price: dataMatch.price ? parseFloat(dataMatch.price) : 0,
-      image: photoMatch.url || `/vip${userVipLevel}/set${currentActiveSet}/photo${numericOrder}.jpg`
+      taskOrder: numericOrder
     }
   })
 
-  // Parse regex values before modifying strings down to lowercase format structures
+  // 🎯 REGEX ARRAY INDEX FIX: Extracted match[1] to pull the correct digit safely
   const match = selectedMergeSet.match(/Set(\d+)/i);
-  const parsedSetNumber = match ? parseInt(match[1]) : 1;
+  const parsedSetNumber = match && match[1] ? parseInt(match[1]) : 1;
   const cleanVipSetString = String(selectedMergeSet).toLowerCase().trim();
 
   const res = await fetch('/api/admin/merge-products', {
@@ -169,10 +156,9 @@ const handleMerge = async () => {
     })
   })
   if(res.ok) {
-    alert(`Merged ${selectedPhotos.length} photos with real prices into 1 task. Saved to DB`);
+    alert(`Merged ${selectedPhotos.length} photos directly into schema-aligned DB combo layout.`);
     setSelectedPhotos([]);
     setSelectedData([]);
-    // 🎯 FIX: Passes clean, unified parsing variables down to your callback handler
     loadMergeSet(cleanVipSetString, parsedSetNumber)
   } else {
     const errText = await res.json();
@@ -190,8 +176,9 @@ const handleSaveDataFile = async () => {
     return { taskOrder: Number(taskOrder), name: data.name, price: parseFloat(data.price) }
   })
   
+  // 🎯 REGEX ARRAY INDEX FIX: Extracted match[1] to pull the correct digit safely
   const match = selectedMergeSet.match(/Set(\d+)/i);
-  const parsedSetNumber = match ? parseInt(match[1]) : 1;
+  const parsedSetNumber = match && match[1] ? parseInt(match[1]) : 1;
   const cleanVipSetString = selectedMergeSet.toLowerCase().trim();
 
   await fetch('/api/admin/save-data-file', {
@@ -208,7 +195,6 @@ const handleSaveDataFile = async () => {
   
   alert('Saved: /data file + DB updated');
   setSelectedData([]);
-  // 🎯 FIX: Passes clean, verified parameters safely down to your screen updates
   loadMergeSet(cleanVipSetString, parsedSetNumber)
 }
 
@@ -220,6 +206,7 @@ const saveEdit = () => {
   setEditingPhoto(null); 
   alert('Edited locally. Hit "Save Data" to update file + DB');
 }
+
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
   const handleSendNotif = async () => { if(!notifMessage) return alert('Enter message'); const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) }); if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed') }

@@ -52,76 +52,55 @@ export async function POST(req) {
 
     console.log('[DEBUG] FILESET_IDS:', fileSet.map(p => p.id))
 
+        // 1. Core query mapping matching your model keys explicitly
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: {
-        userId,
-        vipSet: { equals: `vip${user.vipLevel}set${currentSet}`, mode: 'insensitive' },
+        userId: userId,
+        vipSet: `vip${user.vipLevel}set${currentSet}`,
         status: 'active'
       },
       orderBy: { createdAt: 'desc' }
     })
 
-    console.log('[DEBUG] MERGE_ROW_FOUND:', activeUserMerge? { id: activeUserMerge.id, vipSet: activeUserMerge.vipSet, status: activeUserMerge.status } : 'NULL')
+    console.log('[DEBUG] SCHEMA_MERGE_ROW:', activeUserMerge ? { id: activeUserMerge.id, status: activeUserMerge.status } : 'NULL')
 
     let productsToAssign = []
     let isMergedTask = false
-    let failReason = 'NO_MERGE_ROW'
 
+    // 2. If a database match is found, lock it in instantly!
     if (activeUserMerge) {
-      const userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
-      console.log('[DEBUG] MERGE_PAIRS_RAW:', userPairs)
+      const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
+      
+      if (userPairs && userPairs.length > 0) {
+        isMergedTask = true
 
-      const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n =>!isNaN(n))
-      console.log('[DEBUG] MERGE_TASK_ORDERS:', mergedTaskOrders)
+        userPairs.forEach(pair => {
+          const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId)
+          const fileMatch = fileSet.find(p => Number(p.id) === targetId)
 
-      if (mergedTaskOrders.length > 0) {
-        const mergeTriggerStepNumber = Math.min(...mergedTaskOrders)
-        const gatePasses = userCurrentTaskNumber === mergeTriggerStepNumber
-
-        console.log('[DEBUG] GATE_CHECK:', { mergeTriggerStepNumber, userCurrentTaskNumber, gatePasses })
-
-        if (gatePasses) {
-          isMergedTask = true
-          failReason = 'MATCHED_BUT_NO_FILE_FOUND'
-
-          userPairs.forEach(pair => {
-            const targetId = Number(pair.dataId || pair.photoId || pair.id || pair.taskOrder)
-            const fileMatch = fileSet.find(p => Number(p.id) === targetId)
-
-            if (fileMatch) {
-              productsToAssign.push({
-              ...fileMatch,
-                name: pair.name || fileMatch.name,
-                price: pair.price? parseFloat(pair.price) : fileMatch.price,
-                rating: fileMatch.rating || 5.0
-              })
-            } else {
-              console.log('[DEBUG] FILE_ID_MISS:', { targetId, availableIds: fileSet.map(f => Number(f.id)) })
-            }
-          })
-        } else { // <-- FIXED: else now correctly belongs to gatePasses
-          failReason = `GATE_FAIL: ${userCurrentTaskNumber}!= ${mergeTriggerStepNumber}`
-        }
-      } else {
-        failReason = 'PAIRS_EMPTY_AFTER_PARSE'
+          if (fileMatch) {
+            productsToAssign.push(fileMatch)
+          } else {
+            console.log('[DEBUG] STATIC_LOOKUP_MISS:', targetId)
+          }
+        })
       }
-    } // <-- FIXED: this closes the "if (activeUserMerge)" block
+    }
 
-    // 🎯 FIX: Only drop back to single task if this isn't a valid, matching combo task
-    if (productsToAssign.length === 0 &&!isMergedTask) {
+    // 3. Fallback to normal single layout if no combo row is active
+    if (productsToAssign.length === 0) {
       isMergedTask = false
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
       if (normalProduct) productsToAssign.push(normalProduct)
-      console.log('[DEBUG] FALLBACK_TO_SINGLE:', { reason: failReason, singleId: userCurrentTaskNumber, found:!!normalProduct })
     }
 
-    console.log('[DEBUG] FINAL_DECISION:', { isMergedTask, productsCount: productsToAssign.length, productIds: productsToAssign.map(p => p.id) })
+    console.log('[DEBUG] PROCESS_DECISION:', { isMergedTask, productsCount: productsToAssign.length })
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
 
-    const activeProfitRate = isMergedTask? (config.profit * 10) : config.profit
+    const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
 
-    let totalReserveAdded = 0, totalProfit = 0
+    let totalReserveAdded = 0
     const innerItemsSnapshot = []
 
     const rawCostsArray = productsToAssign.map(p => parseFloat(p.price || 0))
@@ -135,7 +114,6 @@ export async function POST(req) {
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
 
       totalReserveAdded += reserveAmount
-      totalProfit += profitAmount
 
       innerItemsSnapshot.push({
         id: pId, productId: pId, photoId: pId, dataId: pId, taskOrder: pId,
@@ -145,25 +123,23 @@ export async function POST(req) {
       })
     })
 
-    if ((user.taskCompleted || 0) === 0) {
-      if (parseFloat(user.walletBalance || 0) < 50) {
-        return NextResponse.json({ error: 'Balance below 50 unable to continue trading' }, { status: 400 })
-      }
+    if ((user.taskCompleted || 0) === 0 && parseFloat(user.walletBalance || 0) < 50) {
+      return NextResponse.json({ error: 'Balance below 50 unable to continue trading' }, { status: 400 })
     }
 
     const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    const stepsCompleted = isMergedTask? productsToAssign.length : 1
+    const stepsCompleted = productsToAssign.length
     const progressLabelString = stepsCompleted > 1
-    ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
+     ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
       : `${userCurrentTaskNumber}/${config.tasksPerSet}`
 
     const unifiedTaskPayload = innerItemsSnapshot
 
     const databaseOperations = [
       prisma.user.update({
-        where: { id: userId },
+        where: { id: userId }, 
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
