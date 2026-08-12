@@ -34,7 +34,6 @@ export async function POST(req) {
       : (user.currentTaskProducts || [])
 
     if (currentProductsArray.length > 0) {
-      console.log('[DEBUG] BLOCKED: Active task exists')
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
@@ -43,51 +42,36 @@ export async function POST(req) {
     const index = user.tasksInCurrentSet || 0
     const userCurrentTaskNumber = index + 1
 
-    console.log('[DEBUG] INPUTS:', { userId, vip: user.vipLevel, currentSet, index, userCurrentTaskNumber })
-
     if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
 
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    // 1. Core query mapping matching your model keys explicitly
+    // 🎯 FORCE PATH PREFIX BECAUSE YOUR FILES ARE IN /public/vipX/setY/
+    const basePath = `/vip${user.vipLevel}/set${currentSet}`
+
     const activeUserMerge = await prisma.taskMerge.findFirst({
-      where: {
-        userId: userId,
-        vipSet: `vip${user.vipLevel}set${currentSet}`,
-        status: 'active'
-      },
+      where: { userId: userId, vipSet: `vip${user.vipLevel}set${currentSet}`, status: 'active' },
       orderBy: { createdAt: 'desc' }
     })
 
     let productsToAssign = []
     let isMergedTask = false
 
-    // 2. If a database match is found, verify progress step numbers securely
     if (activeUserMerge) {
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
-      
       if (userPairs && userPairs.length > 0) {
         const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n => !isNaN(n))
         const mergeTriggerStepNumber = mergedTaskOrders.length > 0 ? Math.min(...mergedTaskOrders) : userCurrentTaskNumber
-        
-        // 🔒 SCHEDULE-FOR-LATER GATEKEEPER: Gate opens ONLY when the user reaches the combo trigger step number
         const gatePasses = Number(userCurrentTaskNumber) === Number(mergeTriggerStepNumber)
-
-        console.log('[DEBUG] SYNCHRONIZED_GATE_CHECK:', { userCurrentTaskNumber, mergeTriggerStepNumber, gatePasses })
 
         if (gatePasses) {
           isMergedTask = true
-
           userPairs.forEach((pair, idx) => {
             const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
-            
-            // Safe array index lookup strategy to completely bypass file object key variations
             const fileMatch = fileSet.find(p => Number(p.id) === targetId)
-
-            // 📸 IMAGE PATH ALIGNMENT FIX: Fallback precisely to match your file definitions (e.g. /photo34.jpg)
-            const fullyQualifiedImage = pair.image || pair.url || (fileMatch ? (fileMatch.image || fileMatch.url) : null) || `/photo${targetId}.jpg`
-
+            // FIX 1: Add basePath
+            const fullyQualifiedImage = pair.image || pair.url || (fileMatch ? (fileMatch.image || fileMatch.url) : null) || `${basePath}/photo${targetId}.jpg`
             productsToAssign.push({
               id: targetId,
               name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
@@ -100,20 +84,17 @@ export async function POST(req) {
       }
     }
 
-    // 3. Fallback to normal single layout if no combo row matches the current active step number
     if (productsToAssign.length === 0) {
       isMergedTask = false
-      
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
-      
       if (normalProduct) {
+        // FIX 2: Add basePath
         productsToAssign.push({
           id: userCurrentTaskNumber,
           name: normalProduct.name || `Product #${userCurrentTaskNumber}`,
           price: parseFloat(normalProduct.price || 0),
           rating: normalProduct.rating || 5.0,
-          // 🎯 IMAGE PATH ALIGNMENT FIX: Loads the precise image string directly from your file definition
-          image: normalProduct.image || normalProduct.url || `/photo${userCurrentTaskNumber}.jpg`
+          image: normalProduct.image || normalProduct.url || `${basePath}/photo${userCurrentTaskNumber}.jpg`
         })
       }
     }
@@ -121,10 +102,8 @@ export async function POST(req) {
     if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
 
     const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
-
     let totalReserveAdded = 0
     const innerItemsSnapshot = []
-
     const rawCostsArray = productsToAssign.map(p => parseFloat(p.price || 0))
     const cleanTotalPriceSum = rawCostsArray.reduce((sum, val) => sum + val, 0)
 
@@ -134,11 +113,10 @@ export async function POST(req) {
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
       
-      // 🎯 FIXED ALLOCATION PATH: Pulls the true validated file path securely down to database snapshot arrays
-      const imagePathString = p.image || p.url || `/photo${pId}.jpg`
+      // FIX 3: Add basePath
+      const imagePathString = p.image || p.url || `${basePath}/photo${pId}.jpg`
 
       totalReserveAdded += reserveAmount
-
       innerItemsSnapshot.push({
         id: pId, productId: pId, photoId: pId, dataId: pId, taskOrder: pId,
         name: p.name, rating: p.rating || 5.0,
@@ -153,53 +131,27 @@ export async function POST(req) {
 
     const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
-
     const stepsCompleted = isMergedTask ? productsToAssign.length : 1
-    const progressLabelString = isMergedTask
-     ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
-      : `${userCurrentTaskNumber}/${config.tasksPerSet}`
-
+    const progressLabelString = isMergedTask ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}` : `${userCurrentTaskNumber}/${config.tasksPerSet}`
     const unifiedTaskPayload = innerItemsSnapshot
 
     const databaseOperations = [
       prisma.user.update({
         where: { id: userId }, 
-        data: {
-          walletBalance: newWallet,
-          holdAmount: newHold,
-          currentTaskProducts: unifiedTaskPayload,
-          activeProducts: unifiedTaskPayload
-        }
+        data: { walletBalance: newWallet, holdAmount: newHold, currentTaskProducts: unifiedTaskPayload, activeProducts: unifiedTaskPayload }
       }),
       prisma.task.create({
-        data: {
-          userId: userId,
-          vipLevel: user.vipLevel,
-          setNumber: currentSet,
-          progress: progressLabelString,
-          status: 'pending',
-          products: innerItemsSnapshot,
-          taskCode: generateTaskCode()
-        }
+        data: { userId: userId, vipLevel: user.vipLevel, setNumber: currentSet, progress: progressLabelString, status: 'pending', products: innerItemsSnapshot, taskCode: generateTaskCode() }
       })
     ]
 
     if (activeUserMerge && isMergedTask) {
-      databaseOperations.push(
-        prisma.taskMerge.update({
-          where: { id: activeUserMerge.id },
-          data: { status: 'used' }
-        })
-      )
+      databaseOperations.push(prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } }))
     }
 
     await prisma.$transaction(databaseOperations)
 
-    return NextResponse.json({
-      success: true,
-      user: await prisma.user.findUnique({ where: { id: userId } }),
-      currentTaskNumber: userCurrentTaskNumber
-    })
+    return NextResponse.json({ success: true, user: await prisma.user.findUnique({ where: { id: userId } }), currentTaskNumber: userCurrentTaskNumber })
   } catch (err) {
     console.error('[DEBUG] CRASH:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
