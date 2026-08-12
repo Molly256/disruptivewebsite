@@ -30,7 +30,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const currentProductsArray = typeof user.currentTaskProducts === 'string'
-    ? JSON.parse(user.currentTaskProducts || '[]')
+      ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (currentProductsArray.length > 0) {
@@ -50,8 +50,6 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    console.log('[DEBUG] FILESET_IDS:', fileSet.map(p => p.id))
-
     // 1. Core query mapping matching your model keys explicitly
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: {
@@ -62,22 +60,22 @@ export async function POST(req) {
       orderBy: { createdAt: 'desc' }
     })
 
-    console.log('[DEBUG] SCHEMA_MERGE_ROW:', activeUserMerge ? { id: activeUserMerge.id, status: activeUserMerge.status } : 'NULL')
-
     let productsToAssign = []
     let isMergedTask = false
 
-    // 2. If a database match is found, check if the user has reached that progress level!
+    // 2. If a database match is found, verify progress step numbers securely
     if (activeUserMerge) {
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       
       if (userPairs && userPairs.length > 0) {
-        // Extract numbers to identify the combo trigger point
-        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n => !isNaN(n))
+        // 🎯 TYPE HARDENING FIX: Enforce uniform primitive conversion to eliminate strict string vs number desyncs
+        const mergedTaskOrders = userPairs.map(p => Number(pairValue => pairValue.taskOrder || pairValue.photoId || pairValue.dataId || pairValue.id)(p)).filter(n => !isNaN(n))
         const mergeTriggerStepNumber = mergedTaskOrders.length > 0 ? Math.min(...mergedTaskOrders) : userCurrentTaskNumber
         
-        // 🎯 THE JUMPING FIX: Gate opens ONLY if the user reaches the combo trigger step number
-        const gatePasses = userCurrentTaskNumber === mergeTriggerStepNumber
+        // Check if user has matched the entry point of the combo layout row
+        const gatePasses = Number(userCurrentTaskNumber) === Number(mergeTriggerStepNumber)
+
+        console.log('[DEBUG] SYNCHRONIZED_GATE_CHECK:', { userCurrentTaskNumber, mergeTriggerStepNumber, gatePasses })
 
         if (gatePasses) {
           isMergedTask = true
@@ -86,28 +84,27 @@ export async function POST(req) {
             const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
             const fileMatch = fileSet.find(p => Number(p.id) === targetId)
 
+            // 📸 CUSTOM IMAGE RECOVERY: Prioritize properties passed from admin, then file data, then fallback to set template strings
+            const fullyQualifiedImage = pair.image || pair.url || (fileMatch ? (fileMatch.image || fileMatch.url) : null) || `/vip${user.vipLevel}/set${currentSet}/photo${targetId}.jpg`
+
             productsToAssign.push({
               id: targetId,
               name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
               price: pair.price ? parseFloat(pair.price) : (fileMatch ? parseFloat(fileMatch.price) : 0.00),
               rating: fileMatch ? fileMatch.rating : 5.0,
-              image: pair.image || (fileMatch ? fileMatch.image : `/vip${user.vipLevel}/set${currentSet}/photo${targetId}.jpg`)
+              image: fullyQualifiedImage
             })
           })
-        } else {
-          console.log('[DEBUG] STEP_HOLD: Combo skipped. User is on task ' + userCurrentTaskNumber + ', but combo starts at ' + mergeTriggerStepNumber)
         }
       }
     }
 
-    // 3. Fallback to normal single layout if no combo row is active
+    // 3. Fallback to normal single layout if no combo row matches the current active step number
     if (productsToAssign.length === 0) {
       isMergedTask = false
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
       if (normalProduct) productsToAssign.push(normalProduct)
     }
-
-    console.log('[DEBUG] PROCESS_DECISION:', { isMergedTask, productsCount: productsToAssign.length })
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
 
@@ -124,7 +121,9 @@ export async function POST(req) {
       const pId = Number(p.id)
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-      const localImagePath = p.image || `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
+      
+      // Keep custom remote links intact or map them natively to asset templates
+      const imagePathString = p.image || `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
 
       totalReserveAdded += reserveAmount
 
@@ -132,7 +131,7 @@ export async function POST(req) {
         id: pId, productId: pId, photoId: pId, dataId: pId, taskOrder: pId,
         name: p.name, rating: p.rating || 5.0,
         price: pPrice, profit: profitAmount, reserveAmount: reserveAmount,
-        image: localImagePath
+        image: imagePathString
       })
     })
 
