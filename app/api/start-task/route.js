@@ -99,7 +99,7 @@ export async function POST(req) {
               console.log('[DEBUG] FILE_ID_MISS:', { targetId, availableIds: fileSet.map(f => Number(f.id)) })
             }
           })
-        }         } else {
+        }  } else {
           failReason = `GATE_FAIL: ${userCurrentTaskNumber}!= ${mergeTriggerStepNumber}`
         }
       } else {
@@ -121,7 +121,7 @@ export async function POST(req) {
 
     const activeProfitRate = isMergedTask? (config.profit * 10) : config.profit
 
-    let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
+    let totalReserveAdded = 0, totalProfit = 0
     const innerItemsSnapshot = []
 
     const rawCostsArray = productsToAssign.map(p => parseFloat(p.price || 0))
@@ -151,8 +151,9 @@ export async function POST(req) {
       }
     }
 
-    newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
-    newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
+    // 🎯 DECLARATION FIX: Added const variables initialization descriptors cleanly
+    const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
+    const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
     // 🎯 FIX: Track steps correctly by reading the assigned combo items count dynamically
     const stepsCompleted = isMergedTask ? productsToAssign.length : 1
