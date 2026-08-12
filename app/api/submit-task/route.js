@@ -20,7 +20,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const userTaskProducts = typeof user.currentTaskProducts === 'string'
-      ? JSON.parse(user.currentTaskProducts || '[]')
+     ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (userTaskProducts.length === 0) {
@@ -29,7 +29,7 @@ export async function POST(req) {
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const isMergedTask = userTaskProducts.length > 1
-    const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
+    const activeProfitRate = isMergedTask? (config.profit * 10) : config.profit
 
     const currentSetNumber = (user.setsCompleted || 0) + 1
     const vipSetLabel = `vip${user.vipLevel}set${currentSetNumber}`.toLowerCase()
@@ -51,7 +51,8 @@ export async function POST(req) {
         price: pPrice,
         name: ut.name || `Product ${ut.dataId}`,
         profit: pProfit,
-        image: ut.image || `/vip${user.vipLevel}/set${currentSetNumber}/photo${ut.id}.jpg`
+        // ONLY CHANGE: force to set1 because that's the only folder you have
+        image: ut.image || `/vip${user.vipLevel}/set1/photo${ut.id}.jpg`
       })
     })
 
@@ -63,10 +64,10 @@ export async function POST(req) {
 
     // Fetch exactly ONE single pending database task card block generated on initialization step hooks
     const activePendingTaskCard = await prisma.task.findFirst({
-      where: { 
-        userId: userId, 
-        status: 'pending', 
-        setNumber: currentSetNumber 
+      where: {
+        userId: userId,
+        status: 'pending',
+        setNumber: currentSetNumber
       },
       orderBy: { createdAt: 'desc' }
     })
@@ -74,21 +75,21 @@ export async function POST(req) {
     // 🎯 BACKEND MATHEMATICAL ISOLATION FIX:
     // Extract raw conditional calculations from runtime logic pools out to clean JS variables.
     // This stops Prisma from crashing on variable arithmetic parameters!
-    const rawDecrementValue = totalReserve >= (user.holdAmount || 0) ? (user.holdAmount || 0) : totalReserve;
+    const rawDecrementValue = totalReserve >= (user.holdAmount || 0)? (user.holdAmount || 0) : totalReserve;
     const cleanDecrementAmount = parseFloat(rawDecrementValue.toFixed(2));
 
     const tx = [
       prisma.user.update({
-        where: { id: userId }, 
+        where: { id: userId },
         data: {
-          walletBalance: { increment: totalReserve }, 
-          holdAmount: { decrement: cleanDecrementAmount }, 
+          walletBalance: { increment: totalReserve },
+          holdAmount: { decrement: cleanDecrementAmount },
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
-          currentTaskProducts: [], 
+          currentTaskProducts: [],
           activeProducts: [],
-          completedProducts: [...(Array.isArray(user.completedProducts) ? user.completedProducts : []), ...enrichedProducts],
-          tasksInCurrentSet: isSetComplete ? 0 : nextTaskCount,
-          setsCompleted: isSetComplete ? (user.setsCompleted || 0) + 1 : (user.setsCompleted || 0),
+          completedProducts: [...(Array.isArray(user.completedProducts)? user.completedProducts : []),...enrichedProducts],
+          tasksInCurrentSet: isSetComplete? 0 : nextTaskCount,
+          setsCompleted: isSetComplete? (user.setsCompleted || 0) + 1 : (user.setsCompleted || 0),
           taskCompleted: { increment: tasksCompletedInThisSubmit }
         }
       })
@@ -114,7 +115,7 @@ export async function POST(req) {
           status: 'completed',
           vipLevel: user.vipLevel,
           setNumber: currentSetNumber,
-          progress: isMergedTask ? `${currentIndex + 1}-${nextTaskCount}/${config.tasksPerSet}` : `${currentIndex + 1}/${config.tasksPerSet}`,
+          progress: isMergedTask? `${currentIndex + 1}-${nextTaskCount}/${config.tasksPerSet}` : `${currentIndex + 1}/${config.tasksPerSet}`,
           products: enrichedProducts,
           taskCode: `T${Date.now()}${userId.slice(-4)}`,
           completedAt: new Date()
@@ -123,17 +124,17 @@ export async function POST(req) {
     }
 
     tx.push(
-      prisma.taskMerge.updateMany({ 
-        where: { userId, vipSet: vipSetLabel, status: 'active' }, 
-        data: { status: 'used' } 
+      prisma.taskMerge.updateMany({
+        where: { userId, vipSet: vipSetLabel, status: 'active' },
+        data: { status: 'used' }
       })
     )
 
     await prisma.$transaction(tx)
-    
-    return NextResponse.json({ 
-      success: true, 
-      user: await prisma.user.findUnique({ where: { id: userId } }) 
+
+    return NextResponse.json({
+      success: true,
+      user: await prisma.user.findUnique({ where: { id: userId } })
     })
   } catch (err) {
     console.error("Submission operational failure:", err)
