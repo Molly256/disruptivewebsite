@@ -30,7 +30,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const currentProductsArray = typeof user.currentTaskProducts === 'string'
-     ? JSON.parse(user.currentTaskProducts || '[]')
+    ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (currentProductsArray.length > 0) {
@@ -61,11 +61,21 @@ export async function POST(req) {
       const userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       if (userPairs && userPairs.length > 0) {
         const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n =>!isNaN(n))
-        const mergeTriggerStepNumber = mergedTaskOrders.length > 0? Math.min(...mergedTaskOrders) : userCurrentTaskNumber
-        const gatePasses = Number(userCurrentTaskNumber) === Number(mergeTriggerStepNumber)
+        const comboStart = Math.min(...mergedTaskOrders)
+        const comboEnd = Math.max(...mergedTaskOrders)
+
+        // NEW GATE: If current task is anywhere in combo range, give all combo products
+        const gatePasses = Number(userCurrentTaskNumber) >= comboStart && Number(userCurrentTaskNumber) <= comboEnd
 
         if (gatePasses) {
           isMergedTask = true
+
+          // Mark combo as used immediately so it doesn't trigger again
+          await prisma.taskMerge.update({
+            where: { id: activeUserMerge.id },
+            data: { status: 'used' }
+          })
+
           userPairs.forEach((pair, idx) => {
             const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
             const fileMatch = fileSet.find(p => Number(p.id) === targetId)
@@ -141,9 +151,7 @@ export async function POST(req) {
       })
     ]
 
-    if (activeUserMerge && isMergedTask) {
-      databaseOperations.push(prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } }))
-    }
+    // REMOVED: taskMerge update from here because we mark it used above
 
     await prisma.$transaction(databaseOperations)
 
