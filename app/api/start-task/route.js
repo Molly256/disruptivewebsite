@@ -15,15 +15,6 @@ const VIP_CONFIG = {
 
 const STATIC_PRODUCTS = { 1: { 1: vip1Set1, 2: vip1Set2 } }
 
-const safeParse = (data) => {
-  if (!data) return []
-  if (Array.isArray(data)) return data
-  if (typeof data === 'string') {
-    try { return JSON.parse(data) } catch { return [] }
-  }
-  return []
-}
-
 const generateTaskCode = () => {
   const date = new Date().toISOString().slice(0,10).replace(/-/g,'')
   const rand = Math.floor(Math.random() * 10000000).toString().padStart(10, '0')
@@ -38,7 +29,15 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    const currentProductsArray = safeParse(user.currentTaskProducts)
+    let currentProductsArray = []
+    try {
+      currentProductsArray = typeof user.currentTaskProducts === 'string'
+       ? JSON.parse(user.currentTaskProducts || '[]')
+        : (user.currentTaskProducts || [])
+    } catch {
+      currentProductsArray = []
+    }
+
     if (currentProductsArray.length > 0) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
@@ -64,13 +63,16 @@ export async function POST(req) {
     let isMergedTask = false
     let stepsCompleted = 1
 
-    // SAFE MERGE CHECK
     if (activeUserMerge) {
-      const userPairs = safeParse(activeUserMerge.pairs)
+      let userPairs = []
+      try {
+        userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs || []
+      } catch {
+        userPairs = []
+      }
 
       if (userPairs.length > 0) {
-        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.id)).filter(n =>!isNaN(n) && n > 0)
-
+        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.id)).filter(n =>!isNaN(n))
         if (mergedTaskOrders.length > 0) {
           const comboStart = Math.min(...mergedTaskOrders)
 
@@ -78,6 +80,7 @@ export async function POST(req) {
             isMergedTask = true
             stepsCompleted = userPairs.length
 
+            // ONLY MARK USED FOR COMBO
             if (stepsCompleted > 1) {
               await prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } })
             }
@@ -88,8 +91,8 @@ export async function POST(req) {
               if (fileMatch) {
                 productsToAssign.push({
                   id: targetId,
-                  name: pair.name || fileMatch.name,
-                  price: parseFloat(pair.price || fileMatch.price || 0),
+                  name: fileMatch.name,
+                  price: parseFloat(fileMatch.price || 0),
                   rating: fileMatch.rating || 5.0,
                   image: `${basePath}/photo${targetId}.jpg`
                 })
@@ -100,10 +103,10 @@ export async function POST(req) {
       }
     }
 
-    // FALLBACK TO SINGLE
+    // ALWAYS FALLBACK TO SINGLE
     if (productsToAssign.length === 0) {
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
-      if (!normalProduct) return NextResponse.json({ error: `No product found for id ${userCurrentTaskNumber}` }, { status: 404 })
+      if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber}` }, { status: 400 })
 
       productsToAssign.push({
         id: userCurrentTaskNumber,
@@ -125,7 +128,7 @@ export async function POST(req) {
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
       totalReserveAdded += reserveAmount
-      innerItemsSnapshot.push({ id: pId, productId: pId, name: p.name, price: pPrice, profit: profitAmount, reserveAmount, rating: p.rating, image: p.image })
+      innerItemsSnapshot.push({ id: pId, name: p.name, price: pPrice, profit: profitAmount, reserveAmount, rating: p.rating, image: p.image })
     })
 
     if ((user.taskCompleted || 0) === 0 && parseFloat(user.walletBalance || 0) < 50) {
@@ -147,9 +150,9 @@ export async function POST(req) {
       })
     ])
 
-    return NextResponse.json({ success: true, isMerged: isMergedTask, productsGiven: productsToAssign.map(p=>p.id) })
+    return NextResponse.json({ success: true, isMerged: isMergedTask, products: productsToAssign })
   } catch (err) {
     console.error('[CRASH]', err)
-    return NextResponse.json({ error: 'Server error: ' + err.message }, { status: 500 })
+    return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
