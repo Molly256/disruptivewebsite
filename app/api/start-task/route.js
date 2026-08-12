@@ -81,16 +81,18 @@ export async function POST(req) {
 
           userPairs.forEach((pair, idx) => {
             const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
+            
+            // Safe array index lookup strategy to completely bypass file object key variations
             const fileMatch = fileSet.find(p => Number(p.id) === targetId)
 
-            // 📸 CUSTOM IMAGE RECOVERY: Prioritize properties passed from admin, then file data, then fallback to set template strings
-            const fullyQualifiedImage = pair.image || pair.url || (fileMatch ? (fileMatch.image || fileMatch.url) : null) || `/vip${user.vipLevel}/set${currentSet}/photo${targetId}.jpg`
+            // 📸 IMAGE PATH ALIGNMENT FIX: Fallback precisely to match your file definitions (e.g. /photo34.jpg)
+            const fullyQualifiedImage = pair.image || pair.url || (fileMatch ? (fileMatch.image || fileMatch.url) : null) || `/photo${targetId}.jpg`
 
             productsToAssign.push({
               id: targetId,
               name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
               price: pair.price ? parseFloat(pair.price) : (fileMatch ? parseFloat(fileMatch.price) : 0.00),
-              rating: fileMatch ? fileMatch.rating : 5.0,
+              rating: fileMatch ? (fileMatch.rating || 5.0) : 5.0,
               image: fullyQualifiedImage
             })
           })
@@ -101,8 +103,19 @@ export async function POST(req) {
     // 3. Fallback to normal single layout if no combo row matches the current active step number
     if (productsToAssign.length === 0) {
       isMergedTask = false
+      
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
-      if (normalProduct) productsToAssign.push(normalProduct)
+      
+      if (normalProduct) {
+        productsToAssign.push({
+          id: userCurrentTaskNumber,
+          name: normalProduct.name || `Product #${userCurrentTaskNumber}`,
+          price: parseFloat(normalProduct.price || 0),
+          rating: normalProduct.rating || 5.0,
+          // 🎯 IMAGE PATH ALIGNMENT FIX: Loads the precise image string directly from your file definition
+          image: normalProduct.image || normalProduct.url || `/photo${userCurrentTaskNumber}.jpg`
+        })
+      }
     }
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
@@ -117,12 +130,12 @@ export async function POST(req) {
 
     productsToAssign.forEach(p => {
       const pPrice = parseFloat(p.price || 0)
-      const pId = Number(p.id)
+      const pId = Number(p.id || userCurrentTaskNumber)
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
       
-      // 🎯 FIXED IMAGE BINDING OVERWRITE: Use the verified image property directly to prevent broken links
-      const imagePathString = p.image || `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
+      // 🎯 FIXED ALLOCATION PATH: Pulls the true validated file path securely down to database snapshot arrays
+      const imagePathString = p.image || p.url || `/photo${pId}.jpg`
 
       totalReserveAdded += reserveAmount
 
