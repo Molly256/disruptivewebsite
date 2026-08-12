@@ -99,7 +99,7 @@ export async function POST(req) {
               console.log('[DEBUG] FILE_ID_MISS:', { targetId, availableIds: fileSet.map(f => Number(f.id)) })
             }
           })
-        } else {
+        }         } else {
           failReason = `GATE_FAIL: ${userCurrentTaskNumber}!= ${mergeTriggerStepNumber}`
         }
       } else {
@@ -107,7 +107,8 @@ export async function POST(req) {
       }
     }
 
-    if (productsToAssign.length === 0) {
+    // 🎯 FIX: Only drop back to single task if this isn't a valid, matching combo task
+    if (productsToAssign.length === 0 && !isMergedTask) {
       isMergedTask = false
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
       if (normalProduct) productsToAssign.push(normalProduct)
@@ -123,8 +124,6 @@ export async function POST(req) {
     let totalPrice = 0, totalReserveAdded = 0, totalProfit = 0
     const innerItemsSnapshot = []
 
-    // 🎯 BACKEND MATHEMATICAL ISOLATION FIX:
-    // Extract raw float prices independently so they cannot be corrupted by profit addition lines.
     const rawCostsArray = productsToAssign.map(p => parseFloat(p.price || 0))
     const cleanTotalPriceSum = rawCostsArray.reduce((sum, val) => sum + val, 0)
 
@@ -132,7 +131,6 @@ export async function POST(req) {
       const pPrice = parseFloat(p.price || 0)
       const pId = Number(p.id)
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
-      // 🎯 THE HOLD POOL FIX: Restored Cost + Profit configuration so hold correctly accumulates $113.39
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
       const localImagePath = `/vip${user.vipLevel}/set${currentSet}/photo${pId}.jpg`
 
@@ -153,13 +151,11 @@ export async function POST(req) {
       }
     }
 
-    // 🎯 WALLET DEDUCTION FORMULA CORRECTOR:
-    // Substracts ONLY the direct product price sum ($107.99) from your current wallet balance ($56.97).
-    // This locks your debt snapshot perfectly at exactly -$51.02 on the very first click!
-    const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
-    const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
+    newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
+    newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    const stepsCompleted = productsToAssign.length
+    // 🎯 FIX: Track steps correctly by reading the assigned combo items count dynamically
+    const stepsCompleted = isMergedTask ? productsToAssign.length : 1
     const progressLabelString = stepsCompleted > 1
      ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
       : `${userCurrentTaskNumber}/${config.tasksPerSet}`
@@ -168,15 +164,12 @@ export async function POST(req) {
 
     const databaseOperations = [
       prisma.user.update({
-        // 🎯 THE DIRECT TRANSACTION ALIGNMENT FIX: 
-        // Targeting user ID exclusively ensures numbers write securely without count collision skips!
         where: { id: userId }, 
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
           currentTaskProducts: unifiedTaskPayload,
           activeProducts: unifiedTaskPayload
-          // 🎯 REMOVED THE DOUBLE INCREMENT: tasksInCurrentSet is now left completely alone here!
         }
       }),
       prisma.task.create({
@@ -192,10 +185,11 @@ export async function POST(req) {
       })
     ]
 
+    // 🎯 FIX: Locate the active merge row by its accurate primary unique ID to complete status closure cleanly
     if (activeUserMerge && isMergedTask) {
       databaseOperations.push(
         prisma.taskMerge.update({
-          where: { id: activeUserMerge.id, status: 'active' },
+          where: { id: activeUserMerge.id },
           data: { status: 'used' }
         })
       )
@@ -206,10 +200,11 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       user: await prisma.user.findUnique({ where: { id: userId } }),
-      currentTaskNumber: userCurrentTaskNumber // Sends back the genuine current active task step cleanly
+      currentTaskNumber: userCurrentTaskNumber
     })
   } catch (err) {
     console.error('[DEBUG] CRASH:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
+
