@@ -67,28 +67,36 @@ export async function POST(req) {
     let productsToAssign = []
     let isMergedTask = false
 
-    // 2. If a database match is found, lock it in instantly!
+    // 2. If a database match is found, check if the user has reached that progress level!
     if (activeUserMerge) {
       const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       
       if (userPairs && userPairs.length > 0) {
-        isMergedTask = true
+        // Extract numbers to identify the combo trigger point
+        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n => !isNaN(n))
+        const mergeTriggerStepNumber = mergedTaskOrders.length > 0 ? Math.min(...mergedTaskOrders) : userCurrentTaskNumber
+        
+        // 🎯 THE JUMPING FIX: Gate opens ONLY if the user reaches the combo trigger step number
+        const gatePasses = userCurrentTaskNumber === mergeTriggerStepNumber
 
-        userPairs.forEach((pair, idx) => {
-          const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
-          const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+        if (gatePasses) {
+          isMergedTask = true
 
-          // 🎯 THE CORE ARCHITECTURAL SYNC FIX:
-          // Instead of stripping details back to fileSet defaults, use the rich name, 
-          // custom prices, and custom image properties directly from the admin row!
-          productsToAssign.push({
-            id: targetId,
-            name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
-            price: pair.price ? parseFloat(pair.price) : (fileMatch ? parseFloat(fileMatch.price) : 0.00),
-            rating: fileMatch ? fileMatch.rating : 5.0,
-            image: pair.image || (fileMatch ? fileMatch.image : `/vip${user.vipLevel}/set${currentSet}/photo${targetId}.jpg`)
+          userPairs.forEach((pair, idx) => {
+            const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
+            const fileMatch = fileSet.find(p => Number(p.id) === targetId)
+
+            productsToAssign.push({
+              id: targetId,
+              name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
+              price: pair.price ? parseFloat(pair.price) : (fileMatch ? parseFloat(fileMatch.price) : 0.00),
+              rating: fileMatch ? fileMatch.rating : 5.0,
+              image: pair.image || (fileMatch ? fileMatch.image : `/vip${user.vipLevel}/set${currentSet}/photo${targetId}.jpg`)
+            })
           })
-        })
+        } else {
+          console.log('[DEBUG] STEP_HOLD: Combo skipped. User is on task ' + userCurrentTaskNumber + ', but combo starts at ' + mergeTriggerStepNumber)
+        }
       }
     }
 
