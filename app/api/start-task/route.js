@@ -151,11 +151,11 @@ export async function POST(req) {
       }
     }
 
-    // 🎯 DECLARATION FIX: Added const variables initialization descriptors cleanly
+    // 🎯 FIX: Re-declared variables safely using local block scope keywords
     const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
 
-    // 🎯 FIX: Track steps correctly by reading the assigned combo items count dynamically
+    // 🎯 FIX: Calculate step differences cleanly based on real active arrays
     const stepsCompleted = isMergedTask ? productsToAssign.length : 1
     const progressLabelString = stepsCompleted > 1
      ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}`
@@ -186,7 +186,7 @@ export async function POST(req) {
       })
     ]
 
-    // 🎯 FIX: Locate the active merge row by its accurate primary unique ID to complete status closure cleanly
+    // 🎯 FIX: Look up active row exclusively using its unique model tracking ID descriptor key
     if (activeUserMerge && isMergedTask) {
       databaseOperations.push(
         prisma.taskMerge.update({
