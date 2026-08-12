@@ -30,7 +30,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const currentProductsArray = typeof user.currentTaskProducts === 'string'
-      ? JSON.parse(user.currentTaskProducts || '[]')
+     ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (currentProductsArray.length > 0) {
@@ -47,7 +47,6 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    // 🎯 FORCE PATH PREFIX BECAUSE YOUR FILES ARE IN /public/vipX/setY/
     const basePath = `/vip${user.vipLevel}/set${currentSet}`
 
     const activeUserMerge = await prisma.taskMerge.findFirst({
@@ -59,10 +58,10 @@ export async function POST(req) {
     let isMergedTask = false
 
     if (activeUserMerge) {
-      const userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
+      const userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs
       if (userPairs && userPairs.length > 0) {
-        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n => !isNaN(n))
-        const mergeTriggerStepNumber = mergedTaskOrders.length > 0 ? Math.min(...mergedTaskOrders) : userCurrentTaskNumber
+        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.photoId || p.dataId || p.id)).filter(n =>!isNaN(n))
+        const mergeTriggerStepNumber = mergedTaskOrders.length > 0? Math.min(...mergedTaskOrders) : userCurrentTaskNumber
         const gatePasses = Number(userCurrentTaskNumber) === Number(mergeTriggerStepNumber)
 
         if (gatePasses) {
@@ -70,14 +69,13 @@ export async function POST(req) {
           userPairs.forEach((pair, idx) => {
             const targetId = Number(pair.taskOrder || pair.dataId || pair.photoId || pair.id)
             const fileMatch = fileSet.find(p => Number(p.id) === targetId)
-            // FIX 1: Add basePath
-            const fullyQualifiedImage = pair.image || pair.url || (fileMatch ? (fileMatch.image || fileMatch.url) : null) || `${basePath}/photo${targetId}.jpg`
             productsToAssign.push({
               id: targetId,
-              name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
-              price: pair.price ? parseFloat(pair.price) : (fileMatch ? parseFloat(fileMatch.price) : 0.00),
-              rating: fileMatch ? (fileMatch.rating || 5.0) : 5.0,
-              image: fullyQualifiedImage
+              name: pair.name || (fileMatch? fileMatch.name : `Combo Item #${idx + 1}`),
+              price: pair.price? parseFloat(pair.price) : (fileMatch? parseFloat(fileMatch.price) : 0.00),
+              rating: fileMatch? (fileMatch.rating || 5.0) : 5.0,
+              // FORCE PATH - ignore anything from DB or file
+              image: `${basePath}/photo${targetId}.jpg`
             })
           })
         }
@@ -88,20 +86,20 @@ export async function POST(req) {
       isMergedTask = false
       const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
       if (normalProduct) {
-        // FIX 2: Add basePath
         productsToAssign.push({
           id: userCurrentTaskNumber,
           name: normalProduct.name || `Product #${userCurrentTaskNumber}`,
           price: parseFloat(normalProduct.price || 0),
           rating: normalProduct.rating || 5.0,
-          image: normalProduct.image || normalProduct.url || `${basePath}/photo${userCurrentTaskNumber}.jpg`
+          // FORCE PATH - ignore anything from data file
+          image: `${basePath}/photo${userCurrentTaskNumber}.jpg`
         })
       }
     }
 
     if (productsToAssign.length === 0) return NextResponse.json({ error: 'No items found' }, { status: 400 })
 
-    const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
+    const activeProfitRate = isMergedTask? (config.profit * 10) : config.profit
     let totalReserveAdded = 0
     const innerItemsSnapshot = []
     const rawCostsArray = productsToAssign.map(p => parseFloat(p.price || 0))
@@ -112,16 +110,14 @@ export async function POST(req) {
       const pId = Number(p.id || userCurrentTaskNumber)
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-      
-      // FIX 3: Add basePath
-      const imagePathString = p.image || p.url || `${basePath}/photo${pId}.jpg`
 
       totalReserveAdded += reserveAmount
       innerItemsSnapshot.push({
         id: pId, productId: pId, photoId: pId, dataId: pId, taskOrder: pId,
         name: p.name, rating: p.rating || 5.0,
         price: pPrice, profit: profitAmount, reserveAmount: reserveAmount,
-        image: imagePathString
+        // FORCE PATH
+        image: `${basePath}/photo${pId}.jpg`
       })
     })
 
@@ -131,13 +127,13 @@ export async function POST(req) {
 
     const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
-    const stepsCompleted = isMergedTask ? productsToAssign.length : 1
-    const progressLabelString = isMergedTask ? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}` : `${userCurrentTaskNumber}/${config.tasksPerSet}`
+    const stepsCompleted = isMergedTask? productsToAssign.length : 1
+    const progressLabelString = isMergedTask? `${userCurrentTaskNumber}-${index + stepsCompleted}/${config.tasksPerSet}` : `${userCurrentTaskNumber}/${config.tasksPerSet}`
     const unifiedTaskPayload = innerItemsSnapshot
 
     const databaseOperations = [
       prisma.user.update({
-        where: { id: userId }, 
+        where: { id: userId },
         data: { walletBalance: newWallet, holdAmount: newHold, currentTaskProducts: unifiedTaskPayload, activeProducts: unifiedTaskPayload }
       }),
       prisma.task.create({
