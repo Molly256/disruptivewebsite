@@ -52,8 +52,6 @@ export async function POST(req) {
     const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
     if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
 
-    const basePath = `/vip${user.vipLevel}/set${currentSet}`
-
     const activeUserMerge = await prisma.taskMerge.findFirst({
       where: { userId: userId, vipSet: `vip${user.vipLevel}set${currentSet}`, status: 'active' },
       orderBy: { createdAt: 'desc' }
@@ -66,37 +64,36 @@ export async function POST(req) {
     if (activeUserMerge) {
       let userPairs = []
       try {
-        userPairs = typeof activeUserMerge.pairs === 'string'? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs || []
+        userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs || []
       } catch {
         userPairs = []
       }
 
       if (userPairs.length > 0) {
-        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.id)).filter(n =>!isNaN(n))
+        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.id)).filter(n => !isNaN(n))
         if (mergedTaskOrders.length > 0) {
           const comboStart = Math.min(...mergedTaskOrders)
 
+          // 🔒 LANDING CHECKPOINT MATCHES TRUE STEPS ONLY
           if (userCurrentTaskNumber === comboStart) {
             isMergedTask = true
             stepsCompleted = userPairs.length
 
-            // ONLY MARK USED FOR COMBO
             if (stepsCompleted > 1) {
               await prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } })
             }
 
-            userPairs.forEach((pair) => {
+            userPairs.forEach((pair, idx) => {
               const targetId = Number(pair.taskOrder || pair.id)
               const fileMatch = fileSet.find(p => Number(p.id) === targetId)
-              if (fileMatch) {
-                productsToAssign.push({
-                  id: targetId,
-                  name: fileMatch.name,
-                  price: parseFloat(fileMatch.price || 0),
-                  rating: fileMatch.rating || 5.0,
-                  image: `${basePath}/photo${targetId}.jpg`
-                })
-              }
+              
+              productsToAssign.push({
+                id: targetId,
+                name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
+                price: pair.price ? parseFloat(pair.price) : (fileMatch ? parseFloat(fileMatch.price) : 0.00),
+                rating: fileMatch ? fileMatch.rating : 5.0,
+                image: pair.image || (fileMatch ? fileMatch.image : `/photo${targetId}.jpg`)
+              })
             })
           }
         }
@@ -113,11 +110,11 @@ export async function POST(req) {
         name: normalProduct.name,
         price: parseFloat(normalProduct.price || 0),
         rating: normalProduct.rating || 5.0,
-        image: `${basePath}/photo${userCurrentTaskNumber}.jpg`
+        image: normalProduct.image || `/photo${userCurrentTaskNumber}.jpg`
       })
     }
 
-    const activeProfitRate = isMergedTask? (config.profit * 10) : config.profit
+    const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
     let totalReserveAdded = 0
     const innerItemsSnapshot = []
     const cleanTotalPriceSum = productsToAssign.reduce((sum, p) => sum + parseFloat(p.price || 0), 0)
@@ -128,7 +125,20 @@ export async function POST(req) {
       const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
       const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
       totalReserveAdded += reserveAmount
-      innerItemsSnapshot.push({ id: pId, name: p.name, price: pPrice, profit: profitAmount, reserveAmount, rating: p.rating, image: p.image })
+      
+      innerItemsSnapshot.push({ 
+        id: pId, 
+        productId: pId,
+        photoId: pId,
+        dataId: pId,
+        taskOrder: pId,
+        name: p.name, 
+        price: pPrice, 
+        profit: profitAmount, 
+        reserveAmount, 
+        rating: p.rating, 
+        image: p.image || `/photo${pId}.jpg` 
+      })
     })
 
     if ((user.taskCompleted || 0) === 0 && parseFloat(user.walletBalance || 0) < 50) {
@@ -137,13 +147,23 @@ export async function POST(req) {
 
     const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
     const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
-    const newTasksInCurrentSet = index + stepsCompleted
-    const progressLabelString = isMergedTask? `${userCurrentTaskNumber}-${userCurrentTaskNumber + stepsCompleted - 1}/${config.tasksPerSet}` : `${userCurrentTaskNumber}/${config.tasksPerSet}`
+    
+    // 🎯 THE DOUBLE INCREMENT REMOVED FIX: 
+    // Do not modify tasksInCurrentSet here. Leave it completely alone!
+    // The submit-task file handles the increment cleanly when items save.
+    const progressLabelString = isMergedTask 
+      ? `${userCurrentTaskNumber}-${userCurrentTaskNumber + stepsCompleted - 1}/${config.tasksPerSet}` 
+      : `${userCurrentTaskNumber}/${config.tasksPerSet}`
 
     await prisma.$transaction([
       prisma.user.update({
         where: { id: userId },
-        data: { walletBalance: newWallet, holdAmount: newHold, tasksInCurrentSet: newTasksInCurrentSet, currentTaskProducts: innerItemsSnapshot, activeProducts: innerItemsSnapshot }
+        data: { 
+          walletBalance: newWallet, 
+          holdAmount: newHold, 
+          currentTaskProducts: innerItemsSnapshot, 
+          activeProducts: innerItemsSnapshot 
+        }
       }),
       prisma.task.create({
         data: { userId, vipLevel: user.vipLevel, setNumber: currentSet, progress: progressLabelString, status: 'pending', products: innerItemsSnapshot, taskCode: generateTaskCode() }
