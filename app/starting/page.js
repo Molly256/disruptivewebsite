@@ -121,33 +121,32 @@ const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
 const formatMoney = (n) => {
   const num = Number(n) || 0
-  return num.toLocaleString('en-US', { 
-    minimumFractionDigits: 2, 
-    maximumFractionDigits: 2 
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   })
 }
 
-function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance }) {
-  const baseProfitRate = 0.005
-
+function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, holdAmount, x10Tasks, currentTaskNumber, currentDay, currentSet }) {
   if (!products || products.length === 0) return null
 
-  const isMergedTask = products.length > 1
-  const activeProfitRate = isMergedTask ? (baseProfitRate * 10) : baseProfitRate
-
-  // Accurate absolute financial calculations pulling from explicit database arrays
   const totalPrice = Math.round(products.reduce((s, p) => s + Number(p.price || 0), 0) * 100) / 100
-  const totalProfit = Math.round(products.reduce((s, p) => s + Number(p.profit || (p.price * activeProfitRate || 0)), 0) * 100) / 100
+  const totalProfit = Math.round(products.reduce((s, p) => {
+    const baseRate = (Number(p.profitPercent) / 100) || 0.005
+    const bonus = Number(p.bonusMultiplier) || 1
+    const rate = baseRate * bonus
+    return s + Number(p.price * rate || 0)
+  }, 0) * 100) / 100
   const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
+
+  const shortfall = totalPrice - walletBalance
+  const balanceAfter = walletBalance - totalPrice
+  const holdAfter = shortfall > 0? holdAmount + totalPrice : holdAmount
+  const canSubmit = shortfall <= 0
 
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-
-  // 🎯 THE LOCKOUT DISPLAY FIX:
-  // Set to false so the Submit button stays active during a negative shortfall balance state.
-  // This allows the user to process the submission immediately after depositing the missing money!
-  const isLocked = false
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
@@ -157,26 +156,34 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
       </div>
 
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
-        
-        {/* --- GLOBAL OUTSIDE CARD CONTAINER WRAPPER --- */}
-        <div style={{ background: isMergedTask ? '#FFF' : 'transparent', margin: '16px 0', borderRadius: 16, padding: isMergedTask ? '16px' : '0', border: isMergedTask ? '3px solid #FF1493' : 'none' }}>
+
+        {shortfall > 0 && (
+          <div style={{ background: '#FF0000', color: '#FFF', textAlign: 'center', padding: 10, borderRadius: 12, fontWeight: 800, margin: '16px 0' }}>
+            ⚠️ Insufficient Balance. Deposit ${formatMoney(shortfall)} to continue
+          </div>
+        )}
+
+        <div style={{ background: 'transparent', margin: '16px 0', borderRadius: 16, padding: '0' }}>
 
           {products.map((product, idx) => {
-            // DYNAMIC FOLDER RESOLUTION: Checks standard dataset indexes to target set1 vs set2 folders dynamically
             const itemId = product.productId || product.id || product.photoId || 0
-            const currentSetFolder = itemId > 40 ? 'set2' : 'set1'
-            const calculatedImgPath = `/vip${vipLevel || 1}/${currentSetFolder}/photo${itemId}.jpg`
+            const d = currentDay || 1
+            const s = currentSet || 1
+            const calculatedImgPath = `/vip${vipLevel || 1}/day${d}/set${s}/photo${itemId}.jpg`
+
+            const baseRate = (Number(product.profitPercent) / 100) || 0.005
+            const bonus = Number(product.bonusMultiplier) || 1
+            const activeProfitRate = baseRate * bonus
 
             return (
-              <div key={product.id || idx} style={{ background: isMergedTask ? '#FAFAFA' : '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px', border: isMergedTask ? '1px solid #E0E0E0' : 'none' }}>
-                
-                {/* Product Image Asset Container */}
-                <img 
-                  src={product.image || calculatedImgPath} 
-                  alt="" 
-                  style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} 
+              <div key={product.id || idx} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
+
+                <img
+                  src={product.image || calculatedImgPath}
+                  alt=""
+                  style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12 }}
                 />
-                
+
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4, color: '#333' }}>
                     {product.name}
@@ -194,9 +201,9 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
                     </div>
                   </div>
                   <div style={{ flex: 1, minWidth: '120px', border: '1px solid #EEE', borderRadius: 8, padding: 10, textAlign: 'center', background: '#FFF' }}>
-                    <div style={{ color: '#000', fontWeight: 700, fontSize: 11 }}>PROFIT {(activeProfitRate * 100).toFixed(1)}%</div>
+                    <div style={{ color: '#000', fontWeight: 700, fontSize: 11 }}>PROFIT {(activeProfitRate * 100).toFixed(2)}%</div>
                     <div style={{ fontSize: 14, fontWeight: 800, color: '#000' }}>
-                      {formatMoney(product.profit || (product.price * activeProfitRate))} <span style={{fontSize:10}}>USD</span>
+                      {formatMoney(product.price * activeProfitRate)} <span style={{fontSize:10}}>USD</span>
                     </div>
                   </div>
                 </div>
@@ -206,8 +213,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
 
         </div>
 
-
-        {/* --- BOTTOM FINANCIAL OVERVIEW LEDGER BLOCK --- */}
         <div style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px', color: '#000' }}>
           <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
@@ -215,27 +220,28 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance })
 
             <hr style={{margin: '8px 0', borderColor: '#EEE'}}/>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: '#000' }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: isLocked ? '#FF0000' : '#000' }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: balanceAfter < 0? '#FF0000' : '#000' }}><span>BALANCE AFTER</span><span>{formatMoney(balanceAfter)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>HOLD AMOUNT</span><span>{formatMoney(holdAfter)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
           </div>
 
-          {/* Submit button background color is solid hot red (#FF0000) when active */}
-          <button 
-            disabled={isLocked}
+          <button
+            disabled={!canSubmit}
             onClick={onSubmit}
-            style={{ 
-              width: '100%', 
-              background: isLocked ? '#CCC' : '#FF0000', 
-              color: '#FFF', 
-              border: 'none', 
-              padding: '16px', 
-              borderRadius: '12px', 
-              fontWeight: '900', 
-              fontSize: '16px', 
-              cursor: isLocked ? 'not-allowed' : 'pointer' 
+            style={{
+              width: '100%',
+              background: canSubmit? '#FF0000' : '#CCC',
+              color: '#FFF',
+              border: 'none',
+              padding: '16px',
+              borderRadius: '12px',
+              fontWeight: '900',
+              fontSize: '16px',
+              cursor: canSubmit? 'pointer' : 'not-allowed'
             }}
           >
-            Submit
+            {canSubmit? 'Submit' : `Deposit $${formatMoney(shortfall)} First`}
           </button>
         </div>
 
@@ -252,15 +258,18 @@ export default function StartingPage() {
   const [msg, setMsg] = useState('')
   const [showToast, setShowToast] = useState(false)
 
-  const setSize = vip1Set1.length
-  const setFinished = user ? user.taskCompleted >= setSize : false
+  // FIX: use currentSet from schema
+  const setSize = user?.currentSet === 2? vip1Set2.length : user?.currentSet === 3? vip1Set3.length : vip1Set1.length
+  const setFinished = user? user.taskCompleted >= setSize : false
+  const currentTaskNumber = (user?.tasksInCurrentSet || 0) + 1
 
-  // 🎯 THE CRITICAL FIX: Decodes the text cell into an actual product array payload seamlessly
   const parsedTaskProducts = user && user.currentTaskProducts
-    ? (typeof user.currentTaskProducts === 'string' ? JSON.parse(user.currentTaskProducts) : user.currentTaskProducts)
+ ? (typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts) : user.currentTaskProducts)
     : []
 
-    useEffect(() => {
+  const x10Tasks = user?.x10TaskNumbers || []
+
+  useEffect(() => {
     const fetchUser = async () => {
       const saved = localStorage.getItem('user')
       if(!saved) { router.push('/login'); return }
@@ -275,7 +284,7 @@ export default function StartingPage() {
           const todayNY = new Date(nowNY).toDateString()
           const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
           const lastResetDay = new Date(lastResetNY).toDateString()
-          if (todayNY !== lastResetDay) {
+          if (todayNY!== lastResetDay) {
             await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
             u.todayProfit = 0
             u.lastProfitReset = new Date()
@@ -283,12 +292,11 @@ export default function StartingPage() {
           setUser(u)
           localStorage.setItem('user', JSON.stringify(u))
 
-          const activeArray = typeof u.currentTaskProducts === 'string' ? JSON.parse(u.currentTaskProducts || '[]') : (u.currentTaskProducts || [])
+          const activeArray = typeof u.currentTaskProducts === 'string'? JSON.parse(u.currentTaskProducts || '[]') : (u.currentTaskProducts || [])
           if(activeArray.length > 0) {
             setShowDetail(true)
           }
         } else {
-          // No longer silent-fails to stale storage. Force-reads live profile fallback parameters instead
           console.warn("API Error payload received, falling back safely to local state dictionary baseline definitions");
           setUser(localUser)
         }
@@ -304,68 +312,59 @@ export default function StartingPage() {
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
-    const handleStart = async () => {
+  const handleStart = async () => {
     if (setFinished) { setMsg('Set completed. Contact Customer Service to reset.'); return }
-    
-    // Check local parsed products first
-    if (typeof parsedTaskProducts !== 'undefined' && parsedTaskProducts.length > 0) {
+
+    if (typeof parsedTaskProducts!== 'undefined' && parsedTaskProducts.length > 0) {
       setShowDetail(true)
       return
     }
-    
+
     const balance = parseFloat(user.walletBalance || 0)
     const tasksDone = parseInt(user.taskCompleted || 0)
 
-    // 🎯 THE FIX: Uses floating threshold padding to accept exactly $50 cleanly,
-    // and ONLY blocks users if they are brand new accounts (0 tasks completed).
     if (tasksDone === 0 && balance < 49.95) {
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2000)
       return
     }
-    
+
     setMsg('Starting...')
     const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
     const data = await res.json()
-    
-    if(res.ok && data.user) { 
-      // 1. Immediately write the fresh data parameters straight down to storage
+
+    if(res.ok && data.user) {
       localStorage.setItem('user', JSON.stringify(data.user))
       setUser(data.user)
-      
-      // 2. 🎯 THE INSTANT RE-RENDER FIX: Parse the true combo array straight off the server response body right now!
+
       const freshProductsList = typeof data.user.currentTaskProducts === 'string'
-        ? JSON.parse(data.user.currentTaskProducts || '[]')
+     ? JSON.parse(data.user.currentTaskProducts || '[]')
         : (data.user.currentTaskProducts || [])
 
-      // 3. 🎯 Force the screen to open ONLY using verified incoming network objects
-      // Locks the side-by-side cards together instantly with NO manual refreshes!
       if (freshProductsList.length > 0) {
-        setMsg('') 
-        setShowDetail(true) 
+        setMsg('')
+        setShowDetail(true)
       } else {
         window.location.reload()
       }
     }
-    else { 
-      setMsg(data.error || 'Failed to start task') 
+    else {
+      setMsg(data.error || 'Failed to start task')
     }
   }
 
-
   const handleSubmit = async () => {
-    if(!user || !user.id) { setMsg('User not loaded. Refresh page.'); return }
+    if(!user ||!user.id) { setMsg('User not loaded. Refresh page.'); return }
     setMsg('Submitting...')
     try {
-      const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
+      const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, currentTaskNumber }) })
       const data = await res.json()
-      if(res.ok && data.user) { 
-        setUser(data.user); 
-        localStorage.setItem('user', JSON.stringify(data.user)); 
-        setShowDetail(false); 
+      if(res.ok && data.user) {
+        setUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setShowDetail(false);
         setMsg('Task Completed! Payout Received');
-        
-        // 🎯 THE FIX: Confirms clean state sync with API route endpoints to cut out stale client loop anomalies
+
         const r = await fetch(`/api/user?id=${user.id}`);
         const d = await r.json();
         if(r.ok && d.user) setUser(d.user);
@@ -377,7 +376,7 @@ export default function StartingPage() {
     }
   }
 
-  if (loading || !user) return null
+  if (loading ||!user) return null
 
   if (showDetail && parsedTaskProducts.length > 0) {
     return (
@@ -387,12 +386,16 @@ export default function StartingPage() {
         onSubmit={handleSubmit}
         vipLevel={user.vipLevel}
         walletBalance={user.walletBalance || 0}
+        holdAmount={user.holdAmount || 0}
+        x10Tasks={x10Tasks}
+        currentTaskNumber={currentTaskNumber}
+        currentDay={user.currentDay} // MATCH SCHEMA
+        currentSet={user.currentSet} // MATCH SCHEMA
       />
     )
   }
 
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
-  const currentTaskNumber = (user.tasksInCurrentSet || 0) + 1
 
   return (
     <>
@@ -435,12 +438,25 @@ export default function StartingPage() {
             <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '400', color: '#666' }}>Hello,</p>
             <p className="user-name" style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#CC0000' }}>{user.username}</p>
           </div>
-          <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span className="vip-text" style={{ fontSize: '15px', fontWeight: '700', color: '#FF7A00' }}>VIP{user.vipLevel}</span>
-            <svg style={{ width: '22px', height: '22px', color: '#3B82F6' }} fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </div>
+          {(() => {
+            const vipLevel = Number(user.vipLevel) || 1
+            const COLORS = {
+              1: { bg: '#5BC0BE', star: '#A3E2E2' },
+              2: { bg: '#4A90E2', star: '#F5A623' },
+              3: { bg: '#1ABC9C', star: '#F39C12' },
+              4: { bg: '#F39C12', star: '#F1C40F' },
+              5: { bg: '#E74C3C', star: '#F39C12' }
+            }
+            const c = COLORS[vipLevel]
+            return (
+              <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: c.bg, padding: '4px 10px', borderRadius: '8px' }}>
+                <span className="vip-text" style={{ fontSize: '15px', fontWeight: '700', color: '#FFF' }}>VIP{vipLevel}</span>
+                <svg style={{ width: '22px', height: '22px' }} fill={c.star} viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </div>
+            )
+          })()}
         </div>
 
         <div style={{ width: '100%', background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -457,7 +473,7 @@ export default function StartingPage() {
 
         <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
           <button onClick={handleStart} disabled={setFinished} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'not-allowed' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
-            {setFinished? 'Contact Customer Service to Reset' : `Starting (${currentTaskNumber} / ${setSize})`} {/* FIXED: +1 */}
+            {setFinished? 'Contact Customer Service to Reset' : `Starting (${currentTaskNumber} / ${setSize})`}
           </button>
           {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
         </div>

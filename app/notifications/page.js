@@ -10,6 +10,7 @@ export default function NotificationsPage() {
   const [user, setUser] = useState(null)
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
@@ -21,26 +22,36 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async (userId) => {
     setLoading(true)
+    setError('')
     try {
       const res = await fetch(`/api/notifications?userId=${userId}`)
       const data = await res.json()
       if(res.ok) {
         setNotifications(data.notifications || [])
-        // 1. Mark as read when page opens
+        // 1. Mark as read only after we successfully loaded them
         await markAsRead(userId)
+      } else {
+        setError(data.error || 'Failed to load notifications')
       }
-    } catch(e) { console.error(e) }
+    } catch(e) {
+      console.error(e)
+      setError('Network error')
+    }
     setLoading(false)
   }
 
   const markAsRead = async (userId) => {
-    await fetch('/api/notifications/read', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({userId})
-    })
-    // update local state so unread bubble disappears on profile
-    setNotifications(prev => prev.map(n => ({...n, read: true})))
+    try {
+      await fetch('/api/notifications/read', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({userId})
+      })
+      // update local state so unread bubble disappears on profile
+      setNotifications(prev => prev.map(n => ({...n, read: true})))
+    } catch(e) {
+      console.error('Mark as read failed', e)
+    }
   }
 
   if(!user) return null
@@ -60,9 +71,11 @@ export default function NotificationsPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {loading? (
             <p style={{textAlign:'center', color:'#999'}}>Loading...</p>
+          ) : error? (
+            <p style={{textAlign:'center', color:'#FF0000'}}>{error}</p>
           ) : notifications.length > 0? (
-            notifications.map((n, i) => (
-              <div key={i} style={{
+            notifications.map((n) => (
+              <div key={n.id || n.createdAt} style={{
                 background: '#FFF',
                 padding: 16,
                 borderRadius: 12,

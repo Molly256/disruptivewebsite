@@ -1,19 +1,24 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { vip1Set1 } from '@/data/vip1Set1'
-import { vip1Set2 } from '@/data/vip1Set2'
 
 export const dynamic = 'force-dynamic'
 
 const VIP_CONFIG = {
- 1: { tasksPerSet: 40, totalSets: 2, profit: 0.005 },
- 2: { tasksPerSet: 60, totalSets: 2, profit: 0.01 },
- 3: { tasksPerSet: 80, totalSets: 2, profit: 0.015 },
- 4: { tasksPerSet: 100, totalSets: 2, profit: 0.02 },
- 5: { tasksPerSet: 120, totalSets: 2, profit: 0.025 }
+  1: { tasksPerSet: 40, totalSets: 3, profit: 0.005 },
+  2: { tasksPerSet: 60, totalSets: 3, profit: 0.01 },
+  3: { tasksPerSet: 80, totalSets: 3, profit: 0.015 },
+ 4: { tasksPerSet: 100, totalSets: 3, profit: 0.02 },
+  5: { tasksPerSet: 120, totalSets: 3, profit: 0.025 }
 }
 
-const STATIC_PRODUCTS = { 1: { 1: vip1Set1, 2: vip1Set2 } }
+const loadSet = async (vip, day, set) => {
+  try {
+    const mod = await import(`@/data/vip${vip}/day${day}/vip${vip}Set${set}.js`)
+    return mod.default || mod[`vip${vip}Set${set}`]
+  } catch {
+    return null
+  }
+}
 
 const generateTaskCode = () => {
   const date = new Date().toISOString().slice(0,10).replace(/-/g,'')
@@ -32,7 +37,7 @@ export async function POST(req) {
     let currentProductsArray = []
     try {
       currentProductsArray = typeof user.currentTaskProducts === 'string'
-       ? JSON.parse(user.currentTaskProducts || '[]')
+      ? JSON.parse(user.currentTaskProducts || '[]')
         : (user.currentTaskProducts || [])
     } catch {
       currentProductsArray = []
@@ -43,134 +48,85 @@ export async function POST(req) {
     }
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
-    const currentSet = (user.setsCompleted || 0) + 1
-    const index = Number(user.tasksInCurrentSet) || 0
-    const userCurrentTaskNumber = index + 1
 
-    if (index >= config.tasksPerSet) return NextResponse.json({ error: 'Set completed' }, { status: 400 })
+    // ADMIN ONLY
+    const currentDay = user.currentDay || 1 // 1-5
+    const currentSet = user.currentSet || 1 // 1-3
+    let tasksInCurrentSet = user.tasksInCurrentSet || 0
 
-    const fileSet = STATIC_PRODUCTS[user.vipLevel]?.[currentSet]
-    if (!fileSet) return NextResponse.json({ error: 'Static product set missing' }, { status: 400 })
+    const userCurrentTaskNumber = tasksInCurrentSet + 1
 
-    const activeUserMerge = await prisma.taskMerge.findFirst({
-      where: { userId: userId, vipSet: `vip${user.vipLevel}set${currentSet}`, status: 'active' },
-      orderBy: { createdAt: 'desc' }
-    })
-
-    let productsToAssign = []
-    let isMergedTask = false
-    let stepsCompleted = 1
-
-    if (activeUserMerge) {
-      let userPairs = []
-      try {
-        userPairs = typeof activeUserMerge.pairs === 'string' ? JSON.parse(activeUserMerge.pairs) : activeUserMerge.pairs || []
-      } catch {
-        userPairs = []
-      }
-
-      if (userPairs.length > 0) {
-        const mergedTaskOrders = userPairs.map(p => Number(p.taskOrder || p.id)).filter(n => !isNaN(n))
-        if (mergedTaskOrders.length > 0) {
-          const comboStart = Math.min(...mergedTaskOrders)
-
-          // 🔒 LANDING CHECKPOINT MATCHES TRUE STEPS ONLY
-          if (userCurrentTaskNumber === comboStart) {
-            isMergedTask = true
-            stepsCompleted = userPairs.length
-
-            if (stepsCompleted > 1) {
-              await prisma.taskMerge.update({ where: { id: activeUserMerge.id }, data: { status: 'used' } })
-            }
-
-            userPairs.forEach((pair, idx) => {
-              const targetId = Number(pair.taskOrder || pair.id)
-              const fileMatch = fileSet.find(p => Number(p.id) === targetId)
-              
-              productsToAssign.push({
-                id: targetId,
-                name: pair.name || (fileMatch ? fileMatch.name : `Combo Item #${idx + 1}`),
-                price: pair.price ? parseFloat(pair.price) : (fileMatch ? parseFloat(fileMatch.price) : 0.00),
-                rating: fileMatch ? fileMatch.rating : 5.0,
-                image: pair.image || (fileMatch ? fileMatch.image : `/photo${targetId}.jpg`)
-              })
-            })
-          }
-        }
-      }
+    if (tasksInCurrentSet >= config.tasksPerSet) {
+      return NextResponse.json({ error: `Set ${currentSet} completed. Contact admin to open next set.` }, { status: 400 })
     }
 
-    // ALWAYS FALLBACK TO SINGLE
-    if (productsToAssign.length === 0) {
-      const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
-      if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber}` }, { status: 400 })
+    const fileSet = await loadSet(user.vipLevel, currentDay, currentSet)
+    if (!fileSet) return NextResponse.json({ error: `Data missing: /data/vip${user.vipLevel}/day${currentDay}/vip${user.vipLevel}Set${currentSet}.js` }, { status: 400 })
 
-      productsToAssign.push({
-        id: userCurrentTaskNumber,
-        name: normalProduct.name,
-        price: parseFloat(normalProduct.price || 0),
-        rating: normalProduct.rating || 5.0,
-        image: normalProduct.image || `/photo${userCurrentTaskNumber}.jpg`
-      })
-    }
+    const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
+    if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
 
-    const activeProfitRate = isMergedTask ? (config.profit * 10) : config.profit
-    let totalReserveAdded = 0
-    const innerItemsSnapshot = []
-    const cleanTotalPriceSum = productsToAssign.reduce((sum, p) => sum + parseFloat(p.price || 0), 0)
+    // CHANGED 1: read profit + bonus from file. use config.profit as fallback
+    const baseRate = (Number(normalProduct.profitPercent) / 100) || config.profit
+    const bonus = Number(normalProduct.bonusMultiplier) || 1
+    const activeProfitRate = baseRate * bonus
 
-    productsToAssign.forEach(p => {
-      const pPrice = parseFloat(p.price || 0)
-      const pId = Number(p.id)
-      const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
-      const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-      totalReserveAdded += reserveAmount
-      
-      innerItemsSnapshot.push({ 
-        id: pId, 
-        productId: pId,
-        photoId: pId,
-        dataId: pId,
-        taskOrder: pId,
-        name: p.name, 
-        price: pPrice, 
-        profit: profitAmount, 
-        reserveAmount, 
-        rating: p.rating, 
-        image: p.image || `/photo${pId}.jpg` 
-      })
-    })
+    const productsToAssign = [{
+      id: userCurrentTaskNumber,
+      productId: userCurrentTaskNumber,
+      photoId: userCurrentTaskNumber,
+      name: normalProduct.name,
+      price: parseFloat(normalProduct.price || 0),
+      rating: normalProduct.rating || 5.0,
+      image: normalProduct.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`, // CHANGED 2: use file image first
+      profitPercent: normalProduct.profitPercent, // ADD for frontend
+      bonusMultiplier: bonus // ADD for frontend
+    }]
+
+    const pPrice = parseFloat(productsToAssign[0].price || 0)
+    const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
+    const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
+
+    const innerItemsSnapshot = [{
+    ...productsToAssign[0],
+      profit: profitAmount,
+      reserveAmount
+    }]
 
     if ((user.taskCompleted || 0) === 0 && parseFloat(user.walletBalance || 0) < 50) {
       return NextResponse.json({ error: 'Balance below 50 unable to continue trading' }, { status: 400 })
     }
 
-    const newWallet = parseFloat((user.walletBalance - cleanTotalPriceSum).toFixed(2))
-    const newHold = parseFloat((user.holdAmount + totalReserveAdded).toFixed(2))
-    
-    // 🎯 THE DOUBLE INCREMENT REMOVED FIX: 
-    // Do not modify tasksInCurrentSet here. Leave it completely alone!
-    // The submit-task file handles the increment cleanly when items save.
-    const progressLabelString = isMergedTask 
-      ? `${userCurrentTaskNumber}-${userCurrentTaskNumber + stepsCompleted - 1}/${config.tasksPerSet}` 
-      : `${userCurrentTaskNumber}/${config.tasksPerSet}`
+    const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
+    const newHold = parseFloat((user.holdAmount + reserveAmount).toFixed(2))
+    const progressLabelString = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
 
     await prisma.$transaction([
       prisma.user.update({
         where: { id: userId },
-        data: { 
-          walletBalance: newWallet, 
-          holdAmount: newHold, 
-          currentTaskProducts: innerItemsSnapshot, 
-          activeProducts: innerItemsSnapshot 
+        data: {
+          walletBalance: newWallet,
+          holdAmount: newHold,
+          currentTaskProducts: innerItemsSnapshot,
+          activeProducts: innerItemsSnapshot,
+          tasksInCurrentSet: userCurrentTaskNumber
         }
       }),
       prisma.task.create({
-        data: { userId, vipLevel: user.vipLevel, setNumber: currentSet, progress: progressLabelString, status: 'pending', products: innerItemsSnapshot, taskCode: generateTaskCode() }
+        data: {
+          userId,
+          vipLevel: user.vipLevel,
+          day: currentDay, // CHANGED 3: save day
+          setNumber: currentSet,
+          progress: progressLabelString,
+          status: 'pending',
+          products: innerItemsSnapshot,
+          taskCode: generateTaskCode()
+        }
       })
     ])
 
-    return NextResponse.json({ success: true, isMerged: isMergedTask, products: productsToAssign })
+    return NextResponse.json({ success: true, products: productsToAssign })
   } catch (err) {
     console.error('[CRASH]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

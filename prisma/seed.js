@@ -11,15 +11,16 @@ async function main() {
       gender: 'Male',
       countryCode: '+256',
       countryName: 'Uganda',
-      inviteCode: '345678DI', // this is their own code
-      referredBy: null, // who invited admin = null
+      inviteCode: '345678DI', 
+      referredBy: null,
       isAdmin: true,
 
-      // VIP / TASK - VIP 1
+      // VIP / TASK - ADMIN CONTROLLED
       vipId: 1,
       vipLevel: 1,
-      setsCompleted: 0, // 0 = Set1 not done yet
-      tasksInCurrentSet: 0, // 0/40
+      currentDay: 1,
+      currentSet: 1,
+      tasksInCurrentSet: 0,
       taskCompleted: 0,
       totalTasks: 40,
 
@@ -33,11 +34,14 @@ async function main() {
       lastProfitReset: new Date(),
       creditScore: 100,
 
-      // 🎯 THE FIX: Uses structured valid JSON array markers for Prisma inputs
+      // BIND WALLET
+      boundWallet: null,
+
+      // TASK DATA
       currentTaskProducts: [],
       activeProducts: [],
       completedProducts: [],
-      mergedTasks: [], 
+      x10TaskNumbers: [],
     },
     create: {
       username: 'Admin256',
@@ -51,15 +55,14 @@ async function main() {
       referredBy: null,
       isAdmin: true,
 
-      // VIP / TASK - VIP 1
       vipId: 1,
       vipLevel: 1,
-      setsCompleted: 0,
+      currentDay: 1,
+      currentSet: 1,
       tasksInCurrentSet: 0,
       taskCompleted: 0,
       totalTasks: 40,
 
-      // MONEY
       walletBalance: 5000,
       holdAmount: 0,
       freezeAmount: 0,
@@ -69,14 +72,16 @@ async function main() {
       lastProfitReset: new Date(),
       creditScore: 100,
 
-      // 🎯 THE FIX: Uses structured valid JSON array markers for Prisma inputs
+      boundWallet: null,
+
       currentTaskProducts: [],
       activeProducts: [],
       completedProducts: [],
-      mergedTasks: [],
+      x10TaskNumbers: [],
     }
   })
-  console.log('✅ Admin256 ready - VIP 1 with $5000 balance')
+
+  console.log('✅ Seed complete: Admin256 ready')
 }
 
 main()

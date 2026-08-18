@@ -43,10 +43,10 @@ export default function WithdrawPage() {
     if(!user.boundWallet) { setMsg(t('pleaseBindWallet')); return }
     if(!txPassConfirm) { setMsg(t('enterTxPass')); return }
 
-    const res = await fetch('/api/user/update', {
+    const res = await fetch('/api/withdraw/request', { // FIXED: correct endpoint
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({userId: user.id, type: 'withdraw', amount, txPass: txPassConfirm})
+      body: JSON.stringify({userId: user.id, amount, txPass: txPassConfirm})
     })
     const data = await res.json()
 

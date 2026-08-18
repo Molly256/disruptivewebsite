@@ -8,15 +8,22 @@ export async function POST(req) {
 
     const tx = await prisma.transaction.findUnique({ where: { id: txId }, include: { user: true } })
     if (!tx) return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
+    if (tx.type !== 'withdrawal') return NextResponse.json({ error: 'Not a withdrawal' }, { status: 400 }) // safety
     if (tx.status !== 'pending') return NextResponse.json({ error: 'Already processed' }, { status: 400 })
 
-    // Mark completed
-    await prisma.transaction.update({ where: { id: txId }, data: { status: 'completed' } })
+    // Use transaction so both succeed or both fail
+    await prisma.$transaction(async (prisma) => {
+      // 1. Mark completed
+      await prisma.transaction.update({ 
+        where: { id: txId }, 
+        data: { status: 'completed' } 
+      })
 
-    // Reset freezeAmount: remove this amount from freeze
-    await prisma.user.update({ 
-      where: { id: tx.userId }, 
-      data: { freezeAmount: { decrement: tx.amount } }
+      // 2. Remove from freeze. Balance was already deducted on request
+      await prisma.user.update({ 
+        where: { id: tx.userId }, 
+        data: { freezeAmount: { decrement: tx.amount } }
+      })
     })
 
     await prisma.adminLog.create({ 

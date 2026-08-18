@@ -20,13 +20,13 @@ export async function POST(req) {
       data: { walletBalance: { increment: amt } }
     })
 
-    // 2. Create transaction record - clean, no account text
+    // 2. Create transaction record - FIXED
     await prisma.transaction.create({ 
       data: { 
         userId, 
         type: 'deposit',
         amount: amt, 
-        status: 'completed' // must be 'completed' to match enum
+        status: 'success' // FIX: was 'completed'
       } 
     })
 
@@ -34,7 +34,8 @@ export async function POST(req) {
     await prisma.adminLog.create({ 
       data: { 
         adminId, 
-        action: `Deposited $${amt.toFixed(2)} to ${user.username}` 
+        action: `Deposited $${amt.toFixed(2)} to ${user.username}`,
+        targetUserId: userId // added so you can track who
       }
     })
 

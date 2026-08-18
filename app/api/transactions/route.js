@@ -14,12 +14,12 @@ export async function GET(req) {
 
     const where = { userId: String(userId) }
 
-    // filter by type if not 'all'
-    if (type && type!== 'all') {
-      where.type = type
+    // FIX 1: map 'withdraw' to 'withdrawal' so it matches DB
+    if (type && type !== 'all') {
+      where.type = type === 'withdraw' ? 'withdrawal' : type
     } else {
-      // default: only show deposit, withdraw, special_bonus for history page
-      where.type = { in: ['deposit', 'withdraw', 'special_bonus'] }
+      // FIX 2: include 'withdrawal' in default list
+      where.type = { in: ['deposit', 'withdrawal', 'special_bonus'] }
     }
 
     const transactions = await prisma.transaction.findMany({
@@ -27,7 +27,7 @@ export async function GET(req) {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
-        type: true, // 'withdraw', 'deposit', 'special_bonus'
+        type: true, // 'deposit', 'withdrawal', 'special_bonus', 'profit', 'reserve'
         amount: true,
         status: true, // 'pending', 'completed', 'rejected'
         createdAt: true,
@@ -35,7 +35,14 @@ export async function GET(req) {
       }
     })
 
-    return NextResponse.json({ transactions })
+    // FIX 3: convert 'withdrawal' back to 'withdraw' for front
+    const txWithFixedType = transactions.map(tx => ({
+      ...tx,
+      type: tx.type === 'withdrawal' ? 'withdraw' : tx.type,
+      status: tx.status === 'success' ? 'completed' : tx.status // map if needed
+    }))
+
+    return NextResponse.json({ transactions: txWithFixedType })
   } catch (e) {
     console.error('API /transactions error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })

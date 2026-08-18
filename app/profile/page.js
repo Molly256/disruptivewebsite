@@ -186,7 +186,7 @@ export default function ProfilePage() {
 
   <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>{t('other')}</h3>
   <MenuItem icon="🔔" title={t('notifications')} onClick={() => router.push('/notifications')} />
-  <MenuItem icon="⚙️" title={t('changeLanguage')} onClick={() => router.push('/language')} />
+  <MenuItem icon="⚙️" title={t('changeLanguage')} onClick={() => router.push('/change-language')} />
   <MenuItem icon="⏻" title={t('logout')} onClick={handleLogout} />
 </div>
 

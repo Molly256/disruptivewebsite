@@ -1,26 +1,23 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState } from 'react' // removed useEffect
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 import { t } from '@/lib/i18n'
 
 export default function LogoutPage() {
   const router = useRouter()
-  const [selected, setSelected] = useState(null) // 'cancel' | 'logout'
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user')
-    if (!savedUser) { router.push('/login'); return }
-  }, [router])
+  const [processing, setProcessing] = useState(false) // 'cancel' | 'logout' | false
 
   const handleCancel = () => {
-    setSelected('cancel')
+    if (processing) return
+    setProcessing('cancel')
     setTimeout(() => router.push('/'), 200) // go to dashboard
   }
 
   const handleLogout = () => {
-    setSelected('logout')
+    if (processing) return
+    setProcessing('logout')
     setTimeout(() => {
       localStorage.removeItem('user')
       router.push('/login')
@@ -34,8 +31,9 @@ export default function LogoutPage() {
     border: 'none',
     fontSize: 16,
     fontWeight: 700,
-    cursor: 'pointer',
-    transition: 'all 0.2s'
+    cursor: processing? 'not-allowed' : 'pointer',
+    transition: 'all 0.2s',
+    opacity: processing? 0.6 : 1
   }
 
   return (
@@ -50,22 +48,24 @@ export default function LogoutPage() {
 
           <div style={{ display: 'flex', gap: 12 }}>
             <button
+              disabled={!!processing}
               onClick={handleCancel}
               style={{
-               ...btnBase,
-                background: selected === 'cancel'? '#FF0000' : '#E0E0E0',
-                color: selected === 'cancel'? '#FFF' : '#000'
+              ...btnBase,
+                background: processing === 'cancel'? '#FF0000' : '#E0E0E0',
+                color: processing === 'cancel'? '#FFF' : '#000'
               }}
             >
               {t('cancel')}
             </button>
 
             <button
+              disabled={!!processing}
               onClick={handleLogout}
               style={{
-               ...btnBase,
-                background: selected === 'logout'? '#FF0000' : '#E0E0E0',
-                color: selected === 'logout'? '#FFF' : '#000'
+              ...btnBase,
+                background: processing === 'logout'? '#FF0000' : '#E0E0E0',
+                color: processing === 'logout'? '#FFF' : '#000'
               }}
             >
               {t('logout')}

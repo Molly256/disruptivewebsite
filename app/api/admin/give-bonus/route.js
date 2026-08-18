@@ -14,40 +14,39 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
     }
 
-    // 1. Add to specialBonus, walletBalance, AND TotalBalance
+    // 1. Add to specialBonus AND walletBalance only
     const user = await prisma.user.update({ 
       where: { id: userId }, 
       data: { 
-        specialBonus: { increment: amt },   // For display: "Special Lucky Bonus"
-        walletBalance: { increment: amt },  // So user can actually withdraw it
-        TotalBalance: { increment: amt }    // <-- ADDED: keeps total in sync
+        specialBonus: { increment: amt },   // For display
+        walletBalance: { increment: amt }   // So user can withdraw
       },
-      select: { id: true, username: true, specialBonus: true, walletBalance: true, TotalBalance: true }
+      select: { id: true, username: true, specialBonus: true, walletBalance: true }
     })
 
     // 2. Log admin action
     await prisma.adminLog.create({ 
       data: { 
         adminId, 
-        action: `Gave $${amt.toFixed(2)} Lucky Bonus to ${user.username}` 
+        action: `Gave $${amt.toFixed(2)} Special Bonus to ${user.username}`,
+        targetUserId: userId
       }
     })
 
-    // 3. Transaction history - must be 'special_bonus' and 'completed'
+    // 3. Transaction history - FIXED status
     await prisma.transaction.create({
       data: {
         userId,
-        type: 'special_bonus', // <-- FIXED
+        type: 'special_bonus', 
         amount: amt,
-        status: 'completed' // <-- FIXED
+        status: 'success' // FIX: was 'completed'
       }
     })
 
     return NextResponse.json({ 
       success: true, 
       newBonus: user.specialBonus,
-      newBalance: user.walletBalance,
-      newTotal: user.TotalBalance
+      newBalance: user.walletBalance
     })
   } catch (e) { 
     console.error('Give bonus error:', e)

@@ -12,7 +12,7 @@ export async function GET(req) {
     const user = await prisma.user.findFirst({
       where: { 
         OR: [
-          { id: q }, // allow search by ID
+          { id: q },
           { username: { equals: q, mode: 'insensitive' } },
           { phone: q }
         ] 
@@ -25,7 +25,9 @@ export async function GET(req) {
         gender: true, 
         vipLevel: true, 
         vipId: true,
-        setsCompleted: true, // 0 = Set1 active, 1 = Set2 active
+        day: true,          // REQUIRED for photo/data path
+        setNumber: true,    // REQUIRED for photo/data path + setSize
+        setsCompleted: true,
         tasksInCurrentSet: true,
         taskCompleted: true, 
         totalTasks: true,
