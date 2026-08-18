@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 import { t } from '@/lib/i18n'
-import { vip1Set1 } from '@/data/vip1Set1'
 
 const VIP_PROFIT = { 1: 0.005, 2: 0.01, 3: 0.015, 4: 0.02, 5: 0.025 } // 0.5% to 2.5%
 
@@ -125,6 +124,17 @@ const formatMoney = (n) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
+}
+
+// Dynamic loader for data/vip1/dayX/vip1SetY.js
+async function loadSetData(day, set) {
+  try {
+    const mod = await import(`@/data/vip1/day${day}/vip1Set${set}.js`)
+    return mod.default || mod[`vip1Set${set}`] || []
+  } catch(e) {
+    console.error("Failed to load set", day, set, e)
+    return []
+  }
 }
 
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, holdAmount, x10Tasks, currentTaskNumber, currentDay, currentSet }) {
@@ -250,6 +260,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
     </div>
   )
 }
+
 export default function StartingPage() {
   const router = useRouter()
   const [showDetail, setShowDetail] = useState(false)
@@ -257,14 +268,13 @@ export default function StartingPage() {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [showToast, setShowToast] = useState(false)
+  const [setSize, setSetSize] = useState(3)
 
-  // FIX: use currentSet from schema
-  const setSize = user?.currentSet === 2? vip1Set2.length : user?.currentSet === 3? vip1Set3.length : vip1Set1.length
   const setFinished = user? user.taskCompleted >= setSize : false
   const currentTaskNumber = (user?.tasksInCurrentSet || 0) + 1
 
   const parsedTaskProducts = user && user.currentTaskProducts
- ? (typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts) : user.currentTaskProducts)
+? (typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts) : user.currentTaskProducts)
     : []
 
   const x10Tasks = user?.x10TaskNumbers || []
@@ -296,6 +306,13 @@ export default function StartingPage() {
           if(activeArray.length > 0) {
             setShowDetail(true)
           }
+
+          // load set size dynamically
+          const day = u.currentDay || 1
+          const set = u.currentSet || 1
+          const arr = await loadSetData(day, set)
+          setSetSize(arr.length || 3)
+
         } else {
           console.warn("API Error payload received, falling back safely to local state dictionary baseline definitions");
           setUser(localUser)
@@ -338,8 +355,14 @@ export default function StartingPage() {
       setUser(data.user)
 
       const freshProductsList = typeof data.user.currentTaskProducts === 'string'
-     ? JSON.parse(data.user.currentTaskProducts || '[]')
+    ? JSON.parse(data.user.currentTaskProducts || '[]')
         : (data.user.currentTaskProducts || [])
+
+      // update set size after new task
+      const day = data.user.currentDay || 1
+      const set = data.user.currentSet || 1
+      const arr = await loadSetData(day, set)
+      setSetSize(arr.length || 3)
 
       if (freshProductsList.length > 0) {
         setMsg('')
@@ -389,8 +412,8 @@ export default function StartingPage() {
         holdAmount={user.holdAmount || 0}
         x10Tasks={x10Tasks}
         currentTaskNumber={currentTaskNumber}
-        currentDay={user.currentDay} // MATCH SCHEMA
-        currentSet={user.currentSet} // MATCH SCHEMA
+        currentDay={user.currentDay}
+        currentSet={user.currentSet}
       />
     )
   }
