@@ -132,32 +132,47 @@ export default function AdminPage() {
   }
 
   // NEW: MANAGE PROGRESS FUNCTIONS
-  const handleResetToNextSet = async () => {
-    if(!manageUser) return alert('Search user first')
-    if(manageUser.currentSet >= 3) return alert('Set 3 cannot be reset. Use Next Day')
-    const res = await fetch('/api/admin/reset-set-progress', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
-    })
-    const data = await res.json()
-    if(res.ok) { setManageUser(data.user); alert(`Moved to Set ${data.user.currentSet}`) } else alert(data.error)
+const handleResetToNextSet = async () => {
+  if(!manageUser) return alert('Search user first')
+  if(manageUser.currentSet >= 3) return alert('Set 3 cannot be reset. Use Next Day')
+  
+  // 🎯 FIXED URL: Now points to your clean, flat renamed folder path!
+  const res = await fetch('/api/admin/reset-set-progress', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
+  })
+  const data = await res.json()
+  
+  if(res.ok && data.user) { 
+    setManageUser(data.user); 
+    alert(`Moved to Set ${data.user.currentSet}`) 
+  } else {
+    alert(data.error || 'Failed')
   }
+}
 
-  const handleNextDay = async () => {
-    if(!manageUser) return alert('Search user first')
-    if(manageUser.currentDay >= 5) return alert('Max Day 5 reached')
-    const res = await fetch('/api/admin/next-day-progress', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
-    })
-    const data = await res.json()
-    if(res.ok && data.user) {
-      setManageUser(data.user);
-      alert(`Moved to Day ${data.user.currentDay} Set 1`)
-    } else alert(data.error || 'Failed')
+const handleNextDay = async () => {
+  if(!manageUser) return alert('Search user first')
+  if(manageUser.currentDay >= 5) return alert('Max Day 5 reached')
+  
+  // 🎯 VERIFIED URL: Matches your app/api/admin/next-day/progress/route.js folder structure exactly!
+  const res = await fetch('/api/admin/next-day/progress', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
+  })
+  const data = await res.json()
+  
+  if(res.ok && data.user) {
+    setManageUser(data.user);
+    alert(`Moved to Day ${data.user.currentDay} Set 1`)
+  } else {
+    alert(data.error || 'Failed')
   }
+}
+
+
 
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
