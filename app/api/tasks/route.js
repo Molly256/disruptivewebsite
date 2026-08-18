@@ -28,7 +28,7 @@ export async function GET(req) {
       where: {
         userId: userId,
         status: 'pending',
-        day: currentDay, // FIX 1: ADD THIS
+        day: currentDay,
         setNumber: currentSet
       },
       orderBy: { createdAt: 'desc' }
@@ -37,7 +37,7 @@ export async function GET(req) {
     if (activeTasks.length > 0) {
       const firstActiveCard = activeTasks[0]
       const productsArraySnapshot = typeof firstActiveCard.products === 'string'
-      ? JSON.parse(firstActiveCard.products || '[]')
+    ? JSON.parse(firstActiveCard.products || '[]')
         : (firstActiveCard.products || [])
 
       return NextResponse.json({
@@ -56,10 +56,27 @@ export async function GET(req) {
       take: 50
     })
 
+    // FIX: Patch products in historic tasks to add image path using task.day and task.setNumber
+    const patchedTasks = historicTasks.map(t => {
+      const prods = typeof t.products === 'string'? JSON.parse(t.products || '[]') : (t.products || [])
+      const day = t.day || currentDay
+      const set = t.setNumber || currentSet
+
+      const patchedProds = prods.map(p => {
+        const pid = p.productId || p.id || p.photoId || 0
+        return {
+         ...p,
+          image: p.image || `/vip${t.vipLevel}/day${day}/set${set}/photo${pid}.jpg`
+        }
+      })
+
+      return {...t, products: patchedProds }
+    })
+
     return NextResponse.json({
       success: true,
-      tasks: historicTasks,
-      currentDay, // FIX 2: ADD THIS for frontend
+      tasks: patchedTasks, // CHANGED: return patched
+      currentDay,
       currentSet
     })
   } catch (err) {

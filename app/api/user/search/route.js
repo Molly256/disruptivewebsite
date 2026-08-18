@@ -25,8 +25,8 @@ export async function GET(req) {
         gender: true, 
         vipLevel: true, 
         vipId: true,
-        day: true,          // REQUIRED for photo/data path
-        setNumber: true,    // REQUIRED for photo/data path + setSize
+        currentDay: true,          // FIX: was day
+        currentSet: true,          // FIX: was setNumber
         setsCompleted: true,
         tasksInCurrentSet: true,
         taskCompleted: true, 
@@ -43,14 +43,23 @@ export async function GET(req) {
         mergedTasks: true,
         createdAt: true,
         lastProfitReset: true,
-        todayProfit: true
+        todayProfit: true,
+        x10TaskNumbers: true
       }
     })
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    return NextResponse.json({ user })
+
+    // Add aliases so your admin panel code using user.day / user.setNumber won't break
+    const userWithAlias = {
+      ...user,
+      day: user.currentDay,       // alias for photo path
+      setNumber: user.currentSet  // alias for setSize
+    }
+
+    return NextResponse.json({ user: userWithAlias })
   } catch (e) {
-    console.error('API /user/search error:', e)
+    console.error('API /admin/user/search error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

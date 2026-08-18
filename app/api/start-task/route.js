@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic'
 
 const VIP_CONFIG = {
   1: { tasksPerSet: 40, totalSets: 3, profit: 0.005 },
-  2: { tasksPerSet: 60, totalSets: 3, profit: 0.01 },
+ 2: { tasksPerSet: 60, totalSets: 3, profit: 0.01 },
   3: { tasksPerSet: 80, totalSets: 3, profit: 0.015 },
  4: { tasksPerSet: 100, totalSets: 3, profit: 0.02 },
-  5: { tasksPerSet: 120, totalSets: 3, profit: 0.025 }
+ 5: { tasksPerSet: 120, totalSets: 3, profit: 0.025 }
 }
 
 const loadSet = async (vip, day, set) => {
@@ -37,7 +37,7 @@ export async function POST(req) {
     let currentProductsArray = []
     try {
       currentProductsArray = typeof user.currentTaskProducts === 'string'
-      ? JSON.parse(user.currentTaskProducts || '[]')
+     ? JSON.parse(user.currentTaskProducts || '[]')
         : (user.currentTaskProducts || [])
     } catch {
       currentProductsArray = []
@@ -49,7 +49,6 @@ export async function POST(req) {
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
 
-    // ADMIN ONLY
     const currentDay = user.currentDay || 1 // 1-5
     const currentSet = user.currentSet || 1 // 1-3
     let tasksInCurrentSet = user.tasksInCurrentSet || 0
@@ -66,7 +65,6 @@ export async function POST(req) {
     const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
     if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
 
-    // CHANGED 1: read profit + bonus from file. use config.profit as fallback
     const baseRate = (Number(normalProduct.profitPercent) / 100) || config.profit
     const bonus = Number(normalProduct.bonusMultiplier) || 1
     const activeProfitRate = baseRate * bonus
@@ -78,9 +76,9 @@ export async function POST(req) {
       name: normalProduct.name,
       price: parseFloat(normalProduct.price || 0),
       rating: normalProduct.rating || 5.0,
-      image: normalProduct.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`, // CHANGED 2: use file image first
-      profitPercent: normalProduct.profitPercent, // ADD for frontend
-      bonusMultiplier: bonus // ADD for frontend
+      image: normalProduct.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`,
+      profitPercent: normalProduct.profitPercent || (baseRate * 100), // ADD
+      bonusMultiplier: bonus // ADD
     }]
 
     const pPrice = parseFloat(productsToAssign[0].price || 0)
@@ -88,7 +86,7 @@ export async function POST(req) {
     const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
 
     const innerItemsSnapshot = [{
-    ...productsToAssign[0],
+     ...productsToAssign[0],
       profit: profitAmount,
       reserveAmount
     }]
@@ -101,8 +99,8 @@ export async function POST(req) {
     const newHold = parseFloat((user.holdAmount + reserveAmount).toFixed(2))
     const progressLabelString = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
 
-    await prisma.$transaction([
-      prisma.user.update({
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: userId },
         data: {
           walletBalance: newWallet,
@@ -111,12 +109,13 @@ export async function POST(req) {
           activeProducts: innerItemsSnapshot,
           tasksInCurrentSet: userCurrentTaskNumber
         }
-      }),
-      prisma.task.create({
+      })
+
+      await tx.task.create({
         data: {
           userId,
           vipLevel: user.vipLevel,
-          day: currentDay, // CHANGED 3: save day
+          day: currentDay,
           setNumber: currentSet,
           progress: progressLabelString,
           status: 'pending',
@@ -124,9 +123,11 @@ export async function POST(req) {
           taskCode: generateTaskCode()
         }
       })
-    ])
 
-    return NextResponse.json({ success: true, products: productsToAssign })
+      return await tx.user.findUnique({ where: { id: userId } }) // RETURN UPDATED USER
+    })
+
+    return NextResponse.json({ success: true, user: updatedUser }) // CHANGED: return user
   } catch (err) {
     console.error('[CRASH]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

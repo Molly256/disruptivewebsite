@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic'
 
 const VIP_CONFIG = {
  1: { tasksPerSet: 40, totalSets: 3, profit: 0.005 },
-  2: { tasksPerSet: 60, totalSets: 3, profit: 0.01 },
-  3: { tasksPerSet: 80, totalSets: 3, profit: 0.015 },
+ 2: { tasksPerSet: 60, totalSets: 3, profit: 0.01 },
+ 3: { tasksPerSet: 80, totalSets: 3, profit: 0.015 },
  4: { tasksPerSet: 100, totalSets: 3, profit: 0.02 },
-  5: { tasksPerSet: 120, totalSets: 3, profit: 0.025 },
+ 5: { tasksPerSet: 120, totalSets: 3, profit: 0.025 },
 }
 
 export async function POST(req) {
@@ -20,7 +20,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const userTaskProducts = typeof user.currentTaskProducts === 'string'
-    ? JSON.parse(user.currentTaskProducts || '[]')
+   ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (userTaskProducts.length === 0) {
@@ -29,9 +29,9 @@ export async function POST(req) {
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
 
-    // SILENT x10 LOGIC: Only if this task number is in x10TaskNumbers
+    // SILENT x10 LOGIC
     const x10List = typeof user.x10TaskNumbers === 'string'
-     ? JSON.parse(user.x10TaskNumbers || '[]')
+    ? JSON.parse(user.x10TaskNumbers || '[]')
       : (user.x10TaskNumbers || [])
     const isX10 = x10List.includes(Number(currentTaskNumber))
     const activeProfitRate = isX10? (config.profit * 10) : config.profit
@@ -49,21 +49,22 @@ export async function POST(req) {
       totalPrice += pPrice
       totalProfit += pProfit
 
+      const pid = ut.productId || ut.id || ut.photoId || 0 // FIX: fallback
+
       enrichedProducts.push({
-        productId: ut.id || ut.productId || ut.photoId,
+        productId: pid,
         taskOrder: ut.taskOrder || currentTaskNumber,
         price: pPrice,
-        name: ut.name || `Product ${ut.productId}`,
+        name: ut.name || `Product ${pid}`,
         profit: pProfit,
-        image: ut.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${ut.productId}.jpg`
+        image: ut.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${pid}.jpg` // FIX: use pid
       })
     })
 
     const totalReserve = parseFloat((totalPrice + totalProfit).toFixed(2))
 
-    // Hold amount to release
-    const rawDecrementValue = totalReserve >= (user.holdAmount || 0)? (user.holdAmount || 0) : totalReserve;
-    const cleanDecrementAmount = parseFloat(rawDecrementValue.toFixed(2));
+    // FIX: prevent negative hold
+    const decrementAmount = Math.min(totalReserve, parseFloat(user.holdAmount || 0))
 
     const activePendingTaskCard = await prisma.task.findFirst({
       where: {
@@ -74,24 +75,24 @@ export async function POST(req) {
       orderBy: { createdAt: 'desc' }
     })
 
-    const tx = [
-      prisma.user.update({
+    const completedArr = Array.isArray(user.completedProducts)? user.completedProducts : []
+
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
         where: { id: userId },
         data: {
           walletBalance: { increment: totalReserve },
-          holdAmount: { decrement: cleanDecrementAmount },
+          holdAmount: { decrement: decrementAmount },
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
           currentTaskProducts: "[]",
           activeProducts: "[]",
-          completedProducts: [...(Array.isArray(user.completedProducts)? user.completedProducts : []),...enrichedProducts],
+          completedProducts: [...completedArr,...enrichedProducts],
           taskCompleted: { increment: 1 }
         }
       })
-    ]
 
-    if (activePendingTaskCard) {
-      tx.push(
-        prisma.task.update({
+      if (activePendingTaskCard) {
+        await tx.task.update({
           where: { id: activePendingTaskCard.id },
           data: {
             status: 'completed',
@@ -99,25 +100,25 @@ export async function POST(req) {
             products: enrichedProducts
           }
         })
-      )
-    } else {
-      tx.push(prisma.task.create({
-        data: {
-          userId,
-          status: 'completed',
-          vipLevel: user.vipLevel,
-          setNumber: currentSet,
-          progress: `D${currentDay} S${currentSet} T${currentTaskNumber}/${config.tasksPerSet}`,
-          products: enrichedProducts,
-          taskCode: `T${Date.now()}${userId.slice(-4)}`,
-          completedAt: new Date()
-        }
-      }))
-    }
+      } else {
+        await tx.task.create({
+          data: {
+            userId,
+            status: 'completed',
+            vipLevel: user.vipLevel,
+            day: currentDay, // ADD: save day for records page
+            setNumber: currentSet,
+            progress: `D${currentDay} S${currentSet} T${currentTaskNumber}/${config.tasksPerSet}`,
+            products: enrichedProducts,
+            taskCode: `T${Date.now()}${userId.slice(-4)}`,
+            completedAt: new Date()
+          }
+        })
+      }
 
-    await prisma.$transaction(tx)
+      return await tx.user.findUnique({ where: { id: userId } })
+    })
 
-    const updatedUser = await prisma.user.findUnique({ where: { id: userId } })
     return NextResponse.json({ success: true, user: updatedUser })
   } catch (err) {
     console.error("Submission operational failure:", err)

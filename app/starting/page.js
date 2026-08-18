@@ -180,6 +180,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             const d = currentDay || 1
             const s = currentSet || 1
             const calculatedImgPath = `/vip${vipLevel || 1}/day${d}/set${s}/photo${itemId}.jpg`
+            const imgSrc = product.image || calculatedImgPath
 
             const baseRate = (Number(product.profitPercent) / 100) || 0.005
             const bonus = Number(product.bonusMultiplier) || 1
@@ -189,8 +190,9 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
               <div key={product.id || idx} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
 
                 <img
-                  src={product.image || calculatedImgPath}
-                  alt=""
+                  src={imgSrc}
+                  alt={product.name || 'product'}
+                  onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg' }}
                   style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12 }}
                 />
 
@@ -269,6 +271,7 @@ export default function StartingPage() {
   const [msg, setMsg] = useState('')
   const [showToast, setShowToast] = useState(false)
   const [setSize, setSetSize] = useState(3)
+  const [isStarting, setIsStarting] = useState(false)
 
   const setFinished = user? user.taskCompleted >= setSize : false
   const currentTaskNumber = (user?.tasksInCurrentSet || 0) + 1
@@ -330,9 +333,9 @@ export default function StartingPage() {
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
   const handleStart = async () => {
-    if (setFinished) { setMsg('Set completed. Contact Customer Service to reset.'); return }
+    if (setFinished || isStarting) { return }
 
-    if (typeof parsedTaskProducts!== 'undefined' && parsedTaskProducts.length > 0) {
+    if (parsedTaskProducts.length > 0) {
       setShowDetail(true)
       return
     }
@@ -346,16 +349,18 @@ export default function StartingPage() {
       return
     }
 
+    setIsStarting(true)
     setMsg('Starting...')
     const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
     const data = await res.json()
+    setIsStarting(false)
 
     if(res.ok && data.user) {
       localStorage.setItem('user', JSON.stringify(data.user))
       setUser(data.user)
 
       const freshProductsList = typeof data.user.currentTaskProducts === 'string'
-    ? JSON.parse(data.user.currentTaskProducts || '[]')
+   ? JSON.parse(data.user.currentTaskProducts || '[]')
         : (data.user.currentTaskProducts || [])
 
       // update set size after new task
@@ -495,8 +500,8 @@ export default function StartingPage() {
         </div>
 
         <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
-          <button onClick={handleStart} disabled={setFinished} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'not-allowed' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
-            {setFinished? 'Contact Customer Service to Reset' : `Starting (${currentTaskNumber} / ${setSize})`}
+          <button onClick={handleStart} disabled={setFinished || isStarting} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'not-allowed' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
+            {setFinished? 'Contact Customer Service to Reset' : isStarting? 'Starting...' : `Starting (${currentTaskNumber} / ${setSize})`}
           </button>
           {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
         </div>
