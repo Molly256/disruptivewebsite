@@ -52,27 +52,29 @@ export async function POST(req) {
         id: true, username: true, phone: true, countryName: true,
         countryCode: true, gender: true, inviteCode: true, createdAt: true,
         updatedAt: true, vipLevel: true, vipId: true, 
-        currentDay: true, currentSet: true,  // FIX: was day, setNumber
+        currentDay: true, currentSet: true,
         walletBalance: true, holdAmount: true, bonus: true, specialBonus: true,
-        taskCompleted: true, setsCompleted: true, totalTasks: true, activeProducts: true,
+        taskCompleted: true, // setsCompleted REMOVED
+        totalTasks: true, activeProducts: true,
         completedProducts: true, currentTaskProducts: true, mergedTasks: true,
         todayProfit: true, lastProfitReset: true, tasksInCurrentSet: true, 
         x10TaskNumbers: true, boundWallet: true,
       }
     })
 
-    // Add aliases so admin panel using day/setNumber won't break
+    // Add aliases so admin panel using day/setNumber/setsCompleted won't break
     return NextResponse.json({ 
       user: { 
         ...updatedUser, 
         day: updatedUser.currentDay, 
-        setNumber: updatedUser.currentSet 
+        setNumber: updatedUser.currentSet,
+        setsCompleted: 0 // default
       }, 
       message 
     })
 
   } catch (e) {
-    console.error('API /admin/user error:', e)
+    console.error('API /user error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

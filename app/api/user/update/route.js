@@ -42,12 +42,12 @@ export async function POST(req) {
       dataToUpdate.transactionPassword = newPass
       message = 'txPasswordUpdated'
 
-    } else if (type === 'boundWallet' || boundWallet) { // FIX: check type too
+    } else if (type === 'boundWallet' || boundWallet) {
       if(!boundWallet?.type || !boundWallet?.name || !boundWallet?.address) {
         return NextResponse.json({ error: 'All wallet fields required' }, { status: 400 })
       }
       dataToUpdate.boundWallet = {
-        ...(user.boundWallet || {}), // keep existing fields if any
+        ...(user.boundWallet || {}),
         ...boundWallet
       }
       message = 'walletBound'
@@ -68,14 +68,21 @@ export async function POST(req) {
         completedProducts: true, currentTaskProducts: true,
         todayProfit: true, lastProfitReset: true, tasksInCurrentSet: true, 
         x10TaskNumbers: true,
-        boundWallet: true, // return it
+        boundWallet: true,
       }
     })
 
-    return NextResponse.json({ user: updatedUser, message })
+    // add aliases
+    const userWithAlias = {
+      ...updatedUser,
+      day: updatedUser.currentDay,
+      setNumber: updatedUser.currentSet
+    }
+
+    return NextResponse.json({ user: userWithAlias, message })
 
   } catch (e) {
-    console.error('API /admin/user/update error:', e)
+    console.error('API /user/update error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

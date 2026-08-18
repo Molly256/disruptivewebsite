@@ -25,9 +25,9 @@ export async function GET(req) {
         gender: true, 
         vipLevel: true, 
         vipId: true,
-        currentDay: true,          // FIX: was day
-        currentSet: true,          // FIX: was setNumber
-        setsCompleted: true,
+        currentDay: true,          
+        currentSet: true,
+        // setsCompleted: true,  // REMOVED - doesn't exist on User model
         tasksInCurrentSet: true,
         taskCompleted: true, 
         totalTasks: true,
@@ -44,7 +44,8 @@ export async function GET(req) {
         createdAt: true,
         lastProfitReset: true,
         todayProfit: true,
-        x10TaskNumbers: true
+        x10TaskNumbers: true,
+        boundWallet: true
       }
     })
 
@@ -54,12 +55,13 @@ export async function GET(req) {
     const userWithAlias = {
       ...user,
       day: user.currentDay,       // alias for photo path
-      setNumber: user.currentSet  // alias for setSize
+      setNumber: user.currentSet, // alias for setSize
+      setsCompleted: 0            // add default so frontend doesn't crash
     }
 
     return NextResponse.json({ user: userWithAlias })
   } catch (e) {
-    console.error('API /admin/user/search error:', e)
+    console.error('API /user/search error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
