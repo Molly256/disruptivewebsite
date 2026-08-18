@@ -27,7 +27,6 @@ export async function GET(req) {
         vipId: true,
         currentDay: true,          
         currentSet: true,
-        // setsCompleted: true,  // REMOVED - doesn't exist on User model
         tasksInCurrentSet: true,
         taskCompleted: true, 
         totalTasks: true,
@@ -40,7 +39,7 @@ export async function GET(req) {
         currentTaskProducts: true,
         activeProducts: true,
         completedProducts: true,
-        mergedTasks: true,
+        // 🚀 REMOVED: mergedTasks: true (this line was causing the 500 error)
         createdAt: true,
         lastProfitReset: true,
         todayProfit: true,
