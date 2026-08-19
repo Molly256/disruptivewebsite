@@ -277,22 +277,36 @@ export default function StartingPage() {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [showToast, setShowToast] = useState(false)
-  const [setSize, setSetSize] = useState(3)
+  const [setSize, setSetSize] = useState(40) // Default fallback initialization state value
   const [isStarting, setIsStarting] = useState(false)
 
+  // 🎯 SPECIFICATION FIXED: Explicit Set Sizes Per VIP Tier
+  const VIP_TASKS_MAP = {
+    1: 40,  // VIP 1 shows 1/40
+    2: 45,  // VIP 2 shows 1/45
+    3: 50,  // VIP 3 shows 1/50
+    4: 55,  // VIP 4 shows 1/55
+    5: 60   // VIP 5 shows 1/60
+  }
 
-  // Determine active states safely from user payload snapshots
+  // Determine active VIP configuration metrics from user data payload
+  const currentVipLevel = Number(user?.vipLevel || 1)
+  const targetTotalTasks = VIP_TASKS_MAP[currentVipLevel] || 40
+
+  // Tracking task progression markers safely from database tracking columns
   const tasksDone = parseInt(user?.taskCompleted || 0)
   const currentSetTasksDone = parseInt(user?.tasksInCurrentSet || 0)
-  const setFinished = user ? currentSetTasksDone >= setSize : false
+  
+  // Set finish state conditional lock
+  const setFinished = user ? currentSetTasksDone >= targetTotalTasks : false
 
   // Parse active task products cleanly out of database tracking columns
   const parsedTaskProducts = user && user.currentTaskProducts
     ? (typeof user.currentTaskProducts === 'string' ? JSON.parse(user.currentTaskProducts || '[]') : user.currentTaskProducts)
     : []
 
-  // 💡 FIXED: If an active task is running, use its internal id directly so it never increments out of sync!
-  const currentTaskNumber = parsedTaskProducts.length > 0 && parsedTaskProducts[0].id
+  // Ensure current structural task indicator index calculations line up perfectly
+  const currentTaskNumber = parsedTaskProducts.length > 0 && parsedTaskProducts[0]?.id
     ? Number(parsedTaskProducts[0].id)
     : currentSetTasksDone + 1
 
