@@ -1,21 +1,34 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import fs from 'fs'
+import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
 const VIP_CONFIG = {
   1: { tasksPerSet: 40, totalSets: 3, profit: 0.005 },
- 2: { tasksPerSet: 60, totalSets: 3, profit: 0.01 },
+  2: { tasksPerSet: 60, totalSets: 3, profit: 0.01 },
   3: { tasksPerSet: 80, totalSets: 3, profit: 0.015 },
- 4: { tasksPerSet: 100, totalSets: 3, profit: 0.02 },
- 5: { tasksPerSet: 120, totalSets: 3, profit: 0.025 }
+  4: { tasksPerSet: 100, totalSets: 3, profit: 0.02 },
+  5: { tasksPerSet: 120, totalSets: 3, profit: 0.025 }
 }
 
-const loadSet = async (vip, day, set) => {
+const loadSet = (vip, day, set) => {
   try {
-    const mod = await import(`@/data/vip${vip}/day${day}/vip${vip}Set${set}.js`)
-    return mod.default || mod[`vip${vip}Set${set}`]
-  } catch {
+    const fileName = `vip${vip}Set${set}.js`
+    const filePath = path.join(process.cwd(), 'data', `vip${vip}/day${day}`, fileName)
+    
+    if (!fs.existsSync(filePath)) return null
+
+    const fileContent = fs.readFileSync(filePath, 'utf8')
+    const cleanJsonString = fileContent
+      .replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '')
+      .trim()
+      .replace(/;$/, '')
+      
+    return eval(cleanJsonString)
+  } catch (err) {
+    console.error("Failed parsing task data array string:", err)
     return null
   }
 }
@@ -37,7 +50,7 @@ export async function POST(req) {
     let currentProductsArray = []
     try {
       currentProductsArray = typeof user.currentTaskProducts === 'string'
-     ? JSON.parse(user.currentTaskProducts || '[]')
+        ? JSON.parse(user.currentTaskProducts || '[]')
         : (user.currentTaskProducts || [])
     } catch {
       currentProductsArray = []
@@ -47,10 +60,25 @@ export async function POST(req) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
-    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
+    // 💡 FIXED: Split Balance Verification Logic
+    const completedCount = Number(user.taskCompleted || 0)
+    const walletVal = parseFloat(user.walletBalance || 0)
 
-    const currentDay = user.currentDay || 1 // 1-5
-    const currentSet = user.currentSet || 1 // 1-3
+    if (completedCount === 0) {
+      // 🎯 RULE A: If a brand-new user has under $50, block them completely
+      if (walletVal < 50) {
+        return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
+      }
+    } else {
+      // 🎯 RULE B: If an old user is already in a negative debt loophole, force them to clear it first
+      if (walletVal < 0) {
+        return NextResponse.json({ error: 'Your balance is negative. Please settle your current deficit to continue.' }, { status: 400 })
+      }
+    }
+
+    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG
+    const currentDay = user.currentDay || 1 
+    const currentSet = user.currentSet || 1 
     let tasksInCurrentSet = user.tasksInCurrentSet || 0
 
     const userCurrentTaskNumber = tasksInCurrentSet + 1
@@ -59,8 +87,8 @@ export async function POST(req) {
       return NextResponse.json({ error: `Set ${currentSet} completed. Contact admin to open next set.` }, { status: 400 })
     }
 
-    const fileSet = await loadSet(user.vipLevel, currentDay, currentSet)
-    if (!fileSet) return NextResponse.json({ error: `Data missing: /data/vip${user.vipLevel}/day${currentDay}/vip${user.vipLevel}Set${currentSet}.js` }, { status: 400 })
+    const fileSet = loadSet(user.vipLevel, currentDay, currentSet)
+    if (!fileSet) return NextResponse.json({ error: `Data missing or invalid for VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
 
     const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
     if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
@@ -69,6 +97,10 @@ export async function POST(req) {
     const bonus = Number(normalProduct.bonusMultiplier) || 1
     const activeProfitRate = baseRate * bonus
 
+    const realImgPath = normalProduct.image && !normalProduct.image.includes('photo') && normalProduct.image !== `/photo${userCurrentTaskNumber}.jpg`
+      ? normalProduct.image
+      : `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`
+
     const productsToAssign = [{
       id: userCurrentTaskNumber,
       productId: userCurrentTaskNumber,
@@ -76,9 +108,9 @@ export async function POST(req) {
       name: normalProduct.name,
       price: parseFloat(normalProduct.price || 0),
       rating: normalProduct.rating || 5.0,
-      image: normalProduct.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`,
-      profitPercent: normalProduct.profitPercent || (baseRate * 100), // ADD
-      bonusMultiplier: bonus // ADD
+      image: realImgPath, 
+      profitPercent: normalProduct.profitPercent || (baseRate * 100), 
+      bonusMultiplier: bonus 
     }]
 
     const pPrice = parseFloat(productsToAssign[0].price || 0)
@@ -86,15 +118,13 @@ export async function POST(req) {
     const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
 
     const innerItemsSnapshot = [{
-     ...productsToAssign[0],
+      ...productsToAssign[0],
       profit: profitAmount,
       reserveAmount
     }]
 
-    if ((user.taskCompleted || 0) === 0 && parseFloat(user.walletBalance || 0) < 50) {
-      return NextResponse.json({ error: 'Balance below 50 unable to continue trading' }, { status: 400 })
-    }
-
+    // 🎯 EXECUTES NEGATIVE BALANCE TRANSITION DEDUCTION
+    // If an old user starts with $10 and the product is $40, this cleanly drops them to -$30.00 on disk!
     const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + reserveAmount).toFixed(2))
     const progressLabelString = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
@@ -124,10 +154,10 @@ export async function POST(req) {
         }
       })
 
-      return await tx.user.findUnique({ where: { id: userId } }) // RETURN UPDATED USER
+      return await tx.user.findUnique({ where: { id: userId } }) 
     })
 
-    return NextResponse.json({ success: true, user: updatedUser }) // CHANGED: return user
+    return NextResponse.json({ success: true, user: updatedUser }) 
   } catch (err) {
     console.error('[CRASH]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

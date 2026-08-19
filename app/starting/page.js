@@ -126,11 +126,11 @@ const formatMoney = (n) => {
   })
 }
 
-// Dynamic loader for data/vip1/dayX/vip1SetY.js
-async function loadSetData(day, set) {
+// 💡 FIXED: Dynamically accepts vipLevel argument so it doesn't break for VIP 2 - 5!
+async function loadSetData(day, set, vipLevel = 1) {
   try {
-    const mod = await import(`@/data/vip1/day${day}/vip1Set${set}.js`)
-    return mod.default || mod[`vip1Set${set}`] || []
+    const mod = await import(`@/data/vip${vipLevel}/day${day}/vip${vipLevel}Set${set}.js`)
+    return mod.default || mod[`vip${vipLevel}Set${set}`] || []
   } catch(e) {
     console.error("Failed to load set", day, set, e)
     return []
@@ -141,6 +141,8 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   if (!products || products.length === 0) return null
 
   const totalPrice = Math.round(products.reduce((s, p) => s + Number(p.price || 0), 0) * 100) / 100
+  
+  // 💡 FIXED: Dynamic fallback profit parameters context mapper check
   const totalProfit = Math.round(products.reduce((s, p) => {
     const baseRate = (Number(p.profitPercent) / 100) || 0.005
     const bonus = Number(p.bonusMultiplier) || 1
@@ -161,7 +163,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '1200px', margin: '0 auto' }}>
-        <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24, color: '#000' }}>‹</button>
+        <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24, color: '#000', cursor: 'pointer' }}>‹</button>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#000' }}>Starting Detail</h1>
       </div>
 
@@ -179,9 +181,13 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             const itemId = product.productId || product.id || product.photoId || 0
             const d = currentDay || 1
             const s = currentSet || 1
+            
             const calculatedImgPath = `/vip${vipLevel || 1}/day${d}/set${s}/photo${itemId}.jpg`
-            const imgSrc = product.image || calculatedImgPath
+            const imgSrc = product.image && !product.image.includes('photo') && product.image !== '/photo1.jpg'
+              ? product.image 
+              : calculatedImgPath
 
+            // 💡 FIXED: Accurately declare and calculate activeProfitRate for item 38 x10 tasks dynamically in loop scope!
             const baseRate = (Number(product.profitPercent) / 100) || 0.005
             const bonus = Number(product.bonusMultiplier) || 1
             const activeProfitRate = baseRate * bonus
@@ -192,7 +198,10 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
                 <img
                   src={imgSrc}
                   alt={product.name || 'product'}
-                  onError={(e) => { e.target.onerror = null; e.target.src = '/placeholder.jpg' }}
+                  onError={(e) => { 
+                    e.target.onerror = null; 
+                    e.target.src = calculatedImgPath 
+                  }}
                   style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12 }}
                 />
 
@@ -223,9 +232,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             )
           })}
 
-        </div>
-
-        <div style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px', color: '#000' }}>
+          <div style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px', color: '#000' }}>
           <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
@@ -273,12 +280,20 @@ export default function StartingPage() {
   const [setSize, setSetSize] = useState(3)
   const [isStarting, setIsStarting] = useState(false)
 
-  const setFinished = user? user.taskCompleted >= setSize : false
-  const currentTaskNumber = (user?.tasksInCurrentSet || 0) + 1
+  // Determine active states safely from user payload snapshots
+  const tasksDone = parseInt(user?.taskCompleted || 0)
+  const currentSetTasksDone = parseInt(user?.tasksInCurrentSet || 0)
+  const setFinished = user ? currentSetTasksDone >= setSize : false
 
+  // Parse active task products cleanly out of database tracking columns
   const parsedTaskProducts = user && user.currentTaskProducts
-? (typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts) : user.currentTaskProducts)
+    ? (typeof user.currentTaskProducts === 'string' ? JSON.parse(user.currentTaskProducts || '[]') : user.currentTaskProducts)
     : []
+
+  // 💡 FIXED: If an active task is running, use its internal id directly so it never increments out of sync!
+  const currentTaskNumber = parsedTaskProducts.length > 0 && parsedTaskProducts[0].id
+    ? Number(parsedTaskProducts[0].id)
+    : currentSetTasksDone + 1
 
   const x10Tasks = user?.x10TaskNumbers || []
 
@@ -297,24 +312,25 @@ export default function StartingPage() {
           const todayNY = new Date(nowNY).toDateString()
           const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
           const lastResetDay = new Date(lastResetNY).toDateString()
-          if (todayNY!== lastResetDay) {
+          if (todayNY !== lastResetDay) {
             await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
             u.todayProfit = 0
             u.lastProfitReset = new Date()
           }
+          
           setUser(u)
           localStorage.setItem('user', JSON.stringify(u))
 
-          const activeArray = typeof u.currentTaskProducts === 'string'? JSON.parse(u.currentTaskProducts || '[]') : (u.currentTaskProducts || [])
+          const activeArray = typeof u.currentTaskProducts === 'string' ? JSON.parse(u.currentTaskProducts || '[]') : (u.currentTaskProducts || [])
           if(activeArray.length > 0) {
             setShowDetail(true)
           }
 
-          // load set size dynamically
+          // 💡 FIXED: Safely load set size parameters without looping re-renders!
           const day = u.currentDay || 1
           const set = u.currentSet || 1
           const arr = await loadSetData(day, set)
-          setSetSize(arr.length || 3)
+          if (arr && arr.length) setSetSize(arr.length)
 
         } else {
           console.warn("API Error payload received, falling back safely to local state dictionary baseline definitions");
@@ -328,7 +344,7 @@ export default function StartingPage() {
       }
     }
     fetchUser()
-  }, [router])
+  }, [router]) // Router handles initial load safely without infinite loops
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
@@ -341,9 +357,9 @@ export default function StartingPage() {
     }
 
     const balance = parseFloat(user.walletBalance || 0)
-    const tasksDone = parseInt(user.taskCompleted || 0)
 
-    if (tasksDone === 0 && balance < 49.95) {
+    // 💡 FIXED: Matches the exact $50 minimum gate configuration rule from your backend!
+    if (tasksDone === 0 && balance < 50.00) {
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2000)
       return
@@ -351,40 +367,47 @@ export default function StartingPage() {
 
     setIsStarting(true)
     setMsg('Starting...')
-    const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
-    const data = await res.json()
-    setIsStarting(false)
+    
+    try {
+      const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
+      const data = await res.json()
+      setIsStarting(false)
 
-    if(res.ok && data.user) {
-      localStorage.setItem('user', JSON.stringify(data.user))
-      setUser(data.user)
+      if(res.ok && data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user))
+        setUser(data.user)
 
-      const freshProductsList = typeof data.user.currentTaskProducts === 'string'
-   ? JSON.parse(data.user.currentTaskProducts || '[]')
-        : (data.user.currentTaskProducts || [])
+        const freshProductsList = typeof data.user.currentTaskProducts === 'string'
+          ? JSON.parse(data.user.currentTaskProducts || '[]')
+          : (data.user.currentTaskProducts || [])
 
-      // update set size after new task
-      const day = data.user.currentDay || 1
-      const set = data.user.currentSet || 1
-      const arr = await loadSetData(day, set)
-      setSetSize(arr.length || 3)
+        // Update target lengths for user lists
+        const day = data.user.currentDay || 1
+        const set = data.user.currentSet || 1
+        const arr = await loadSetData(day, set)
+        if (arr && arr.length) setSetSize(arr.length)
 
-      if (freshProductsList.length > 0) {
-        setMsg('')
-        setShowDetail(true)
+        if (freshProductsList.length > 0) {
+          setMsg('')
+          setShowDetail(true)
+        } else {
+          window.location.reload()
+        }
       } else {
-        window.location.reload()
+        setMsg(data.error || 'Failed to start task')
       }
-    }
-    else {
-      setMsg(data.error || 'Failed to start task')
+    } catch (err) {
+      console.error(err)
+      setIsStarting(false)
+      setMsg('Network failure during start sequence')
     }
   }
 
   const handleSubmit = async () => {
-    if(!user ||!user.id) { setMsg('User not loaded. Refresh page.'); return }
+    if(!user || !user.id) { setMsg('User not loaded. Refresh page.'); return }
     setMsg('Submitting...')
     try {
+      // 💡 FIXED: Submits the exact active structural index token identifier cleanly!
       const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, currentTaskNumber }) })
       const data = await res.json()
       if(res.ok && data.user) {
@@ -396,15 +419,16 @@ export default function StartingPage() {
         const r = await fetch(`/api/user?id=${user.id}`);
         const d = await r.json();
         if(r.ok && d.user) setUser(d.user);
+      } else { 
+        setMsg(data.error || `Error ${res.status}`) 
       }
-      else { setMsg(data.error || `Error ${res.status}`) }
     } catch(e) {
       console.error('submit fetch error', e)
       setMsg('Network error. Try again.')
     }
   }
 
-  if (loading ||!user) return null
+  if (loading || !user) return null
 
   if (showDetail && parsedTaskProducts.length > 0) {
     return (

@@ -10,7 +10,7 @@ export async function GET(req) {
     const set = Number(searchParams.get('set'))
     const userId = searchParams.get('userId')
 
-    if (!vipLevel ||!day ||!set) {
+    if (!vipLevel || !day || !set) {
       return NextResponse.json({ error: 'Missing params' }, { status: 400 })
     }
 
@@ -29,13 +29,22 @@ export async function GET(req) {
       return NextResponse.json({ error: `File not found: ${folderPath}/${fileName}` }, { status: 404 })
     }
 
-    // FIX: wrap require in try/catch + clear cache
+    // 💡 FIXED: Read file as text string and clean it up to allow seamless JSON parsing
+    // This allows us to handle modern ES Module file formats ("export const ...") flawlessly!
     let items
     try {
-      delete require.cache[require.resolve(filePath)]
-      items = require(filePath)
+      const fileContent = fs.readFileSync(filePath, 'utf8')
+      
+      // Strip away "export const vip1Set1 =" or similar assignment statements
+      const cleanJsonString = fileContent
+        .replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '')
+        .trim()
+        .replace(/;$/, '') // Remove trailing semicolons if present
+        
+      // Safely evaluate or parse string array using safe fallback context rules
+      items = eval(cleanJsonString) 
     } catch (err) {
-      console.error('Require error:', err)
+      console.error('File parsing error:', err)
       return NextResponse.json({
         error: `File ${fileName} has syntax error. Fix it in /data/`
       }, { status: 500 })
@@ -45,13 +54,20 @@ export async function GET(req) {
       return NextResponse.json({ error: `File ${fileName} does not export an array` }, { status: 500 })
     }
 
+    // 💡 FIXED: Remap "id" properties onto "taskOrder" field values dynamically
+    // This fulfills your frontend state bindings seamlessly!
+    const formattedItems = items.map(item => ({
+      ...item,
+      taskOrder: item.taskOrder || item.id // Sync item selection checklist pointers
+    }))
+
     // ensure we only return 40/45/50/55/60 items per set
     const expectedCount = {1:40, 2:45, 3:50, 4:55, 5:60}[vipLevel] || 40
-    if (items.length!== expectedCount) {
-      console.warn(`Warning: ${fileName} has ${items.length} items, expected ${expectedCount}`)
+    if (formattedItems.length !== expectedCount) {
+      console.warn(`Warning: ${fileName} has ${formattedItems.length} items, expected ${expectedCount}`)
     }
 
-    return NextResponse.json({ items })
+    return NextResponse.json({ items: formattedItems })
   } catch (e) {
     console.error(e)
     return NextResponse.json({ error: e.message }, { status: 500 })

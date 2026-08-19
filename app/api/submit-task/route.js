@@ -20,7 +20,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const userTaskProducts = typeof user.currentTaskProducts === 'string'
-   ? JSON.parse(user.currentTaskProducts || '[]')
+      ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (userTaskProducts.length === 0) {
@@ -29,12 +29,11 @@ export async function POST(req) {
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
 
-    // SILENT x10 LOGIC
+    // SILENT x10 LOGIC (Database override check)
     const x10List = typeof user.x10TaskNumbers === 'string'
-    ? JSON.parse(user.x10TaskNumbers || '[]')
+      ? JSON.parse(user.x10TaskNumbers || '[]')
       : (user.x10TaskNumbers || [])
-    const isX10 = x10List.includes(Number(currentTaskNumber))
-    const activeProfitRate = isX10? (config.profit * 10) : config.profit
+    const isX10DatabaseOverride = x10List.includes(Number(currentTaskNumber))
 
     const currentDay = user.currentDay || 1
     const currentSet = user.currentSet || 1
@@ -45,22 +44,36 @@ export async function POST(req) {
 
     userTaskProducts.forEach(ut => {
       const pPrice = parseFloat(ut.price || 0)
+      
+      // 🎯 STEP 1: Determine the base profit percentage from your file structure
+      // Example: profitPercent: 0.5 becomes 0.005 (0.5 / 100). Fallback to config if omitted.
+      const fileProfitPercent = parseFloat(ut.profitPercent)
+      const baseRate = !isNaN(fileProfitPercent) ? (fileProfitPercent / 100) : config.profit
+
+      // 🎯 STEP 2: Handle the Multiplier cleanly
+      // Prioritizes your hardcoded file bonusMultiplier (e.g. 10). If the admin flagged it via DB, force 10.
+      const bonus = isX10DatabaseOverride ? 10 : (Number(ut.bonusMultiplier) || 1)
+
+      // 🎯 STEP 3: Pure calculation block ($50 * 0.005 * 10 = $2.50 profit)
+      const activeProfitRate = baseRate * bonus
       const pProfit = parseFloat((pPrice * activeProfitRate).toFixed(2))
+
       totalPrice += pPrice
       totalProfit += pProfit
 
-      const pid = ut.productId || ut.id || ut.photoId || 0 // FIX: fallback
+      const pid = ut.productId || ut.id || ut.photoId || 0 
 
       enrichedProducts.push({
         productId: pid,
-        taskOrder: ut.taskOrder || currentTaskNumber,
+        taskOrder: ut.taskOrder || currentTaskNumber || ut.id,
         price: pPrice,
         name: ut.name || `Product ${pid}`,
         profit: pProfit,
-        image: ut.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${pid}.jpg` // FIX: use pid
+        image: ut.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${pid}.jpg` 
       })
     })
 
+    // 🎯 STEP 4: Sum total financial execution values ($50 cost + $2.50 profit = $52.50)
     const totalReserve = parseFloat((totalPrice + totalProfit).toFixed(2))
 
     // FIX: prevent negative hold
@@ -81,12 +94,14 @@ export async function POST(req) {
       await tx.user.update({
         where: { id: userId },
         data: {
+          // 🚀 Increments the user wallet balance by the exact $52.50 payload total amount smoothly!
           walletBalance: { increment: totalReserve },
           holdAmount: { decrement: decrementAmount },
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
-          currentTaskProducts: "[]",
-          activeProducts: "[]",
-          completedProducts: [...completedArr,...enrichedProducts],
+          // 💡 FIXED: Uses clean native arrays [] instead of broken strings "[]" to satisfy PostgreSQL Json constraints!
+          currentTaskProducts: [],
+          activeProducts: [],
+          completedProducts: [...completedArr, ...enrichedProducts],
           taskCompleted: { increment: 1 }
         }
       })
@@ -106,7 +121,7 @@ export async function POST(req) {
             userId,
             status: 'completed',
             vipLevel: user.vipLevel,
-            day: currentDay, // ADD: save day for records page
+            day: currentDay, 
             setNumber: currentSet,
             progress: `D${currentDay} S${currentSet} T${currentTaskNumber}/${config.tasksPerSet}`,
             products: enrichedProducts,
