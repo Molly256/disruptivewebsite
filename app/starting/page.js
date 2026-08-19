@@ -263,12 +263,13 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
           {canSubmit ? 'Submit' : `Deposit $${formatMoney(shortfall)} First`}
         </button>
 
-      </div> {/* 💡 FIXED: This now properly closes your main inner container */}
-      <BottomNav />
-    </div>
-  )
+      </div> {/* 1. closes border div */}
+    </div> {/* 2. closes maxWidth 600px div */}
+  </div> {/* 3. closes main outer div */}
+  <BottomNav />
+</div>
+)
 }
-
 export default function StartingPage() {
   const router = useRouter()
   const [showDetail, setShowDetail] = useState(false)
