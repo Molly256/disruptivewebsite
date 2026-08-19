@@ -449,7 +449,7 @@ export default function StartingPage() {
 
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
 
-  return (
+   return (
     <>
       <AppHeader />
       {showToast && (
@@ -470,8 +470,7 @@ export default function StartingPage() {
           Balance below 50 unable to continue trading
         </div>
       )}
-
-      <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', background: '#F2F2F2', width: '100%' }}>
+       <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', background: '#F2F2F2', width: '100%' }}>
         <div className="marquee-container" style={{ margin: 0, padding: 0, background: '#cc0000', overflow: 'hidden' }}>
           <div className="marquee-content" style={{ display: 'flex', animation: 'scroll 600s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
             {allMessages.map((msg, i) => (
