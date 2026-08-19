@@ -418,22 +418,24 @@ export default function StartingPage() {
     }
   }
 
-  const handleSubmit = async () => {
+    const handleSubmit = async () => {
     if(!user || !user.id) { setMsg('User not loaded. Refresh page.'); return }
     setMsg('Submitting...')
     try {
-      // 💡 FIXED: Submits the exact active structural index token identifier cleanly!
-      const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, currentTaskNumber }) })
+      const res = await fetch('/api/submit-task', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ userId: user.id, currentTaskNumber }) 
+      })
       const data = await res.json()
+      
       if(res.ok && data.user) {
+        // 💡 FIXED: Use the fully fresh user object returned right from your submit-task route!
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
+        
         setShowDetail(false);
         setMsg('Task Completed! Payout Received');
-
-        const r = await fetch(`/api/user?id=${user.id}`);
-        const d = await r.json();
-        if(r.ok && d.user) setUser(d.user);
       } else { 
         setMsg(data.error || `Error ${res.status}`) 
       }
@@ -461,6 +463,7 @@ export default function StartingPage() {
       />
     )
   }
+
 
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
 
