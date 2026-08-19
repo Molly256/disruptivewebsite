@@ -5,12 +5,13 @@ import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
+// 🎯 SPECIFICATION FIXED: Mapped exactly to your set sizes (40, 45, 50, 55, 60)
 const VIP_CONFIG = {
   1: { tasksPerSet: 40, totalSets: 3, profit: 0.005 },
-  2: { tasksPerSet: 60, totalSets: 3, profit: 0.01 },
-  3: { tasksPerSet: 80, totalSets: 3, profit: 0.015 },
-  4: { tasksPerSet: 100, totalSets: 3, profit: 0.02 },
-  5: { tasksPerSet: 120, totalSets: 3, profit: 0.025 }
+  2: { tasksPerSet: 45, totalSets: 3, profit: 0.01 },
+  3: { tasksPerSet: 50, totalSets: 3, profit: 0.015 },
+  4: { tasksPerSet: 55, totalSets: 3, profit: 0.02 },
+  5: { tasksPerSet: 60, totalSets: 3, profit: 0.025 }
 }
 
 const loadSet = (vip, day, set) => {
@@ -60,23 +61,20 @@ export async function POST(req) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
-    // 💡 FIXED: Split Balance Verification Logic
     const completedCount = Number(user.taskCompleted || 0)
     const walletVal = parseFloat(user.walletBalance || 0)
 
     if (completedCount === 0) {
-      // 🎯 RULE A: If a brand-new user has under $50, block them completely
       if (walletVal < 50) {
         return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
       }
     } else {
-      // 🎯 RULE B: If an old user is already in a negative debt loophole, force them to clear it first
       if (walletVal < 0) {
         return NextResponse.json({ error: 'Your balance is negative. Please settle your current deficit to continue.' }, { status: 400 })
       }
     }
 
-    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG
+    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentDay = user.currentDay || 1 
     const currentSet = user.currentSet || 1 
     let tasksInCurrentSet = user.tasksInCurrentSet || 0
@@ -123,20 +121,19 @@ export async function POST(req) {
       reserveAmount
     }]
 
-    // 🎯 EXECUTES NEGATIVE BALANCE TRANSITION DEDUCTION
-    // If an old user starts with $10 and the product is $40, this cleanly drops them to -$30.00 on disk!
     const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + reserveAmount).toFixed(2))
     const progressLabelString = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
 
     const updatedUser = await prisma.$transaction(async (tx) => {
+      // 💡 FIXED: Explicit JSON conversion mapping ensures clean writing to disk fields
       await tx.user.update({
         where: { id: userId },
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
-          currentTaskProducts: innerItemsSnapshot,
-          activeProducts: innerItemsSnapshot,
+          currentTaskProducts: JSON.stringify(innerItemsSnapshot),
+          activeProducts: JSON.stringify(innerItemsSnapshot),
           tasksInCurrentSet: userCurrentTaskNumber
         }
       })
@@ -149,7 +146,7 @@ export async function POST(req) {
           setNumber: currentSet,
           progress: progressLabelString,
           status: 'pending',
-          products: innerItemsSnapshot,
+          products: JSON.stringify(innerItemsSnapshot), 
           taskCode: generateTaskCode()
         }
       })
@@ -159,7 +156,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, user: updatedUser }) 
   } catch (err) {
-    console.error('[CRASH]', err)
+    console.error('[START-TASK CRASH]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
