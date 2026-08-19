@@ -61,27 +61,29 @@ export async function POST(req) {
           loginPassword,
           transactionPassword,
           gender,
-          inviteCode: generateInviteCode(phone), // NOW = last6 + DI
-          referredBy: invitedBy, // WHO INVITED THEM
+          inviteCode: generateInviteCode(phone), 
+          referredBy: invitedBy, 
 
-          vipId: 1,
+          // 💡 FIXED: Scrubbed vipId and setsCompleted ghost columns
           vipLevel: 1,
-          setsCompleted: 0,        // FIXED: was setCompleted
-          tasksInCurrentSet: 0,    // FIXED: for 0/40 button
+          currentDay: 1,           // Added default initializer
+          currentSet: 1,           // Added default initializer
+          tasksInCurrentSet: 0,    
           taskCompleted: 0,
-          totalTasks: 40,          // ADDED: for display
+          totalTasks: 40,          
 
           walletBalance: 0,
           holdAmount: 0,
-          bonus: 0,
+          // 💡 FIXED: Scrubbed bonus ghost column
           specialBonus: 0,
           todayProfit: 0,
           lastProfitReset: new Date(),
           creditScore: 100,
 
-          currentTaskProducts: [],
-          activeProducts: [],
-          completedProducts: [],
+          // 💡 FIXED: Explicit JSON array baseline initialization formatting
+          currentTaskProducts: '[]',
+          activeProducts: '[]',
+          completedProducts: '[]',
           isAdmin: false
         }
       })
@@ -122,7 +124,8 @@ export async function POST(req) {
           phone: user.phone,
           gender: user.gender,
           vipLevel: user.vipLevel,
-          vipId: user.vipId,
+          currentDay: user.currentDay, // Send dynamic paths parameters
+          currentSet: user.currentSet, // Send dynamic paths parameters
           walletBalance: user.walletBalance,
           holdAmount: user.holdAmount,
           specialBonus: user.specialBonus,
@@ -130,9 +133,8 @@ export async function POST(req) {
           lastProfitReset: user.lastProfitReset,
           currentTaskProducts: user.currentTaskProducts,
           taskCompleted: user.taskCompleted,
-          tasksInCurrentSet: user.tasksInCurrentSet, // ADDED: for button
-          setsCompleted: user.setsCompleted,         // ADDED
-          totalTasks: user.totalTasks,               // ADDED
+          tasksInCurrentSet: user.tasksInCurrentSet, 
+          totalTasks: user.totalTasks,               
           inviteCode: user.inviteCode
         }
       })
