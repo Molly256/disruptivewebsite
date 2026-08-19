@@ -246,30 +246,32 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
           </div>
 
           <button
-            disabled={!canSubmit}
+                        disabled={!canSubmit}
             onClick={onSubmit}
             style={{
               width: '100%',
-              background: canSubmit? '#FF0000' : '#CCC',
+              background: canSubmit ? '#FF0000' : '#CCC',
               color: '#FFF',
               border: 'none',
               padding: '16px',
               borderRadius: '12px',
               fontWeight: '900',
-            fontSize: '16px',
-            cursor: canSubmit ? 'pointer' : 'not-allowed'
-          }}
-        >
-          {canSubmit ? 'Submit' : `Deposit $${formatMoney(shortfall)} First`}
-        </button>
+              fontSize: '16px',
+              cursor: canSubmit ? 'pointer' : 'not-allowed'
+            }}
+          >
+            {/* 💡 FIXED: Completely removed all fake flags, labels, and broken shortfall text! */}
+            {canSubmit ? 'Submit' : 'Locked - Balance Deficit'}
+          </button>
 
-      </div> {/* 1. closes border div */}
-    </div> {/* 2. closes maxWidth 600px div */}
-  </div> {/* 3. closes main outer div */}
-  <BottomNav />
-</div>
-)
+        </div> {/* 1. closes border div */}
+      </div> {/* 2. closes maxWidth 600px div */}
+    </div> {/* 3. closes main outer div */}
+    <BottomNav />
+  </div>
+  )
 }
+
 export default function StartingPage() {
   const router = useRouter()
   const [showDetail, setShowDetail] = useState(false)
@@ -311,6 +313,7 @@ export default function StartingPage() {
     : currentSetTasksDone + 1
 
   const x10Tasks = user?.x10TaskNumbers || []
+
 
     useEffect(() => {
     const fetchUser = async () => {
