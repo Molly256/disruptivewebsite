@@ -2,11 +2,12 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// 💡 FIXED: Added a GET handler to intercept and process ?id=... requests from the frontend!
+// 💡 FIXED: Handles standard query fetches gracefully to stop 405 rejections
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url)
-    const userId = searchParams.get('id')
+    // Checks for both ?id= and ?userId= parameter structures cleanly
+    const userId = searchParams.get('id') || searchParams.get('userId')
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID query parameter required' }, { status: 400 })
@@ -31,7 +32,6 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // Add required formatting aliases to match dashboard templates smoothly
     return NextResponse.json({ 
       success: true,
       user: { 
@@ -43,26 +43,43 @@ export async function GET(req) {
     })
 
   } catch (e) {
-    console.error('API /user GET error:', e)
+    console.error('API /user GET exception tracker:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
 
-// 🔒 PRESERVED: Your original POST password/txpassword handling security system continues exactly as before
+// 🔒 PRESERVED & STABILIZED: Your profile adjustment processing block
 export async function POST(req) {
   try {
-    const { userId, type, oldPass, newPass } = await req.json()
+    const rawData = await req.json()
+    const { userId, id, type, oldPass, newPass } = rawData
+    
+    // Fallback parsing strategy handles payload tokens in any format seamlessly
+    const activeId = userId || id
 
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID required' }, { status: 400 })
+    if (!activeId) {
+      return NextResponse.json({ error: 'Target account identifier string missing' }, { status: 400 })
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: String(userId) }
+      where: { id: String(activeId) }
     })
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    // 💡 INTERCEPT HOOK: If the frontend sends a general update fetch via POST instead of GET
+    if (!type) {
+      return NextResponse.json({
+        success: true,
+        user: {
+          ...user,
+          day: user.currentDay,
+          setNumber: user.currentSet,
+          setsCompleted: 0
+        }
+      })
     }
 
     let dataToUpdate = {}
@@ -89,11 +106,11 @@ export async function POST(req) {
       message = 'txPasswordUpdated'
 
     } else {
-      return NextResponse.json({ error: 'Invalid type' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid type operation parameter' }, { status: 400 })
     }
 
     const updatedUser = await prisma.user.update({
-      where: { id: String(userId) },
+      where: { id: String(activeId) },
       data: dataToUpdate,
       select: {
         id: true, username: true, phone: true, countryName: true,
@@ -101,8 +118,7 @@ export async function POST(req) {
         updatedAt: true, vipLevel: true, vipId: true, 
         currentDay: true, currentSet: true,
         walletBalance: true, holdAmount: true, bonus: true, specialBonus: true,
-        taskCompleted: true, 
-        totalTasks: true, activeProducts: true,
+        taskCompleted: true, totalTasks: true, activeProducts: true,
         completedProducts: true, currentTaskProducts: true, mergedTasks: true,
         todayProfit: true, lastProfitReset: true, tasksInCurrentSet: true, 
         x10TaskNumbers: true, boundWallet: true,
@@ -120,7 +136,7 @@ export async function POST(req) {
     })
 
   } catch (e) {
-    console.error('API /user POST error:', e)
+    console.error('API /user POST configuration failure:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
