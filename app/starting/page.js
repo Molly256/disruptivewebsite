@@ -256,15 +256,14 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
               padding: '16px',
               borderRadius: '12px',
               fontWeight: '900',
-              fontSize: '16px',
-              cursor: canSubmit? 'pointer' : 'not-allowed'
-            }}
-          >
-            {canSubmit? 'Submit' : `Deposit $${formatMoney(shortfall)} First`}
-          </button>
-        </div>
+            fontSize: '16px',
+            cursor: canSubmit ? 'pointer' : 'not-allowed'
+          }}
+        >
+          {canSubmit ? 'Submit' : `Deposit $${formatMoney(shortfall)} First`}
+        </button>
 
-      </div>
+      </div> {/* 💡 FIXED: This now properly closes your main inner container */}
       <BottomNav />
     </div>
   )
@@ -279,6 +278,7 @@ export default function StartingPage() {
   const [showToast, setShowToast] = useState(false)
   const [setSize, setSetSize] = useState(3)
   const [isStarting, setIsStarting] = useState(false)
+
 
   // Determine active states safely from user payload snapshots
   const tasksDone = parseInt(user?.taskCompleted || 0)
