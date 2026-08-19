@@ -151,9 +151,10 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   }, 0) * 100) / 100
   const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
 
-  const balanceAfter = Math.round((walletBalance - totalPrice) * 100) / 100 // CHANGED 1
-  const holdAfter = holdAmount + totalPrice // CHANGED 2
-  const canSubmit = balanceAfter >= 0 // CHANGED 3
+  const totalAvailable = walletBalance + holdAmount // ADDED
+  const balanceAfter = Math.round((totalAvailable - totalPrice) * 100) / 100 // FIXED
+  const holdAfter = holdAmount + totalPrice
+  const canSubmit = balanceAfter >= 0
 
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
