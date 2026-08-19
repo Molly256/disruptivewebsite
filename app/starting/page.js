@@ -151,10 +151,9 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   }, 0) * 100) / 100
   const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
 
-  const shortfall = totalPrice - walletBalance
-  const balanceAfter = walletBalance - totalPrice
-  const holdAfter = shortfall > 0? holdAmount + totalPrice : holdAmount
-  const canSubmit = shortfall <= 0
+  const balanceAfter = Math.round((walletBalance - totalPrice) * 100) / 100 // CHANGED 1
+  const holdAfter = holdAmount + totalPrice // CHANGED 2
+  const canSubmit = balanceAfter >= 0 // CHANGED 3
 
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
@@ -169,11 +168,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
 
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
 
-        {shortfall > 0 && (
-          <div style={{ background: '#FF0000', color: '#FFF', textAlign: 'center', padding: 10, borderRadius: 12, fontWeight: 800, margin: '16px 0' }}>
-            ⚠️ Insufficient Balance. Deposit ${formatMoney(shortfall)} to continue
-          </div>
-        )}
+        {/* BANNER REMOVED */}
 
         <div style={{ background: 'transparent', margin: '16px 0', borderRadius: 16, padding: '0' }}>
 
@@ -246,7 +241,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
           </div>
 
           <button
-                        disabled={!canSubmit}
+            disabled={!canSubmit}
             onClick={onSubmit}
             style={{
               width: '100%',
@@ -260,8 +255,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
               cursor: canSubmit ? 'pointer' : 'not-allowed'
             }}
           >
-            {/* 💡 FIXED: Completely removed all fake flags, labels, and broken shortfall text! */}
-            {canSubmit ? 'Submit' : 'Locked - Balance Deficit'}
+            Submit
           </button>
 
         </div> {/* 1. closes border div */}
@@ -271,7 +265,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   </div>
   )
 }
-
 export default function StartingPage() {
   const router = useRouter()
   const [showDetail, setShowDetail] = useState(false)
