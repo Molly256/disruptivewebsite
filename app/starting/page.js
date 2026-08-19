@@ -312,7 +312,7 @@ export default function StartingPage() {
 
   const x10Tasks = user?.x10TaskNumbers || []
 
-  useEffect(() => {
+    useEffect(() => {
     const fetchUser = async () => {
       const saved = localStorage.getItem('user')
       if(!saved) { router.push('/login'); return }
@@ -333,18 +333,19 @@ export default function StartingPage() {
             u.lastProfitReset = new Date()
           }
           
-          setUser(u)
+          // 💡 FIXED: Update your local storage string BEFORE shifting active component states
           localStorage.setItem('user', JSON.stringify(u))
+          setUser(u)
 
           const activeArray = typeof u.currentTaskProducts === 'string' ? JSON.parse(u.currentTaskProducts || '[]') : (u.currentTaskProducts || [])
           if(activeArray.length > 0) {
             setShowDetail(true)
           }
 
-          // 💡 FIXED: Safely load set size parameters without looping re-renders!
+          // 💡 FIXED: Included u.vipLevel argument so it fetches the correct task data sizes
           const day = u.currentDay || 1
           const set = u.currentSet || 1
-          const arr = await loadSetData(day, set)
+          const arr = await loadSetData(day, set, u.vipLevel)
           if (arr && arr.length) setSetSize(arr.length)
 
         } else {
@@ -358,6 +359,7 @@ export default function StartingPage() {
         setLoading(false)
       }
     }
+
     fetchUser()
   }, [router]) // Router handles initial load safely without infinite loops
 
