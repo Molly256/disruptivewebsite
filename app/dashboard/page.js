@@ -11,6 +11,8 @@ export default function Dashboard() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showDepositPopup, setShowDepositPopup] = useState(false)
+  // 🎯 STEP 1: Add a dedicated state hook for the post-login image popup card
+  const [showLoginPopup, setShowLoginPopup] = useState(false)
 
   useEffect(() => {
     const checkScreen = () => setIsDesktop(window.innerWidth >= 768)
@@ -26,20 +28,25 @@ export default function Dashboard() {
         }
 
         const localUser = JSON.parse(savedUser)
-        setUser(localUser) // show user immediately so no bounce
+        setUser(localUser) 
 
         // Call your existing /api/user?id= to get fresh data
         const res = await fetch(`/api/user?id=${localUser.id}`)
         const data = await res.json()
 
         if (res.ok && data.user) {
-          setUser(data.user) // update with fresh data
-          localStorage.setItem('user', JSON.stringify(data.user)) // update cache
+          setUser(data.user) 
+          localStorage.setItem('user', JSON.stringify(data.user)) 
+
+          // 🎯 STEP 2: Check the session flag immediately on fresh landing!
+          const hasJustLoggedIn = sessionStorage.getItem('showLoginNotice')
+          if (hasJustLoggedIn === 'true') {
+            setShowLoginPopup(true)
+            sessionStorage.removeItem('showLoginNotice') // Clear it out instantly so it won't loop on refresh
+          }
         }
-        // IMPORTANT: if API fails, we still keep localUser. No logout.
       } catch (e) {
         console.error(e)
-        // if network fails, still keep localUser
       } finally {
         setLoading(false)
       }
@@ -60,12 +67,12 @@ export default function Dashboard() {
     { name: 'About Us', emoji: 'ℹ️', url: '/about' }
   ]
 
-  // HARD LOCK: ONLY THIS ADMIN SEES THE BUTTON
   const isSuperAdmin = user?.username === 'Admin256' && user?.phone === '+256712345678'
 
   const adminButton = { name: 'Admin Panel', emoji: '👑', url: '/admin' }
   const clicks = isSuperAdmin? [adminButton,...baseClicks] : baseClicks
 
+  // 🎯 PRESERVED EXACTLY: Deposit button operates its own normal popup independently!
   const handleClick = (item) => {
     if (item.action === 'deposit') {
       setShowDepositPopup(true)
@@ -87,6 +94,88 @@ export default function Dashboard() {
 
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
+
+      {/* 🎯 STEP 3: LOGIN OVERLAY POPUP LAYER MODAL */}
+      {showLoginPopup && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 99999, // Floats safely over everything including headers
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#FFFFFF',
+            padding: '20px',
+            borderRadius: '16px',
+            position: 'relative',
+            width: '100%',
+            maxWidth: '380px',
+            textAlign: 'center',
+            boxShadow: '0 8px 30px rgba(0,0,0,0.3)'
+          }}>
+            
+            {/* ✕ TOP RIGHT EXIT ANCHOR */}
+            <button 
+              onClick={() => setShowLoginPopup(false)} 
+              style={{
+                position: 'absolute',
+                top: '12px',
+                right: '16px',
+                background: 'none',
+                border: 'none',
+                fontSize: '22px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                color: '#333',
+                lineHeight: 1
+              }}
+            >
+              ✕
+            </button>
+            
+            {/* PUBLIC/LOGIN.JPG IMAGE DISPLAY */}
+            <img 
+              src="/login.jpg" 
+              alt="Welcome Notice" 
+              onError={(e) => { e.target.src = '/placeholder.jpg' }}
+              style={{
+                width: '100%',
+                height: 'auto',
+                borderRadius: '12px',
+                marginTop: '15px',
+                marginBottom: '16px',
+                objectFit: 'contain',
+                maxHeight: '350px'
+              }} 
+            />
+            
+            {/* SOLID ACTION CLOSING BUTTON */}
+            <button 
+              onClick={() => setShowLoginPopup(false)} 
+              style={{
+                width: '100%',
+                padding: '12px 0',
+                background: '#FF0000',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '800',
+                fontSize: '15px',
+                cursor: 'pointer'
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes scroll {
