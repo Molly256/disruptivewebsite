@@ -97,7 +97,7 @@ export default function Dashboard() {
 
       {/* 🎯 STEP 3: LOGIN OVERLAY POPUP LAYER MODAL */}
             {/* 🎯 FIXED: RAW FLOATING IMAGE OVERLAY MODAL (WIDER ON DESKTOP & SOLE FLOATING ✕ CLOSE LOCK) */}
-            {/* 🎯 FIXED: RAW FLOATING IMAGE OVERLAY MODAL (GUARANTEED DESKTOP HEIGHT CONTROL) */}
+                  {/* 🎯 FIXED: FIXED-SIZE MOBILY IMAGE OVERLAY MODAL (GUARANTEED CLOSE ICON VISIBILITY) */}
       {showLoginPopup && (
         <div style={{
           position: 'fixed',
@@ -105,18 +105,18 @@ export default function Dashboard() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)', // Deep dark transparent background overlay
+          backgroundColor: 'rgba(0, 0, 0, 0.85)', // Deep dark background overlay
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 99999, // Floats safely over everything including headers
-          padding: '48px 16px 16px' // Added top padding gap to protect the close icon area
+          padding: '24px 16px 16px' // Added safe top padding
         }}>
           <div style={{
-            position: 'relative', // Lets us anchor the close icon perfectly on the raw image
-            // 💡 FIXED: Sets width to auto on desktop so the image shrinks to fit the height bounds perfectly
-            width: isDesktop ? 'auto' : '100%',
-            maxWidth: isDesktop ? '520px' : '360px', 
+            position: 'relative', // Anchors the close icon perfectly right above the raw image
+            width: '100%',
+            // 💡 FIXED: Locked strictly to mobile width on both phone and desktop to prevent stretching!
+            maxWidth: '340px', 
             background: 'transparent', 
             padding: 0,                
             margin: 0,
@@ -130,9 +130,9 @@ export default function Dashboard() {
               onClick={() => setShowLoginPopup(false)} 
               style={{
                 position: 'absolute',
-                top: '-42px', // Positioned neatly right above your raw graphic image asset
-                right: isDesktop ? '0px' : '4px', // Aligns flush with the asset frame boundary edges
-                background: 'rgba(0,0,0,0.6)', // Dark circle background so it stands out
+                top: '-46px', // Shifted up comfortably into the dark overlay area
+                right: '4px', // Aligns neatly with the image edge bounds
+                background: 'rgba(0,0,0,0.6)', // Dark circle background for high contrast
                 border: 'none',
                 width: '36px',
                 height: '36px',
@@ -160,22 +160,21 @@ export default function Dashboard() {
               alt="Welcome Notice" 
               onError={(e) => { e.target.src = '/placeholder.jpg' }}
               style={{
-                // 💡 FIXED: Dynamic proportion limits lock height to 75% of viewscreen to prevent overflow spikes!
-                width: isDesktop ? 'auto' : '100%',
+                width: '100%',
                 height: 'auto',
-                maxHeight: isDesktop ? '75vh' : '80vh', 
+                maxHeight: '70vh', // Clean height cap to stay perfectly centered vertically
                 objectFit: 'contain',
                 display: 'block',
                 margin: 0,
                 padding: 0,
-                borderRadius: '12px' // Subtle curve on the raw image corners
+                borderRadius: '12px' // Smooth matching corner curves
               }} 
             />
 
           </div>
         </div>
       )}
-       
+
         <style jsx>{`
         @keyframes scroll {
           0% { transform: translateX(100%); }
