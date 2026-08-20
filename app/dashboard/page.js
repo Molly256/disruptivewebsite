@@ -96,6 +96,7 @@ export default function Dashboard() {
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
 
       {/* 🎯 STEP 3: LOGIN OVERLAY POPUP LAYER MODAL */}
+            {/* 🎯 FIXED: RAW FLOATING IMAGE OVERLAY MODAL (WIDER ON DESKTOP & SOLE FLOATING ✕ CLOSE LOCK) */}
       {showLoginPopup && (
         <div style={{
           position: 'fixed',
@@ -103,44 +104,56 @@ export default function Dashboard() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          backgroundColor: 'rgba(0, 0, 0, 0.85)', // Deep dark transparent background overlay
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 99999, // Floats safely over everything including headers
-          padding: '20px'
+          padding: '16px'
         }}>
           <div style={{
-            background: '#FFFFFF',
-            padding: '20px',
-            borderRadius: '16px',
-            position: 'relative',
+            position: 'relative', // Lets us anchor the close icon perfectly on the raw image
             width: '100%',
-            maxWidth: '380px',
-            textAlign: 'center',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.3)'
+            // 💡 FIXED: Dynamically scales wider on desktop screens while staying mobile-responsive
+            maxWidth: isDesktop ? '520px' : '360px', 
+            background: 'transparent', 
+            padding: 0,                
+            margin: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
           }}>
             
-            {/* ✕ TOP RIGHT EXIT ANCHOR */}
+            {/* ✕ THE SOLE FLOATING CLOSE ANCHOR BUTTON */}
             <button 
               onClick={() => setShowLoginPopup(false)} 
               style={{
                 position: 'absolute',
-                top: '12px',
-                right: '16px',
-                background: 'none',
+                top: '-42px', // Positioned slightly higher to stay clean on wider desktop views
+                right: '4px',
+                background: 'rgba(0,0,0,0.6)', // Dark circle background so it stands out
                 border: 'none',
-                fontSize: '22px',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                fontSize: '20px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
-                color: '#333',
-                lineHeight: 1
+                color: '#FFFFFF', // Bright white close mark
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1,
+                zIndex: 2,
+                transition: 'background 0.2s'
               }}
+              onMouseEnter={(e) => e.target.style.background = 'rgba(0,0,0,0.8)'}
+              onMouseLeave={(e) => e.target.style.background = 'rgba(0,0,0,0.6)'}
             >
               ✕
             </button>
             
-            {/* PUBLIC/LOGIN.JPG IMAGE DISPLAY */}
+            {/* RAW IMAGE FROM PUBLIC/LOGIN.JPG RENDERING CLEANLY */}
             <img 
               src="/login.jpg" 
               alt="Welcome Notice" 
@@ -148,36 +161,21 @@ export default function Dashboard() {
               style={{
                 width: '100%',
                 height: 'auto',
-                borderRadius: '12px',
-                marginTop: '15px',
-                marginBottom: '16px',
                 objectFit: 'contain',
-                maxHeight: '350px'
+                maxHeight: '80vh', // Responsive cap on smaller vertical height viewports
+                display: 'block',
+                margin: 0,
+                padding: 0
               }} 
             />
             
-            {/* SOLID ACTION CLOSING BUTTON */}
-            <button 
-              onClick={() => setShowLoginPopup(false)} 
-              style={{
-                width: '100%',
-                padding: '12px 0',
-                background: '#FF0000',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '8px',
-                fontWeight: '800',
-                fontSize: '15px',
-                cursor: 'pointer'
-              }}
-            >
-              Close
-            </button>
+            {/* 💡 FIXED: Red close action button has been completely removed from this layout block */}
+
           </div>
         </div>
       )}
 
-      <style jsx>{`
+       <style jsx>{`
         @keyframes scroll {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
