@@ -97,6 +97,7 @@ export default function Dashboard() {
 
       {/* 🎯 STEP 3: LOGIN OVERLAY POPUP LAYER MODAL */}
             {/* 🎯 FIXED: RAW FLOATING IMAGE OVERLAY MODAL (WIDER ON DESKTOP & SOLE FLOATING ✕ CLOSE LOCK) */}
+            {/* 🎯 FIXED: RAW FLOATING IMAGE OVERLAY MODAL (GUARANTEED DESKTOP HEIGHT CONTROL) */}
       {showLoginPopup && (
         <div style={{
           position: 'fixed',
@@ -109,12 +110,12 @@ export default function Dashboard() {
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 99999, // Floats safely over everything including headers
-          padding: '16px'
+          padding: '48px 16px 16px' // Added top padding gap to protect the close icon area
         }}>
           <div style={{
             position: 'relative', // Lets us anchor the close icon perfectly on the raw image
-            width: '100%',
-            // 💡 FIXED: Dynamically scales wider on desktop screens while staying mobile-responsive
+            // 💡 FIXED: Sets width to auto on desktop so the image shrinks to fit the height bounds perfectly
+            width: isDesktop ? 'auto' : '100%',
             maxWidth: isDesktop ? '520px' : '360px', 
             background: 'transparent', 
             padding: 0,                
@@ -129,8 +130,8 @@ export default function Dashboard() {
               onClick={() => setShowLoginPopup(false)} 
               style={{
                 position: 'absolute',
-                top: '-42px', // Positioned slightly higher to stay clean on wider desktop views
-                right: '4px',
+                top: '-42px', // Positioned neatly right above your raw graphic image asset
+                right: isDesktop ? '0px' : '4px', // Aligns flush with the asset frame boundary edges
                 background: 'rgba(0,0,0,0.6)', // Dark circle background so it stands out
                 border: 'none',
                 width: '36px',
@@ -159,23 +160,23 @@ export default function Dashboard() {
               alt="Welcome Notice" 
               onError={(e) => { e.target.src = '/placeholder.jpg' }}
               style={{
-                width: '100%',
+                // 💡 FIXED: Dynamic proportion limits lock height to 75% of viewscreen to prevent overflow spikes!
+                width: isDesktop ? 'auto' : '100%',
                 height: 'auto',
+                maxHeight: isDesktop ? '75vh' : '80vh', 
                 objectFit: 'contain',
-                maxHeight: '80vh', // Responsive cap on smaller vertical height viewports
                 display: 'block',
                 margin: 0,
-                padding: 0
+                padding: 0,
+                borderRadius: '12px' // Subtle curve on the raw image corners
               }} 
             />
-            
-            {/* 💡 FIXED: Red close action button has been completely removed from this layout block */}
 
           </div>
         </div>
       )}
-
-       <style jsx>{`
+       
+        <style jsx>{`
         @keyframes scroll {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
