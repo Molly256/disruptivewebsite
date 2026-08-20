@@ -244,7 +244,7 @@ export default function Login() {
     })
     const data = await res.json()
     
-        if (res.ok) {
+    if (res.ok) {
       localStorage.setItem('user', JSON.stringify(data.user))
       
       // 🎯 FIXED: This tells your dashboard to show the /login.jpg popup immediately upon landing!
@@ -255,7 +255,9 @@ export default function Login() {
         window.location.href = '/dashboard' // Hard redirect so server sees cookie
       }, 1500)
     } else {
-
+      setError(data.error || 'Login failed') // ADDED THIS
+    }
+  } // ADDED THIS
 
   const inputStyle = {
     width: '100%',
