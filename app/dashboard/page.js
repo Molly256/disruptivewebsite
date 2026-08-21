@@ -96,7 +96,7 @@ export default function Dashboard() {
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
 
       {/* 🎯 STEP 3: LOGIN OVERLAY POPUP LAYER MODAL */}
-                 {/* 🎯 FIXED: DUAL-BEHAVIOR IMAGE OVERLAY MODAL (PHONE HAS ✕ OVERLAY | DESKTOP HAS RED CLOSE BUTTON) */}
+        {/* 🎯 FIXED: FULL-SCREEN DESKTOP COVERAGE WITH SMALL RED BUTTON | MOBILE PHONE UNTOUCHED */}
       {showLoginPopup && (
         <div style={{
           position: 'fixed',
@@ -104,24 +104,25 @@ export default function Dashboard() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.85)', // Deep dark background overlay
+          backgroundColor: 'rgba(0, 0, 0, 0.9)', // Solid dark background overlay for desktop focus
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 99999, // Floats safely over everything including headers
-          padding: isDesktop ? '20px' : '24px 16px 16px' 
+          padding: isDesktop ? '0' : '24px 16px 16px' 
         }}>
           <div style={{
             position: 'relative', 
-            width: '100%',
-            // 💡 FIXED: Wide on desktop, locked to 340px on mobile phones
-            maxWidth: isDesktop ? '600px' : '340px', 
+            // 💡 FIXED: Expands wide on desktop for full coverage, stays compact on phone
+            width: isDesktop ? '90vw' : '100%',
+            maxWidth: isDesktop ? '1000px' : '340px', 
             background: 'transparent', 
             padding: 0,                
             margin: 0,
             display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center'
+            alignItems: 'center',
+            justifyContent: 'center'
           }}>
             
             {/* ✕ THE SOLE FLOATING CLOSE ANCHOR BUTTON - PHONE ONLY */}
@@ -152,15 +153,16 @@ export default function Dashboard() {
               </button>
             )}
             
-            {/* RAW IMAGE FROM PUBLIC/LOGIN.JPG RENDERING CLEANLY */}
+            {/* RAW IMAGE FROM PUBLIC/LOGIN.JPG RENDERING WITH FULL DESKTOP SCALE */}
             <img 
               src="/login.jpg" 
               alt="Welcome Notice" 
               onError={(e) => { e.target.src = '/placeholder.jpg' }}
               style={{
-                width: '100%',
+                width: isDesktop ? 'auto' : '100%',
                 height: 'auto',
-                maxHeight: isDesktop ? '70vh' : '70vh', 
+                // 💡 FIXED: Large presentation coverage boundary line on desktop monitors
+                maxHeight: isDesktop ? '75vh' : '70vh', 
                 objectFit: 'contain',
                 display: 'block',
                 margin: 0,
@@ -174,16 +176,18 @@ export default function Dashboard() {
               <button 
                 onClick={() => setShowLoginPopup(false)} 
                 style={{
-                  width: '100%',
-                  padding: '14px 0',
+                  // 💡 FIXED: Stripped full-width. Set to a small, professional centered button size block
+                  width: '160px', 
+                  padding: '12px 0',
                   background: '#FF0000',
                   color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '8px',
                   fontWeight: '900',
-                  fontSize: '16px',
+                  fontSize: '15px',
                   cursor: 'pointer',
-                  marginTop: '16px'
+                  marginTop: '20px',
+                  boxShadow: '0 4px 12px rgba(255,0,0,0.3)'
                 }}
               >
                 Close
