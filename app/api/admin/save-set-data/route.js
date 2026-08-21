@@ -1,7 +1,4 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
-import { execSync } from 'child_process'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(req) {
@@ -9,65 +6,66 @@ export async function POST(req) {
     const body = await req.json()
     const { vipLevel, day, setNum, data, adminId } = body
 
+    // 1. Validate inputs
     if (!vipLevel || !day || !setNum || !data) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const v = Number(vipLevel), d = Number(day), s = Number(setNum)
     if (![1,2,3,4,5].includes(v) || d < 1 || d > 5 || s < 1 || s > 3) {
-      return NextResponse.json({ error: 'Invalid vipLevel, day, or setNum' }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid vipLevel, day, or setNum parameters' }, { status: 400 })
     }
     if (!Array.isArray(data)) {
-      return NextResponse.json({ error: 'data must be an array' }, { status: 400 })
+      return NextResponse.json({ error: 'Data must be an array matching task rows' }, { status: 400 })
     }
 
-    const fileName = `vip${v}Set${s}.js`
-    const folderPath = `vip${v}/day${d}`
-    
-    const dirPath = path.join(process.cwd(), 'data', folderPath)
-    const filePath = path.join(dirPath, fileName)
-
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true })
-    }
-
-    // 💡 FIX 1: Read existing data first so we don't accidentally delete unedited tasks!
-    let existingItems = []
-    if (fs.existsSync(filePath)) {
-      try {
-        const fileContent = fs.readFileSync(filePath, 'utf8')
-        const cleanJsonString = fileContent
-          .replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '')
-          .trim()
-          .replace(/;$/, '')
-        existingItems = eval(cleanJsonString)
-      } catch (err) {
-        console.warn('Failed to parse existing file layout, initializing empty fallback context', err)
+    // 2. 🎯 FIND THE TARGET USER WHO IS CURRENTLY ASSIGNED TO THIS SET LAYOUT
+    const targetUser = await prisma.user.findFirst({
+      where: {
+        vipLevel: v,
+        currentDay: d,
+        currentSet: s
       }
-    }
-
-    // 💡 FIX 2: Merge admin changes into the full array, remapping taskOrder back to id
-    const fullUpdatedDataset = existingItems.map(originalItem => {
-      // Look for a matching edited item sent by the frontend admin panel
-      const editedItem = data.find(edit => 
-        Number(edit.taskOrder) === Number(originalItem.id) || 
-        Number(edit.id) === Number(originalItem.id)
-      )
-
-      if (editedItem) {
-        return {
-          id: originalItem.id, // Keep native data model identifier key string
-          name: editedItem.name,
-          rating: editedItem.rating || originalItem.rating || 5.0,
-          price: parseFloat(editedItem.price),
-          image: editedItem.image || originalItem.image
-        }
-      }
-      return originalItem // Keep unedited items completely untouched
     })
 
-    // If the file was empty or didn't exist, map incoming items safely as a fallback
-    const finalItemsToSave = fullUpdatedDataset.length > 0 ? fullUpdatedDataset : data.map(item => ({
+    if (!targetUser) {
+      return NextResponse.json({ 
+        error: `No live user found currently matching VIP ${v}, Day ${d}, Set ${s}` 
+      }, { status: 404 })
+    }
+
+    // 3. 🎯 PARSE THEIR EXISTING JSON PRODUCTS ARRAY SAFELY OUT OF THE USER COLUMN
+    let activeTaskArray = []
+    try {
+      activeTaskArray = typeof targetUser.currentTaskProducts === 'string' 
+        ? JSON.parse(targetUser.currentTaskProducts) 
+        : (targetUser.currentTaskProducts || [])
+    } catch (parseErr) {
+      activeTaskArray = []
+    }
+
+    // 4. 🎯 MERGE YOUR ADMIN PANEL CHANGES INTO THE USER'S LIVE DATA INSTANTLY
+    const updatedTaskSnapshot = activeTaskArray.map((originalProduct) => {
+      // Look for a corresponding modified item matches sent from your active edit admin menu layout rows
+      const matchingAdminEditItem = data.find(edit => 
+        Number(edit.taskOrder) === Number(originalProduct.id) || 
+        Number(edit.id) === Number(originalProduct.id) ||
+        Number(edit.taskOrder) === Number(originalProduct.taskOrder)
+      )
+
+      if (matchingAdminEditItem) {
+        return {
+          ...originalProduct,
+          name: matchingAdminEditItem.name,
+          price: parseFloat(matchingAdminEditItem.price),
+          rating: parseFloat(matchingAdminEditItem.rating || originalProduct.rating || 5.0)
+        }
+      }
+      return originalProduct // Leave unedited product items completely untouched
+    })
+
+    // If their profile row arrays were empty, fall back directly onto remapped incoming template fields
+    const finalProductsJsonBlock = updatedTaskSnapshot.length > 0 ? updatedTaskSnapshot : data.map(item => ({
       id: item.id || item.taskOrder,
       name: item.name,
       rating: item.rating || 5.0,
@@ -75,38 +73,36 @@ export async function POST(req) {
       image: item.image
     }))
 
-    // 💡 FIX 3: Stringify using your exact variable naming assignment layout format
-    const variableName = `vip${v}Set${s}`
-    const fileContent = `export const ${variableName} = ${JSON.stringify(finalItemsToSave, null, 2)};\n`
-    fs.writeFileSync(filePath, fileContent, 'utf8')
+    // 5. 🎯 MUTATE THE USER ROW JSON WITH YOUR CHANGES (NO READ-ONLY FILE CRASHES)
+    await prisma.user.update({
+      where: { id: targetUser.id },
+      data: {
+        currentTaskProducts: finalProductsJsonBlock,
+        activeProducts: finalProductsJsonBlock // Sync active mirror copy seamlessly
+      }
+    })
 
-    // Git commit + push operations remain completely valid
-    try {
-      execSync(`git add "${filePath}"`)
-      execSync(`git commit -m "Admin ${adminId || 'System'}: Update ${folderPath}/${fileName}" --allow-empty`)
-      execSync(`git push`)
-      console.log('Git push success')
-    } catch (gitErr) {
-      console.error('Git error:', gitErr.message)
-    }
-
-    // 💡 FIX 4: Adjusted admin log database writing block to fit schema properties perfectly
+    // 6. Log the admin action to the logs model safely matching your schema definitions
     if (adminId) {
-      await prisma.adminLog.create({
-        data: {
-          adminId,
-          action: 'edit_tasks',
-          targetUserId: body.userId || null,
-          details: {
-            message: `Edited tasks for ${folderPath}/${fileName} - ${data.length} items modified`
+      try {
+        await prisma.adminLog.create({
+          data: {
+            adminId,
+            action: 'edit_tasks',
+            targetUserId: targetUser.id,
+            details: {
+              message: `Edited tasks inside user JSON array column for User: ${targetUser.username || targetUser.id}. ${data.length} fields overwrote.`
+            }
           }
-        }
-      })
+        })
+      } catch (logErr) {
+        console.warn('Optional admin log creation skipped:', logErr.message)
+      }
     }
 
-    return NextResponse.json({ success: true, message: 'File saved and pushed to git successfully' })
+    return NextResponse.json({ success: true, message: 'Task changes saved to database successfully!' })
   } catch (e) {
-    console.error('Save task endpoint breakdown:', e)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    console.error('Save task database transaction failure:', e)
+    return NextResponse.json({ error: e.message || 'Database write failed' }, { status: 500 })
   }
 }
