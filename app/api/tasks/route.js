@@ -23,7 +23,7 @@ export async function GET(req) {
     const currentDay = user.currentDay || 1
     const currentSet = user.currentSet || 1
 
-    // 1. Get active pending task for current Day + Set
+    // 1. Get active pending task row configuration for the current Day + Set session track
     const activeTasks = await prisma.task.findMany({
       where: {
         userId: userId,
@@ -36,46 +36,61 @@ export async function GET(req) {
 
     if (activeTasks.length > 0) {
       const firstActiveCard = activeTasks[0]
+      
+      // Parse active snapshots out of task JSON table fields safely without compiling gaps
       const productsArraySnapshot = typeof firstActiveCard.products === 'string'
-    ? JSON.parse(firstActiveCard.products || '[]')
+        ? JSON.parse(firstActiveCard.products || '[]')
         : (firstActiveCard.products || [])
+
+      // Remap image strings dynamically to verify that the frontend displays item assets properly
+      const patchedActiveProducts = productsArraySnapshot.map(p => {
+        const pid = p.taskOrder || p.productId || p.id || p.photoId || 1
+        return {
+          ...p,
+          id: pid,
+          taskOrder: pid,
+          image: p.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${pid}.jpg`
+        }
+      })
 
       return NextResponse.json({
         success: true,
         tasks: activeTasks,
         currentDay,
         currentSet,
-        products: productsArraySnapshot
+        products: patchedActiveProducts // Returns pristine image array snapshot paths
       })
     }
 
-    // 2. Fallback: Get all completed tasks for history
+    // 2. Fallback execution flow path: Return all completed task records for history log components
     const historicTasks = await prisma.task.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 50
     })
 
-    // FIX: Patch products in historic tasks to add image path using task.day and task.setNumber
+    // Patch product tracking configurations inside historic rows to preserve legacy rendering records
     const patchedTasks = historicTasks.map(t => {
-      const prods = typeof t.products === 'string'? JSON.parse(t.products || '[]') : (t.products || [])
+      const prods = typeof t.products === 'string' ? JSON.parse(t.products || '[]') : (t.products || [])
       const day = t.day || currentDay
       const set = t.setNumber || currentSet
 
       const patchedProds = prods.map(p => {
-        const pid = p.productId || p.id || p.photoId || 0
+        const pid = p.taskOrder || p.productId || p.id || p.photoId || 1
         return {
-         ...p,
+          ...p,
+          id: pid,
+          taskOrder: pid,
           image: p.image || `/vip${t.vipLevel}/day${day}/set${set}/photo${pid}.jpg`
         }
       })
 
-      return {...t, products: patchedProds }
+      return { ...t, products: patchedProds }
     })
 
     return NextResponse.json({
       success: true,
-      tasks: patchedTasks, // CHANGED: return patched
+      tasks: patchedTasks, 
       currentDay,
       currentSet
     })

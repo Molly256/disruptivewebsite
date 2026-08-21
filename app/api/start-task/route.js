@@ -5,7 +5,6 @@ import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
-// 🎯 SPECIFICATION FIXED: Mapped exactly to your set sizes (40, 45, 50, 55, 60)
 const VIP_CONFIG = {
   1: { tasksPerSet: 40, totalSets: 3, profit: 0.005 },
   2: { tasksPerSet: 45, totalSets: 3, profit: 0.01 },
@@ -79,6 +78,7 @@ export async function POST(req) {
     const currentSet = user.currentSet || 1 
     let tasksInCurrentSet = user.tasksInCurrentSet || 0
 
+    // 🎯 TRUE SEQUENTIAL PROGRESS NUMBER DEFINITION
     const userCurrentTaskNumber = tasksInCurrentSet + 1
 
     if (tasksInCurrentSet >= config.tasksPerSet) {
@@ -88,7 +88,7 @@ export async function POST(req) {
     const fileSet = loadSet(user.vipLevel, currentDay, currentSet)
     if (!fileSet) return NextResponse.json({ error: `Data missing or invalid for VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
 
-    const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber)
+    const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber || Number(p.taskOrder) === userCurrentTaskNumber)
     if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
 
     const baseRate = (Number(normalProduct.profitPercent) / 100) || config.profit
@@ -101,6 +101,7 @@ export async function POST(req) {
 
     const productsToAssign = [{
       id: userCurrentTaskNumber,
+      taskOrder: userCurrentTaskNumber,
       productId: userCurrentTaskNumber,
       photoId: userCurrentTaskNumber,
       name: normalProduct.name,
@@ -118,23 +119,24 @@ export async function POST(req) {
     const innerItemsSnapshot = [{
       ...productsToAssign[0],
       profit: profitAmount,
-      reserveAmount
+      reserveAmount: reserveAmount
     }]
 
+    // 🎯 EXACT MATH: Deducts task cost from wallet, moves total reserve (price + profit) into hold Amount
     const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + reserveAmount).toFixed(2))
+    
     const progressLabelString = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
 
     const updatedUser = await prisma.$transaction(async (tx) => {
-      // 💡 FIXED: Explicit JSON conversion mapping ensures clean writing to disk fields
       await tx.user.update({
         where: { id: userId },
         data: {
-          walletBalance: newWallet,
-          holdAmount: newHold,
-          currentTaskProducts: JSON.stringify(innerItemsSnapshot),
-          activeProducts: JSON.stringify(innerItemsSnapshot),
-          tasksInCurrentSet: userCurrentTaskNumber
+          walletBalance: newWallet, // Balance goes negative if task cost > balance
+          holdAmount: newHold,      // Money goes safely into hold fields
+          currentTaskProducts: innerItemsSnapshot,
+          activeProducts: innerItemsSnapshot
+          // 🎯 FIXED: tasksInCurrentSet REMOVED from here! We do not step count forward yet.
         }
       })
 
@@ -146,7 +148,7 @@ export async function POST(req) {
           setNumber: currentSet,
           progress: progressLabelString,
           status: 'pending',
-          products: JSON.stringify(innerItemsSnapshot), 
+          products: innerItemsSnapshot, 
           taskCode: generateTaskCode()
         }
       })

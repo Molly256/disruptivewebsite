@@ -152,9 +152,10 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
 
   const totalAvailable = walletBalance + holdAmount // ADDED
-  const balanceAfter = Math.round((totalAvailable - totalPrice) * 100) / 100 // FIXED
   const holdAfter = holdAmount + totalPrice
-  const canSubmit = balanceAfter >= 0
+  
+  // 🎯 CORE CONFIGURATION: Unlock submit ONLY when walletBalance reaches $0 or above
+  const canSubmit = walletBalance >= 0
 
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
@@ -234,10 +235,14 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
 
             <hr style={{margin: '8px 0', borderColor: '#EEE'}}/>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16, color: balanceAfter < 0? '#FF0000' : '#000' }}><span>BALANCE AFTER</span><span>{formatMoney(balanceAfter)} USD</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}><span>HOLD AMOUNT</span><span>{formatMoney(holdAfter)} USD</span></div>
+            {/* 🎯 FIXED: Label changed back to exact match BALANCE text token */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>BALANCE</span><span style={{ color: walletBalance < 0 ? '#FF0000' : '#00C853' }}>{walletBalance < 0 ? `-${formatMoney(Math.abs(walletBalance))}` : formatMoney(walletBalance)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
+            
+            {/* BALANCE AFTER FIELD REMOVED */}
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>HOLD AMOUNT</span><span>{formatMoney(holdAfter)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
           </div>
 

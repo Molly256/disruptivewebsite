@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
-// 🎯 SPECIFICATION FIXED: Aligned perfectly with your set boundaries (40, 45, 50, 55, 60)
 const VIP_CONFIG = {
   1: { tasksPerSet: 40, totalSets: 3, profit: 0.005 },
   2: { tasksPerSet: 45, totalSets: 3, profit: 0.01 },
@@ -18,7 +17,7 @@ export async function POST(req) {
     if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { where: { status: 404 } })
 
     const userTaskProducts = typeof user.currentTaskProducts === 'string'
       ? JSON.parse(user.currentTaskProducts || '[]')
@@ -68,7 +67,6 @@ export async function POST(req) {
     })
 
     const totalReserve = parseFloat((totalPrice + totalProfit).toFixed(2))
-    const decrementAmount = Math.min(totalReserve, parseFloat(user.holdAmount || 0))
 
     const activePendingTaskCard = await prisma.task.findFirst({
       where: {
@@ -88,18 +86,33 @@ export async function POST(req) {
 
     const updatedCompletedProducts = [...completedArr, ...enrichedProducts]
 
+    // Calculate progression markers cleanly
+    let tasksInCurrentSet = Number(user.tasksInCurrentSet || 0)
+    let nextTasksInCurrentSet = tasksInCurrentSet + 1
+    let nextSet = currentSet
+    
+    // 🎯 CYCLE FINISH ROUTINE CHECK: If user completes their final set boundaries, advance cleanly
+    if (nextTasksInCurrentSet >= config.tasksPerSet) {
+      nextTasksInCurrentSet = 0 // Reset progress to 0 for the fresh set loop step
+      nextSet = currentSet < config.totalSets ? currentSet + 1 : 1
+    }
+
     const updatedUser = await prisma.$transaction(async (tx) => {
-      // 💡 FIXED: Uses clean stringification serialization across all column rows to guarantee database compatibility
+      // 🎯 MATH MECHANIC: Moves exact funds out of hold right into the balance arrays seamlessly!
       await tx.user.update({
         where: { id: userId },
         data: {
           walletBalance: { increment: totalReserve },
-          holdAmount: { decrement: decrementAmount },
+          holdAmount: { decrement: totalReserve }, // Wipes out hold parameter weights smoothly
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
           currentTaskProducts: '[]',
           activeProducts: '[]',
           completedProducts: JSON.stringify(updatedCompletedProducts),
-          taskCompleted: { increment: 1 }
+          taskCompleted: { increment: 1 },
+          
+          // 🎯 FIXED: Sequential counters advance cleanly only after verification checks pass
+          tasksInCurrentSet: nextTasksInCurrentSet,
+          currentSet: nextSet
         }
       })
 
@@ -131,7 +144,6 @@ export async function POST(req) {
       return await tx.user.findUnique({ where: { id: userId } })
     })
 
-    // 💡 FIXED: Sends backend payload mapping variables cleanly so frontend state tracking re-renders perfectly!
     return NextResponse.json({ success: true, user: updatedUser })
   } catch (err) {
     console.error("Submission operational failure:", err)
