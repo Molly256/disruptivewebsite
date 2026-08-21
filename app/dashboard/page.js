@@ -114,8 +114,8 @@ export default function Dashboard() {
           <div style={{
             position: 'relative', 
             // 💡 FIXED: Expands wide on desktop for full coverage, stays compact on phone
-            width: isDesktop ? '90vw' : '100%',
-            maxWidth: isDesktop ? '1000px' : '340px', 
+            width: isDesktop ? '95vw' : '100%',
+            maxWidth: isDesktop ? '1200px' : '340px', 
             background: 'transparent', 
             padding: 0,                
             margin: 0,
@@ -159,9 +159,9 @@ export default function Dashboard() {
               alt="Welcome Notice" 
               onError={(e) => { e.target.src = '/placeholder.jpg' }}
               style={{
-                width: isDesktop ? 'auto' : '100%',
+                // 💡 FIXED: Changed from 'auto' to '100%' so desktop stretches it completely full screen wide!
+                width: '100%',
                 height: 'auto',
-                // 💡 FIXED: Large presentation coverage boundary line on desktop monitors
                 maxHeight: isDesktop ? '75vh' : '70vh', 
                 objectFit: 'contain',
                 display: 'block',
@@ -197,7 +197,8 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-        <style jsx>{`
+        
+         <style jsx>{`
         @keyframes scroll {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
