@@ -4,16 +4,16 @@ import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 
 const vipList = [
-  { id: 1, name: 'VIP1', price: 100, tasks: 40 }, // 40 per set
-  { id: 2, name: 'VIP2', price: 500, tasks: 45 }, // 45 per set
-  { id: 3, name: 'VIP3', price: 1600, tasks: 50 }, // 50 per set
-  { id: 4, name: 'VIP4', price: 5500, tasks: 55 }, // 55 per set
-  { id: 5, name: 'VIP5', price: 10000, tasks: 60 } // 60 per set
+  { id: 1, name: 'VIP1', price: 100, tasks: 40 },
+  { id: 2, name: 'VIP2', price: 500, tasks: 45 },
+  { id: 3, name: 'VIP3', price: 1600, tasks: 50 },
+  { id: 4, name: 'VIP4', price: 5500, tasks: 55 },
+  { id: 5, name: 'VIP5', price: 10000, tasks: 60 }
 ]
 
 export default function AdminPage() {
   const [tab, setTab] = useState('upgrade')
-  const [admin, setAdmin] = useState({}) // FIX: useState instead of direct localStorage
+  const [admin, setAdmin] = useState({})
 
   useEffect(() => {
     setAdmin(JSON.parse(localStorage.getItem('user') || '{}'))
@@ -23,15 +23,13 @@ export default function AdminPage() {
   const [resetSearch, setResetSearch] = useState(''); const [resetUser, setResetUser] = useState(null);
   const [passSearch, setPassSearch] = useState(''); const [passUser, setPassUser] = useState(null); const [showPassInput, setShowPassInput] = useState(false); const [newPass, setNewPass] = useState('');
 
-  // EDIT TASKS STATES - replaced merge
   const [editSearch, setEditSearch] = useState(''); const [editUser, setEditUser] = useState(null);
   const [activeEditSet, setActiveEditSet] = useState(null);
-  const [editSetData, setEditSetData] = useState([]); // holds data + photo
+  const [editSetData, setEditSetData] = useState([]);
   const [selectedEditItems, setSelectedEditItems] = useState([]);
   const [editingPhoto, setEditingPhoto] = useState(null)
   const [editData, setEditData] = useState({name:'', price:0})
 
-  // NEW: MANAGE PROGRESS STATES
   const [manageSearch, setManageSearch] = useState(''); const [manageUser, setManageUser] = useState(null);
 
   const [depositSearch, setDepositSearch] = useState(''); const [depositUser, setDepositUser] = useState(null); const [depositAmount, setDepositAmount] = useState(''); const [showDepositInput, setShowDepositInput] = useState(false);
@@ -46,10 +44,10 @@ export default function AdminPage() {
   useEffect(() => { if(tab === 'withdraw') fetchWithdraws() }, [tab])
   const fetchWithdraws = async () => { const res = await fetch('/api/admin/withdraw/list'); const data = await res.json(); setWithdrawList(data.transactions || []) }
 
-  const searchUser = async (q, setter, clearFn) => { // FIX: added clearFn
+  const searchUser = async (q, setter, clearFn) => {
     if(!q) return alert('Enter username or phone')
-    if(clearFn) clearFn() // FIX: clear old form when searching new user
-    const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`) // FIX: encode
+    if(clearFn) clearFn()
+    const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`)
     const data = await res.json()
     if(data.error) return alert(data.error)
     setter(data.user)
@@ -75,14 +73,14 @@ export default function AdminPage() {
     if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
   }
 
-  // NEW: Load set for editing
+  // FIXED: Load set - global file, no userId
   const loadEditSet = async (vipLevel, day, setNum) => {
     if(!editUser) return alert('No user selected')
     const vipData = vipList.find(v => v.id === vipLevel)
     if(!vipData) return alert(`VIP level ${vipLevel} not found`)
 
     try {
-      const res = await fetch(`/api/admin/get-set-data?vipLevel=${vipLevel}&day=${day}&set=${setNum}&userId=${editUser.id}`)
+      const res = await fetch(`/api/admin/get-set-data?vipLevel=${vipLevel}&day=${day}&set=${setNum}`)
       const data = await res.json()
       if(!res.ok) throw new Error(data.error)
       setEditSetData(data.items || [])
@@ -92,7 +90,7 @@ export default function AdminPage() {
     }
   }
 
-  // NEW: Save edited data to database
+  // FIXED: Save to FILE for ALL users - Option A
   const handleSaveEditedData = async () => {
     if(selectedEditItems.length === 0) return alert('Select items to save')
     const vipLevel = editUser.vipLevel
@@ -109,13 +107,12 @@ export default function AdminPage() {
         day,
         setNum,
         data: updatedItems,
-        adminId: admin.id,
-        targetUserId: editUser.id // 💡 FIXED: Sends the exact user ID so the database knows who to update!
+        adminId: admin.id
       })
     })
 
     if(res.ok) {
-      alert('Data Saved successfully to Database!')
+      alert(`File vip${vipLevel}Set${setNum}.js saved for ALL users! New price shows when user taps START.`)
       setSelectedEditItems([])
       loadEditSet(vipLevel, day, setNum)
     } else {
@@ -132,48 +129,39 @@ export default function AdminPage() {
     setEditingPhoto(null);
   }
 
-
-  // NEW: MANAGE PROGRESS FUNCTIONS
-const handleResetToNextSet = async () => {
-  if(!manageUser) return alert('Search user first')
-  if(manageUser.currentSet >= 3) return alert('Set 3 cannot be reset. Use Next Day')
-  
-  // 🎯 FIXED URL: Now points to your clean, flat renamed folder path!
-  const res = await fetch('/api/admin/reset-set-progress', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
-  })
-  const data = await res.json()
-  
-  if(res.ok && data.user) { 
-    setManageUser(data.user); 
-    alert(`Moved to Set ${data.user.currentSet}`) 
-  } else {
-    alert(data.error || 'Failed')
+  const handleResetToNextSet = async () => {
+    if(!manageUser) return alert('Search user first')
+    if(manageUser.currentSet >= 3) return alert('Set 3 cannot be reset. Use Next Day')
+    const res = await fetch('/api/admin/reset-set-progress', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
+    })
+    const data = await res.json()
+    if(res.ok && data.user) {
+      setManageUser(data.user);
+      alert(`Moved to Set ${data.user.currentSet}`)
+    } else {
+      alert(data.error || 'Failed')
+    }
   }
-}
 
-const handleNextDay = async () => {
-  if(!manageUser) return alert('Search user first')
-  if(manageUser.currentDay >= 5) return alert('Max Day 5 reached')
-  
-  // 🎯 VERIFIED URL: Matches your app/api/admin/next-day/progress/route.js folder structure exactly!
-  const res = await fetch('/api/admin/next-day/progress', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
-  })
-  const data = await res.json()
-  
-  if(res.ok && data.user) {
-    setManageUser(data.user);
-    alert(`Moved to Day ${data.user.currentDay} Set 1`)
-  } else {
-    alert(data.error || 'Failed')
+  const handleNextDay = async () => {
+    if(!manageUser) return alert('Search user first')
+    if(manageUser.currentDay >= 5) return alert('Max Day 5 reached')
+    const res = await fetch('/api/admin/next-day/progress', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
+    })
+    const data = await res.json()
+    if(res.ok && data.user) {
+      setManageUser(data.user);
+      alert(`Moved to Day ${data.user.currentDay} Set 1`)
+    } else {
+      alert(data.error || 'Failed')
+    }
   }
-}
-
 
 
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
