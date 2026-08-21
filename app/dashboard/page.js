@@ -96,7 +96,7 @@ export default function Dashboard() {
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
 
       {/* 🎯 STEP 3: LOGIN OVERLAY POPUP LAYER MODAL */}
-        {/* 🎯 FIXED: FULL-SCREEN DESKTOP COVERAGE WITH SMALL RED BUTTON | MOBILE PHONE UNTOUCHED */}
+      {/* 🎯 FIXED: HYDRATION-PROOF PURE CSS LAYOUT OVERRIDES */}
       {showLoginPopup && (
         <div style={{
           position: 'fixed',
@@ -104,99 +104,111 @@ export default function Dashboard() {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.9)', // Solid dark background overlay for desktop focus
+          backgroundColor: 'rgba(0, 0, 0, 0.9)', 
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          zIndex: 99999, // Floats safely over everything including headers
-          padding: isDesktop ? '0' : '24px 16px 16px' 
+          zIndex: 999999, 
+          padding: '16px'
         }}>
-          <div style={{
-            position: 'relative', 
-            // 💡 FIXED: Expands wide on desktop for full coverage, stays compact on phone
-            width: isDesktop ? '95vw' : '100%',
-            maxWidth: isDesktop ? '1200px' : '340px', 
-            background: 'transparent', 
-            padding: 0,                
-            margin: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          {/* 💡 FIXED: Direct browser styles that execute instantly without waiting for React state */}
+          <style jsx>{`
+            .popup-content-box {
+              position: relative;
+              display: flex;
+              flex-direction: column;
+              alignItems: center;
+              justify-content: center;
+              background: transparent;
+              width: 100%;
+              max-width: 340px; /* 📱 Mobile default layout size */
+            }
+            .popup-raw-img {
+              width: 100%;
+              height: auto;
+              max-height: 70vh;
+              object-fit: contain;
+              display: block;
+              border-radius: 12px;
+            }
+            .mobile-only-x { display: flex; }
+            .desktop-only-btn { display: none; }
+
+            /* 💻 DESKTOP MONITOR COVERAGE OVERRIDES (Overrides phone dimensions instantly) */
+            @media (min-width: 768px) {
+              .popup-content-box {
+                width: 95vw !important;
+                max-width: 1200px !important;
+              }
+              .popup-raw-img {
+                max-height: 75vh !important;
+              }
+              .mobile-only-x { display: none !important; }
+              .desktop-only-btn { display: block !important; }
+            }
+          `}</style>
+
+          <div className="popup-content-box">
             
-            {/* ✕ THE SOLE FLOATING CLOSE ANCHOR BUTTON - PHONE ONLY */}
-            {!isDesktop && (
-              <button 
-                onClick={() => setShowLoginPopup(false)} 
-                style={{
-                  position: 'absolute',
-                  top: '-46px', 
-                  right: '4px', 
-                  background: 'rgba(0,0,0,0.6)', 
-                  border: 'none',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  color: '#FFFFFF', 
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  lineHeight: 1,
-                  zIndex: 2
-                }}
-              >
-                ✕
-              </button>
-            )}
+            {/* ✕ PHONE-ONLY FLOATING CLOSE ANCHOR */}
+            <button 
+              onClick={() => setShowLoginPopup(false)} 
+              className="mobile-only-x"
+              style={{
+                position: 'absolute',
+                top: '-46px', 
+                right: '4px', 
+                background: 'rgba(0,0,0,0.6)', 
+                border: 'none',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                color: '#FFFFFF', 
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1,
+                zIndex: 2
+              }}
+            >
+              ✕
+            </button>
             
-            {/* RAW IMAGE FROM PUBLIC/LOGIN.JPG RENDERING WITH FULL DESKTOP SCALE */}
+            {/* RAW IMAGE FROM PUBLIC/LOGIN.JPG */}
             <img 
               src="/login.jpg" 
               alt="Welcome Notice" 
+              className="popup-raw-img"
               onError={(e) => { e.target.src = '/placeholder.jpg' }}
-              style={{
-                // 💡 FIXED: Changed from 'auto' to '100%' so desktop stretches it completely full screen wide!
-                width: '100%',
-                height: 'auto',
-                maxHeight: isDesktop ? '75vh' : '70vh', 
-                objectFit: 'contain',
-                display: 'block',
-                margin: 0,
-                padding: 0,
-                borderRadius: '12px' 
-              }} 
             />
 
-            {/* 🚨 SOLID RED ACTION CLOSING BUTTON - DESKTOP ONLY */}
-            {isDesktop && (
-              <button 
-                onClick={() => setShowLoginPopup(false)} 
-                style={{
-                  // 💡 FIXED: Stripped full-width. Set to a small, professional centered button size block
-                  width: '160px', 
-                  padding: '12px 0',
-                  background: '#FF0000',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: '900',
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  marginTop: '20px',
-                  boxShadow: '0 4px 12px rgba(255,0,0,0.3)'
-                }}
-              >
-                Close
-              </button>
-            )}
+            {/* 🚨 SMALL RED ACTION CLOSING BUTTON - DESKTOP ONLY */}
+            <button 
+              onClick={() => setShowLoginPopup(false)} 
+              className="desktop-only-btn"
+              style={{
+                width: '160px', 
+                padding: '12px 0',
+                background: '#FF0000',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '900',
+                fontSize: '15px',
+                cursor: 'pointer',
+                marginTop: '24px',
+                boxShadow: '0 4px 12px rgba(255,0,0,0.3)'
+              }}
+            >
+              Close
+            </button>
 
           </div>
         </div>
       )}
+
         
          <style jsx>{`
         @keyframes scroll {
