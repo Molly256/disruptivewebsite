@@ -96,8 +96,7 @@ export default function Dashboard() {
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
 
       {/* 🎯 STEP 3: LOGIN OVERLAY POPUP LAYER MODAL */}
-            {/* 🎯 FIXED: RAW FLOATING IMAGE OVERLAY MODAL (WIDER ON DESKTOP & SOLE FLOATING ✕ CLOSE LOCK) */}
-                  {/* 🎯 FIXED: FIXED-SIZE MOBILY IMAGE OVERLAY MODAL (GUARANTEED CLOSE ICON VISIBILITY) */}
+                 {/* 🎯 FIXED: DUAL-BEHAVIOR IMAGE OVERLAY MODAL (PHONE HAS ✕ OVERLAY | DESKTOP HAS RED CLOSE BUTTON) */}
       {showLoginPopup && (
         <div style={{
           position: 'fixed',
@@ -110,13 +109,13 @@ export default function Dashboard() {
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 99999, // Floats safely over everything including headers
-          padding: '24px 16px 16px' // Added safe top padding
+          padding: isDesktop ? '20px' : '24px 16px 16px' 
         }}>
           <div style={{
-            position: 'relative', // Anchors the close icon perfectly right above the raw image
+            position: 'relative', 
             width: '100%',
-            // 💡 FIXED: Locked strictly to mobile width on both phone and desktop to prevent stretching!
-            maxWidth: '340px', 
+            // 💡 FIXED: Wide on desktop, locked to 340px on mobile phones
+            maxWidth: isDesktop ? '600px' : '340px', 
             background: 'transparent', 
             padding: 0,                
             margin: 0,
@@ -125,34 +124,33 @@ export default function Dashboard() {
             alignItems: 'center'
           }}>
             
-            {/* ✕ THE SOLE FLOATING CLOSE ANCHOR BUTTON */}
-            <button 
-              onClick={() => setShowLoginPopup(false)} 
-              style={{
-                position: 'absolute',
-                top: '-46px', // Shifted up comfortably into the dark overlay area
-                right: '4px', // Aligns neatly with the image edge bounds
-                background: 'rgba(0,0,0,0.6)', // Dark circle background for high contrast
-                border: 'none',
-                width: '36px',
-                height: '36px',
-                borderRadius: '50%',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                color: '#FFFFFF', // Bright white close mark
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                lineHeight: 1,
-                zIndex: 2,
-                transition: 'background 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.background = 'rgba(0,0,0,0.8)'}
-              onMouseLeave={(e) => e.target.style.background = 'rgba(0,0,0,0.6)'}
-            >
-              ✕
-            </button>
+            {/* ✕ THE SOLE FLOATING CLOSE ANCHOR BUTTON - PHONE ONLY */}
+            {!isDesktop && (
+              <button 
+                onClick={() => setShowLoginPopup(false)} 
+                style={{
+                  position: 'absolute',
+                  top: '-46px', 
+                  right: '4px', 
+                  background: 'rgba(0,0,0,0.6)', 
+                  border: 'none',
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  color: '#FFFFFF', 
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  lineHeight: 1,
+                  zIndex: 2
+                }}
+              >
+                ✕
+              </button>
+            )}
             
             {/* RAW IMAGE FROM PUBLIC/LOGIN.JPG RENDERING CLEANLY */}
             <img 
@@ -162,19 +160,39 @@ export default function Dashboard() {
               style={{
                 width: '100%',
                 height: 'auto',
-                maxHeight: '70vh', // Clean height cap to stay perfectly centered vertically
+                maxHeight: isDesktop ? '70vh' : '70vh', 
                 objectFit: 'contain',
                 display: 'block',
                 margin: 0,
                 padding: 0,
-                borderRadius: '12px' // Smooth matching corner curves
+                borderRadius: '12px' 
               }} 
             />
+
+            {/* 🚨 SOLID RED ACTION CLOSING BUTTON - DESKTOP ONLY */}
+            {isDesktop && (
+              <button 
+                onClick={() => setShowLoginPopup(false)} 
+                style={{
+                  width: '100%',
+                  padding: '14px 0',
+                  background: '#FF0000',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontWeight: '900',
+                  fontSize: '16px',
+                  cursor: 'pointer',
+                  marginTop: '16px'
+                }}
+              >
+                Close
+              </button>
+            )}
 
           </div>
         </div>
       )}
-
         <style jsx>{`
         @keyframes scroll {
           0% { transform: translateX(100%); }
