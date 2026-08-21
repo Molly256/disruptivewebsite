@@ -92,7 +92,7 @@ export default function AdminPage() {
     }
   }
 
-  // NEW: Save edited data to file + git
+  // NEW: Save edited data to database
   const handleSaveEditedData = async () => {
     if(selectedEditItems.length === 0) return alert('Select items to save')
     const vipLevel = editUser.vipLevel
@@ -109,12 +109,13 @@ export default function AdminPage() {
         day,
         setNum,
         data: updatedItems,
-        adminId: admin.id
+        adminId: admin.id,
+        targetUserId: editUser.id // 💡 FIXED: Sends the exact user ID so the database knows who to update!
       })
     })
 
     if(res.ok) {
-      alert('Data Saved! File + Git updated.')
+      alert('Data Saved successfully to Database!')
       setSelectedEditItems([])
       loadEditSet(vipLevel, day, setNum)
     } else {
@@ -130,6 +131,7 @@ export default function AdminPage() {
     setSelectedEditItems(prev => prev.includes(editingPhoto.taskOrder)? prev : [...prev, editingPhoto.taskOrder]);
     setEditingPhoto(null);
   }
+
 
   // NEW: MANAGE PROGRESS FUNCTIONS
 const handleResetToNextSet = async () => {

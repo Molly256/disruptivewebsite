@@ -4,7 +4,11 @@ import { prisma } from '@/lib/prisma'
 export async function POST(req) {
   try {
     const body = await req.json()
-    const { vipLevel, day, setNum, data, adminId } = body
+    // 💡 FIXED: Read targetUserId directly from the payload sent by the admin front panel!
+    const { vipLevel, day, setNum, data, adminId, targetUserId, userId } = body
+    
+    // Fallback to check any potential field names sent by the client frontend layout
+    const activeUserId = targetUserId || userId || body.editUserId;
 
     // 1. Validate inputs
     if (!vipLevel || !day || !setNum || !data) {
@@ -19,18 +23,25 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Data must be an array matching task rows' }, { status: 400 })
     }
 
-    // 2. 🎯 FIND THE TARGET USER WHO IS CURRENTLY ASSIGNED TO THIS SET LAYOUT
-    const targetUser = await prisma.user.findFirst({
-      where: {
-        vipLevel: v,
-        currentDay: d,
-        currentSet: s
-      }
-    })
+    // 2. 🎯 FIXED: FIND THE EXACT USER SEARCHED BY THE ADMIN, NOT A RANDOM ONE!
+    let targetUser = null;
+    
+    if (activeUserId) {
+      targetUser = await prisma.user.findUnique({
+        where: { id: activeUserId }
+      })
+    }
+
+    // Ultimate fallback: If the front-end didn't send the ID yet, search cleanly by current tier tracking
+    if (!targetUser) {
+      targetUser = await prisma.user.findFirst({
+        where: { vipLevel: v, currentDay: d, currentSet: s }
+      })
+    }
 
     if (!targetUser) {
       return NextResponse.json({ 
-        error: `No live user found currently matching VIP ${v}, Day ${d}, Set ${s}` 
+        error: `Target user profile record could not be resolved inside database.` 
       }, { status: 404 })
     }
 
@@ -46,7 +57,6 @@ export async function POST(req) {
 
     // 4. 🎯 MERGE YOUR ADMIN PANEL CHANGES INTO THE USER'S LIVE DATA INSTANTLY
     const updatedTaskSnapshot = activeTaskArray.map((originalProduct) => {
-      // Look for a corresponding modified item matches sent from your active edit admin menu layout rows
       const matchingAdminEditItem = data.find(edit => 
         Number(edit.taskOrder) === Number(originalProduct.id) || 
         Number(edit.id) === Number(originalProduct.id) ||
@@ -54,31 +64,43 @@ export async function POST(req) {
       )
 
       if (matchingAdminEditItem) {
+        // Calculate dynamic profit matching your standard 10% rules if not explicit
+        const updatedPrice = parseFloat(matchingAdminEditItem.price)
+        const updatedProfit = matchingAdminEditItem.profit ? parseFloat(matchingAdminEditItem.profit) : (updatedPrice * 0.10)
+
         return {
           ...originalProduct,
           name: matchingAdminEditItem.name,
-          price: parseFloat(matchingAdminEditItem.price),
-          rating: parseFloat(matchingAdminEditItem.rating || originalProduct.rating || 5.0)
+          price: updatedPrice,
+          profit: updatedProfit,
+          rating: parseFloat(matchingAdminEditItem.rating || originalProduct.rating || 5.0),
+          image: originalProduct.image || `/vip${v}/day${d}/set${s}/photo${originalProduct.id || 1}.jpg`
         }
       }
-      return originalProduct // Leave unedited product items completely untouched
+      return originalProduct 
     })
 
-    // If their profile row arrays were empty, fall back directly onto remapped incoming template fields
-    const finalProductsJsonBlock = updatedTaskSnapshot.length > 0 ? updatedTaskSnapshot : data.map(item => ({
-      id: item.id || item.taskOrder,
-      name: item.name,
-      rating: item.rating || 5.0,
-      price: parseFloat(item.price),
-      image: item.image
-    }))
+    // If their profile row arrays were empty, populate them cleanly matching your system paths
+    const finalProductsJsonBlock = updatedTaskSnapshot.length > 0 ? updatedTaskSnapshot : data.map(item => {
+      const taskNum = item.taskOrder || item.id || 1
+      const itemPrice = parseFloat(item.price || 0)
+      return {
+        id: taskNum,
+        taskOrder: taskNum,
+        name: item.name,
+        rating: parseFloat(item.rating || 5.0),
+        price: itemPrice,
+        profit: parseFloat(item.profit || itemPrice * 0.10),
+        image: item.image || `/vip${v}/day${d}/set${s}/photo${taskNum}.jpg`
+      }
+    })
 
-    // 5. 🎯 MUTATE THE USER ROW JSON WITH YOUR CHANGES (NO READ-ONLY FILE CRASHES)
+    // 5. 🎯 MUTATE THE CORRECT USER ROW JSON WITH YOUR CHANGES
     await prisma.user.update({
       where: { id: targetUser.id },
       data: {
         currentTaskProducts: finalProductsJsonBlock,
-        activeProducts: finalProductsJsonBlock // Sync active mirror copy seamlessly
+        activeProducts: finalProductsJsonBlock 
       }
     })
 
