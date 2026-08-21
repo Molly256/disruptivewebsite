@@ -17,10 +17,10 @@ export async function POST(req) {
     if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
 
     const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user) return NextResponse.json({ error: 'User not found' }, { where: { status: 404 } })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const userTaskProducts = typeof user.currentTaskProducts === 'string'
-      ? JSON.parse(user.currentTaskProducts || '[]')
+     ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (userTaskProducts.length === 0) {
@@ -30,7 +30,7 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
 
     const x10List = typeof user.x10TaskNumbers === 'string'
-      ? JSON.parse(user.x10TaskNumbers || '[]')
+     ? JSON.parse(user.x10TaskNumbers || '[]')
       : (user.x10TaskNumbers || [])
     const isX10DatabaseOverride = x10List.includes(Number(currentTaskNumber))
 
@@ -43,74 +43,59 @@ export async function POST(req) {
 
     userTaskProducts.forEach(ut => {
       const pPrice = parseFloat(ut.price || 0)
-      
       const fileProfitPercent = parseFloat(ut.profitPercent)
-      const baseRate = !isNaN(fileProfitPercent) ? (fileProfitPercent / 100) : config.profit
-      const bonus = isX10DatabaseOverride ? 10 : (Number(ut.bonusMultiplier) || 1)
-
+      const baseRate =!isNaN(fileProfitPercent)? (fileProfitPercent / 100) : config.profit
+      const bonus = isX10DatabaseOverride? 10 : (Number(ut.bonusMultiplier) || 1)
       const activeProfitRate = baseRate * bonus
       const pProfit = parseFloat((pPrice * activeProfitRate).toFixed(2))
-
       totalPrice += pPrice
       totalProfit += pProfit
-
-      const pid = ut.productId || ut.id || ut.photoId || 0 
-
+      const pid = ut.productId || ut.id || ut.photoId || 0
       enrichedProducts.push({
         productId: pid,
         taskOrder: ut.taskOrder || currentTaskNumber || ut.id,
         price: pPrice,
         name: ut.name || `Product ${pid}`,
         profit: pProfit,
-        image: ut.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${pid}.jpg` 
+        image: ut.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${pid}.jpg`
       })
     })
 
-    const totalReserve = parseFloat((totalPrice + totalProfit).toFixed(2))
-
     const activePendingTaskCard = await prisma.task.findFirst({
-      where: {
-        userId: userId,
-        status: 'pending',
-        setNumber: currentSet
-      },
+      where: { userId: userId, status: 'pending', setNumber: currentSet },
       orderBy: { createdAt: 'desc' }
     })
 
     let completedArr = []
     if (user.completedProducts) {
-      completedArr = typeof user.completedProducts === 'string'
-        ? JSON.parse(user.completedProducts || '[]')
-        : user.completedProducts
+      completedArr = typeof user.completedProducts === 'string'? JSON.parse(user.completedProducts || '[]') : user.completedProducts
     }
+    const updatedCompletedProducts = [...completedArr,...enrichedProducts]
 
-    const updatedCompletedProducts = [...completedArr, ...enrichedProducts]
-
-    // Calculate progression markers cleanly
     let tasksInCurrentSet = Number(user.tasksInCurrentSet || 0)
     let nextTasksInCurrentSet = tasksInCurrentSet + 1
     let nextSet = currentSet
-    
-    // 🎯 CYCLE FINISH ROUTINE CHECK: If user completes their final set boundaries, advance cleanly
     if (nextTasksInCurrentSet >= config.tasksPerSet) {
-      nextTasksInCurrentSet = 0 // Reset progress to 0 for the fresh set loop step
-      nextSet = currentSet < config.totalSets ? currentSet + 1 : 1
+      nextTasksInCurrentSet = 0
+      nextSet = currentSet < config.totalSets? currentSet + 1 : 1
     }
 
+    // YOUR DEMAND: $90 task, $50 balance => -40 hold 90, deposit 40 => 0, submit => 90+profit, hold 0
+    const currentHold = parseFloat(user.holdAmount || 0) // 90
+    const currentWallet = parseFloat(user.walletBalance || 0) // 0 after deposit
+    const finalWallet = parseFloat((currentWallet + currentHold + totalProfit).toFixed(2)) // 0 + 90 + profit = 90+profit
+
     const updatedUser = await prisma.$transaction(async (tx) => {
-      // 🎯 MATH MECHANIC: Moves exact funds out of hold right into the balance arrays seamlessly!
       await tx.user.update({
         where: { id: userId },
         data: {
-          walletBalance: { increment: totalReserve },
-          holdAmount: { decrement: totalReserve }, // Wipes out hold parameter weights smoothly
+          walletBalance: finalWallet,
+          holdAmount: 0, // 0 immediately on submit
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
           currentTaskProducts: '[]',
           activeProducts: '[]',
           completedProducts: JSON.stringify(updatedCompletedProducts),
           taskCompleted: { increment: 1 },
-          
-          // 🎯 FIXED: Sequential counters advance cleanly only after verification checks pass
           tasksInCurrentSet: nextTasksInCurrentSet,
           currentSet: nextSet
         }
@@ -119,11 +104,7 @@ export async function POST(req) {
       if (activePendingTaskCard) {
         await tx.task.update({
           where: { id: activePendingTaskCard.id },
-          data: {
-            status: 'completed',
-            completedAt: new Date(),
-            products: JSON.stringify(enrichedProducts)
-          }
+          data: { status: 'completed', completedAt: new Date(), products: JSON.stringify(enrichedProducts) }
         })
       } else {
         await tx.task.create({
@@ -131,7 +112,7 @@ export async function POST(req) {
             userId,
             status: 'completed',
             vipLevel: user.vipLevel,
-            day: currentDay, 
+            day: currentDay,
             setNumber: currentSet,
             progress: `D${currentDay} S${currentSet} T${currentTaskNumber}/${config.tasksPerSet}`,
             products: JSON.stringify(enrichedProducts),
@@ -140,7 +121,6 @@ export async function POST(req) {
           }
         })
       }
-
       return await tx.user.findUnique({ where: { id: userId } })
     })
 

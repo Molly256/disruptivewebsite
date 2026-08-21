@@ -151,10 +151,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   }, 0) * 100) / 100
   const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
 
-  const totalAvailable = walletBalance + holdAmount // ADDED
-  const holdAfter = holdAmount + totalPrice
-  
-  // 🎯 CORE CONFIGURATION: Unlock submit ONLY when walletBalance reaches $0 or above
+  const holdAfter = holdAmount
   const canSubmit = walletBalance >= 0
 
   const productSignature = products.map(p => p.productId || p.id).join('-')
@@ -235,13 +232,9 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
 
             <hr style={{margin: '8px 0', borderColor: '#EEE'}}/>
-            {/* 🎯 FIXED: Label changed back to exact match BALANCE text token */}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>BALANCE</span><span style={{ color: walletBalance < 0 ? '#FF0000' : '#00C853' }}>{walletBalance < 0 ? `-${formatMoney(Math.abs(walletBalance))}` : formatMoney(walletBalance)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
-            
-            {/* BALANCE AFTER FIELD REMOVED */}
-            
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>HOLD AMOUNT</span><span>{formatMoney(holdAfter)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
           </div>
@@ -264,9 +257,9 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             Submit
           </button>
 
-        </div> {/* 1. closes border div */}
-      </div> {/* 2. closes maxWidth 600px div */}
-    </div> {/* 3. closes main outer div */}
+        </div>
+      </div>
+    </div>
     <BottomNav />
   </div>
   )

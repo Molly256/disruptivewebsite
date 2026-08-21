@@ -17,15 +17,9 @@ const loadSet = (vip, day, set) => {
   try {
     const fileName = `vip${vip}Set${set}.js`
     const filePath = path.join(process.cwd(), 'data', `vip${vip}/day${day}`, fileName)
-    
     if (!fs.existsSync(filePath)) return null
-
     const fileContent = fs.readFileSync(filePath, 'utf8')
-    const cleanJsonString = fileContent
-      .replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '')
-      .trim()
-      .replace(/;$/, '')
-      
+    const cleanJsonString = fileContent.replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '').trim().replace(/;$/, '')
     return eval(cleanJsonString)
   } catch (err) {
     console.error("Failed parsing task data array string:", err)
@@ -49,9 +43,7 @@ export async function POST(req) {
 
     let currentProductsArray = []
     try {
-      currentProductsArray = typeof user.currentTaskProducts === 'string'
-        ? JSON.parse(user.currentTaskProducts || '[]')
-        : (user.currentTaskProducts || [])
+      currentProductsArray = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts || '[]') : (user.currentTaskProducts || [])
     } catch {
       currentProductsArray = []
     }
@@ -67,18 +59,19 @@ export async function POST(req) {
       if (walletVal < 50) {
         return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
       }
-    } else {
-      if (walletVal < 0) {
-        return NextResponse.json({ error: 'Your balance is negative. Please settle your current deficit to continue.' }, { status: 400 })
-      }
+    }
+    // FIXED: Removed the walletVal < 0 block that stuck you on 1 task.
+    // Allow starting with negative? No, block NEXT start if still negative, but check happens AFTER current task is pending.
+    // Since we already checked active task above, this check is for next task. Keep it but it should block START, not DETAIL.
+    // If you WANT to allow starting next task even while negative to create demand chain, delete this whole block.
+    if (completedCount > 0 && walletVal < 0) {
+      return NextResponse.json({ error: 'Your balance is negative. Please deposit to continue.' }, { status: 400 })
     }
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
-    const currentDay = user.currentDay || 1 
-    const currentSet = user.currentSet || 1 
+    const currentDay = user.currentDay || 1
+    const currentSet = user.currentSet || 1
     let tasksInCurrentSet = user.tasksInCurrentSet || 0
-
-    // 🎯 TRUE SEQUENTIAL PROGRESS NUMBER DEFINITION
     const userCurrentTaskNumber = tasksInCurrentSet + 1
 
     if (tasksInCurrentSet >= config.tasksPerSet) {
@@ -95,8 +88,8 @@ export async function POST(req) {
     const bonus = Number(normalProduct.bonusMultiplier) || 1
     const activeProfitRate = baseRate * bonus
 
-    const realImgPath = normalProduct.image && !normalProduct.image.includes('photo') && normalProduct.image !== `/photo${userCurrentTaskNumber}.jpg`
-      ? normalProduct.image
+    const realImgPath = normalProduct.image &&!normalProduct.image.includes('photo') && normalProduct.image!== `/photo${userCurrentTaskNumber}.jpg`
+     ? normalProduct.image
       : `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`
 
     const productsToAssign = [{
@@ -107,9 +100,9 @@ export async function POST(req) {
       name: normalProduct.name,
       price: parseFloat(normalProduct.price || 0),
       rating: normalProduct.rating || 5.0,
-      image: realImgPath, 
-      profitPercent: normalProduct.profitPercent || (baseRate * 100), 
-      bonusMultiplier: bonus 
+      image: realImgPath,
+      profitPercent: normalProduct.profitPercent || (baseRate * 100),
+      bonusMultiplier: bonus
     }]
 
     const pPrice = parseFloat(productsToAssign[0].price || 0)
@@ -117,26 +110,25 @@ export async function POST(req) {
     const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
 
     const innerItemsSnapshot = [{
-      ...productsToAssign[0],
+     ...productsToAssign[0],
       profit: profitAmount,
       reserveAmount: reserveAmount
     }]
 
-    // 🎯 EXACT MATH: Deducts task cost from wallet, moves total reserve (price + profit) into hold Amount
-    const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
-    const newHold = parseFloat((user.holdAmount + reserveAmount).toFixed(2))
-    
+    // FIXED: Hold holds PRICE ONLY, not reserve. Wallet goes negative for demand.
+    const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2)) // 50 - 90 = -40
+    const newHold = parseFloat((user.holdAmount + pPrice).toFixed(2)) // 0 + 90 = 90 (price only)
+
     const progressLabelString = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
 
     const updatedUser = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: {
-          walletBalance: newWallet, // Balance goes negative if task cost > balance
-          holdAmount: newHold,      // Money goes safely into hold fields
+          walletBalance: newWallet,
+          holdAmount: newHold,
           currentTaskProducts: innerItemsSnapshot,
           activeProducts: innerItemsSnapshot
-          // 🎯 FIXED: tasksInCurrentSet REMOVED from here! We do not step count forward yet.
         }
       })
 
@@ -148,15 +140,15 @@ export async function POST(req) {
           setNumber: currentSet,
           progress: progressLabelString,
           status: 'pending',
-          products: innerItemsSnapshot, 
+          products: innerItemsSnapshot,
           taskCode: generateTaskCode()
         }
       })
 
-      return await tx.user.findUnique({ where: { id: userId } }) 
+      return await tx.user.findUnique({ where: { id: userId } })
     })
 
-    return NextResponse.json({ success: true, user: updatedUser }) 
+    return NextResponse.json({ success: true, user: updatedUser })
   } catch (err) {
     console.error('[START-TASK CRASH]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
