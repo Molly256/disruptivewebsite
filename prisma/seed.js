@@ -33,6 +33,7 @@ async function main() {
       todayProfit: 0,
       lastProfitReset: new Date(),
       creditScore: 100,
+      isRiskControlled: false,
 
       // BIND WALLET
       boundWallet: null,
@@ -71,6 +72,7 @@ async function main() {
       todayProfit: 0,
       lastProfitReset: new Date(),
       creditScore: 100,
+      isRiskControlled: false,
 
       boundWallet: null,
 

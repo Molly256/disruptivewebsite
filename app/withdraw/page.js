@@ -10,9 +10,8 @@ export default function WithdrawPage() {
   const [user, setUser] = useState(null)
   const [msg, setMsg] = useState('')
   const [showHistory, setShowHistory] = useState(false)
-  const [activeTab, setActiveTab] = useState('reviewing') // reviewing | success | reject
+  const [activeTab, setActiveTab] = useState('reviewing')
   const [transactions, setTransactions] = useState([])
-
   const [withdrawAmount, setWithdrawAmount] = useState('0')
   const [txPassConfirm, setTxPassConfirm] = useState('')
 
@@ -36,14 +35,40 @@ export default function WithdrawPage() {
     } catch(e) { console.error(e) }
   }
 
+  const showBlackToast = (text) => {
+    const toast = document.createElement('div')
+    toast.innerText = text
+    toast.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:14px 22px;border-radius:10px;z-index:99999;font-size:13px;max-width:90vw;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.3)'
+    document.body.appendChild(toast)
+    setTimeout(()=>toast.remove(), 4000)
+  }
+
   const handleWithdraw = async () => {
     setMsg('')
+
+    // === RISK CONTROL CHECK - NEW ===
+    try{
+      const riskRes = await fetch('/api/withdraw/check', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ userId: user.id })
+      })
+      const riskData = await riskRes.json()
+      if(riskData.blocked){
+        showBlackToast(riskData.message || 'Your account is under risk control please go to customer service now.')
+        return
+      }
+    }catch(e){
+      console.error('risk check failed', e)
+    }
+    // === END RISK CONTROL CHECK ===
+
     const amount = withdrawAmount === 'ALL'? Number(user.walletBalance) : Number(withdrawAmount)
     if(amount <= 0) { setMsg(t('pleaseEnterAmount')); return }
     if(!user.boundWallet) { setMsg(t('pleaseBindWallet')); return }
     if(!txPassConfirm) { setMsg(t('enterTxPass')); return }
 
-    const res = await fetch('/api/withdraw/request', { // FIXED: correct endpoint
+    const res = await fetch('/api/withdraw/request', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({userId: user.id, amount, txPass: txPassConfirm})
@@ -117,40 +142,26 @@ export default function WithdrawPage() {
       <AppHeader />
 
       <div style={{ padding: 16, maxWidth: 500, margin: '0 auto' }}>
-        {/* HEADER */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => router.back()} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', fontSize: 18, cursor: 'pointer' }}>←</button>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: '#000' }}>{t('withdraw')}</h1>
         </div>
 
-        {/* CARD 1: BALANCE */}
         <div style={{ background: '#FFF', borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <span style={{ fontSize: 14, color: '#FF6B00', fontWeight: 700 }}>{t('totalBalance')}</span>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <button
-                onClick={() => router.push('/withdraw')}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-              >
-                <span>💸</span> {t('withdraw')}
-              </button>
-              <button
-                onClick={() => setShowHistory(!showHistory)}
-                style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', color: '#000', fontSize: 14, fontWeight: 500, cursor: 'pointer', textDecoration: 'underline' }}
-              >
-                <span>📜</span> History
-              </button>
+              <button onClick={() => router.push('/withdraw')} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}><span>💸</span> {t('withdraw')}</button>
+              <button onClick={() => setShowHistory(!showHistory)} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', color: '#000', fontSize: 14, fontWeight: 500, cursor: 'pointer', textDecoration: 'underline' }}><span>📜</span> History</button>
             </div>
           </div>
           <div style={{ fontSize: 28, fontWeight: 800, color: '#000', marginBottom: 4 }}>{totalBalance} <span style={{ fontSize: 16, fontWeight: 600 }}>USD</span></div>
           <p style={{ fontSize: 12, color: '#666', margin: 0 }}>You will receive your withdrawal within an hour</p>
-
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
             <span style={{ fontSize: 14, color: '#666' }}>{t('freeze')}</span>
             <span style={{ fontSize: 16, fontWeight: 800, color: '#FF0000' }}>{freezeAmount} USD</span>
           </div>
 
-          {/* HISTORY TABS */}
           {showHistory && (
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #EEE' }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
@@ -158,7 +169,6 @@ export default function WithdrawPage() {
                 <TabBtn id="success" label="Success" />
                 <TabBtn id="reject" label="Reject" />
               </div>
-
               {filteredTx.length === 0? (
                 <p style={{ textAlign: 'center', color: '#999', fontSize: 13 }}>{t('noRecords')}</p>
               ) : (
@@ -167,9 +177,7 @@ export default function WithdrawPage() {
                     <div key={tx.id} style={{ background: '#F8F8F8', borderRadius: 8, padding: 12 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                         <span style={{ fontSize: 14, fontWeight: 700, color: '#000', textTransform: 'lowercase' }}>{getTxLabel(tx.type)}</span>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: tx.type === 'withdraw'? '#FF0000' : '#00A86B' }}>
-                          {tx.type === 'withdraw'? '-' : '+'}{Number(tx.amount).toFixed(2)} USD
-                        </span>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: tx.type === 'withdraw'? '#FF0000' : '#00A86B' }}>{tx.type === 'withdraw'? '-' : '+'}{Number(tx.amount).toFixed(2)} USD</span>
                       </div>
                       <div style={{ fontSize: 11, color: '#999' }}>{formatUSDate(tx.createdAt)}</div>
                     </div>
@@ -180,7 +188,6 @@ export default function WithdrawPage() {
           )}
         </div>
 
-        {/* CARD 2: WITHDRAW ACCOUNT */}
         <div style={{ background: '#FFF', borderRadius: 12, padding: 16, marginBottom: 12 }}>
           <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('withdrawAccount')}</div>
           {user.boundWallet? (
@@ -193,53 +200,22 @@ export default function WithdrawPage() {
           )}
         </div>
 
-        {/* CARD 3: WITHDRAW FORM */}
         <div style={{ background: '#FFF', borderRadius: 12, padding: 16, marginBottom: 40 }}>
           <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('withdrawAmount')}</div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <input
-              value={withdrawAmount}
-              onChange={e => setWithdrawAmount(e.target.value)}
-              placeholder="0"
-              type="number"
-              style={{ flex: 1, padding: '12px 14px', borderRadius: 8, border: '1px solid #EEE', fontSize: 15 }}
-            />
-            <button
-              onClick={() => setWithdrawAmount(String(user.walletBalance))}
-              style={{ background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 8, padding: '0 20px', fontWeight: 700, cursor: 'pointer' }}
-            >
-              {t('all')}
-            </button>
+            <input value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} placeholder="0" type="number" style={{ flex: 1, padding: '12px 14px', borderRadius: 8, border: '1px solid #EEE', fontSize: 15 }} />
+            <button onClick={() => setWithdrawAmount(String(user.walletBalance))} style={{ background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 8, padding: '0 20px', fontWeight: 700, cursor: 'pointer' }}>{t('all')}</button>
           </div>
-
           <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('transactionPassword')}</div>
-          <input
-            value={txPassConfirm}
-            onChange={e => setTxPassConfirm(e.target.value)}
-            type="password"
-            placeholder={t('enterTxPassword')}
-            style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #EEE', fontSize: 15, boxSizing: 'border-box', marginBottom: 16 }}
-          />
-
+          <input value={txPassConfirm} onChange={e => setTxPassConfirm(e.target.value)} type="password" placeholder={t('enterTxPassword')} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #EEE', fontSize: 15, boxSizing: 'border-box', marginBottom: 16 }} />
           {msg && <p style={{color:'#FF0000', fontSize:12, margin: '0 0 16px'}}>{msg}</p>}
-
-          <button
-            onClick={handleWithdraw}
-            style={{ width: '100%', background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 12, padding: '14px', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}
-          >
-            {t('submit')}
-          </button>
-
-          <p style={{ fontSize: 11, color: '#999', marginTop: 12 }}>
-            {t('withdrawNote')}
-          </p>
+          <button onClick={handleWithdraw} style={{ width: '100%', background: '#FF0000', color: '#FFF', border: 'none', borderRadius: 12, padding: '14px', fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>{t('submit')}</button>
+          <p style={{ fontSize: 11, color: '#999', marginTop: 12 }}>{t('withdrawNote')}</p>
         </div>
 
-        {/* FOOTER */}
         <div style={{ textAlign: 'center', marginTop: '20px', paddingBottom: '20px' }}>
           <p style={{ fontSize: '14px', color: '#666', fontWeight: '400' }}>{t('copyright')}</p>
         </div>
-
       </div>
       <BottomNav />
     </div>

@@ -21,17 +21,13 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const savedUser = localStorage.getItem('user')
-    if (!savedUser) {
-      router.push('/login')
-      return
-    }
+    if (!savedUser) { router.push('/login'); return }
     let u = JSON.parse(savedUser)
     if (!u.vipLevel) u.vipLevel = 'VIP1'
-    if (!u.creditScore) u.creditScore = 100
+    if (!u.creditScore && u.creditScore!==0) u.creditScore = 100
     if (!u.vipId) u.vipId = 1
     setUser(u)
     setAvatar(u.avatar || '')
-
     const refresh = async () => {
       try {
         const res = await fetch(`/api/user?id=${u.id}`)
@@ -40,7 +36,7 @@ export default function ProfilePage() {
           setUser(data.user)
           localStorage.setItem('user', JSON.stringify(data.user))
         }
-      } catch(e) { console.error(e) }
+      } catch(e) {}
     }
     refresh()
   }, [router])
@@ -62,8 +58,7 @@ export default function ProfilePage() {
 
   const copyReferral = () => {
     if (!user) return
-    const referralCode = user.inviteCode || ''
-    navigator.clipboard.writeText(referralCode)
+    navigator.clipboard.writeText(user.inviteCode || '')
     alert('Referral Code Copied!')
   }
 
@@ -74,31 +69,16 @@ export default function ProfilePage() {
 
   if (!user) return null
 
-  const phone = user.phone || ''
   const referralCode = user.inviteCode || ''
   const vipLevel = user.vipLevel || 'VIP1'
   const vipId = user.vipId || 1
   const currentVip = vipData.find(v => v.id === vipId) || vipData[0]
-  
-  // FIX: Force numbers to strictly display 2 decimal digits via clean string transformation
   const todayProfit = Number(user.todayProfit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const totalBalance = Number(user.walletBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-  const creditScore = user.creditScore || 100
+  const creditScore = user.creditScore?? 100
 
   const MenuItem = ({ icon, title, onClick }) => (
-    <div
-      onClick={onClick}
-      style={{
-        background: '#FF0000',
-        borderRadius: '12px',
-        padding: '16px 20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: '12px',
-        cursor: 'pointer'
-      }}
-    >
+    <div onClick={onClick} style={{ background: '#FF0000', borderRadius: '12px', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', cursor: 'pointer' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <span style={{ fontSize: '22px' }}>{icon}</span>
         <span style={{ color: '#FFF', fontSize: '15px', fontWeight: '600' }}>{title}</span>
@@ -110,7 +90,6 @@ export default function ProfilePage() {
   return (
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       <AppHeader />
-
       <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => router.back()} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', fontSize: '18px', cursor: 'pointer' }}>←</button>
         <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#000', margin: 0, flex: 1, textAlign: 'center' }}>My Profile</h1>
@@ -144,7 +123,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0', marginBottom: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0', marginBottom: '18px' }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: '12px', color: '#AAA', margin: '0 0 8px' }}>My Referral Code</p>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -159,41 +138,38 @@ export default function ProfilePage() {
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: '12px', color: '#AAA', margin: '0 0 8px' }}>Total Balance (USD)</p>
               <p style={{ fontSize: '20px', fontWeight: '800', color: '#FFF', margin: 0 }}>{totalBalance}</p>
-              {/* REMOVED: Budget: {currentVip.price} */}
             </div>
           </div>
 
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span style={{ fontSize: '13px', color: '#FFF', fontWeight: '600' }}>Credit Score:</span>
+          <div style={{ marginTop: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px', color: '#FFF', fontWeight: '600', whiteSpace: 'nowrap' }}>Credit Score:</span>
+              <div style={{ background: '#333', borderRadius: '10px', height: '10px', overflow: 'hidden', width: '42%' }}>
+                <div style={{ background: '#FF0000', width: `${creditScore}%`, height: '100%' }}></div>
+              </div>
               <span style={{ fontSize: '13px', color: '#FFF', fontWeight: '700' }}>{creditScore}%</span>
             </div>
-            <div style={{ background: '#333', borderRadius: '10px', height: '10px', overflow: 'hidden' }}>
-              <div style={{ background: '#FF0000', width: `${creditScore}%`, height: '100%' }}></div>
-            </div>
           </div>
+
         </div>
       </div>
 
       <div style={{ padding: '24px 20px 0' }}>
-  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '0 0 16px' }}>{t('myProfileSection')}</h3>
-  <MenuItem icon="👤" title={t('accountInfo')} onClick={() => router.push('/account-info')} />
-  <MenuItem icon="🔗" title={t('bindWallet')} onClick={() => router.push('/bind-wallet')} />
-
-  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>{t('myFinancial')}</h3>
-  <MenuItem icon="🏦" title={t('deposit')} onClick={() => router.push('/deposit')} />
-  <MenuItem icon="💸" title={t('withdraw')} onClick={() => router.push('/withdraw')} />
-
-  <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>{t('other')}</h3>
-  <MenuItem icon="🔔" title={t('notifications')} onClick={() => router.push('/notifications')} />
-  <MenuItem icon="⚙️" title={t('changeLanguage')} onClick={() => router.push('/change-language')} />
-  <MenuItem icon="⏻" title={t('logout')} onClick={handleLogout} />
-</div>
+        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '0 0 16px' }}>{t('myProfileSection')}</h3>
+        <MenuItem icon="👤" title={t('accountInfo')} onClick={() => router.push('/account-info')} />
+        <MenuItem icon="🔗" title={t('bindWallet')} onClick={() => router.push('/bind-wallet')} />
+        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>{t('myFinancial')}</h3>
+        <MenuItem icon="🏦" title={t('deposit')} onClick={() => router.push('/deposit')} />
+        <MenuItem icon="💸" title={t('withdraw')} onClick={() => router.push('/withdraw')} />
+        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#000', margin: '24px 0 16px' }}>{t('other')}</h3>
+        <MenuItem icon="🔔" title={t('notifications')} onClick={() => router.push('/notifications')} />
+        <MenuItem icon="⚙️" title={t('changeLanguage')} onClick={() => router.push('/change-language')} />
+        <MenuItem icon="⏻" title={t('logout')} onClick={handleLogout} />
+      </div>
 
       <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '80px' }}>
         <p style={{ fontSize: '14px', color: '#666', fontWeight: '400' }}>Copyrights 2026 © Disruptive Advertising Agency</p>
       </div>
-
       <BottomNav />
     </div>
   )
