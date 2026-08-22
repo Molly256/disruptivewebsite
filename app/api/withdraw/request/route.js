@@ -16,7 +16,7 @@ export async function POST(req) {
     if (txPass !== user.transactionPassword) return NextResponse.json({ error: 'Transaction password incorrect' }, { status: 400 })
 
     const withdrawAmount = Number(amount)
-    const available = Number(user.walletBalance || 0) - Number(user.freezeAmount || 0)
+    const available = Number(user.walletBalance || 0)
     
     if (isNaN(withdrawAmount) || withdrawAmount <= 0) return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
     if (withdrawAmount > available) return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 })
@@ -32,15 +32,13 @@ export async function POST(req) {
         }
       })
 
-      // 2. Create pending withdrawal transaction with wallet snapshot
+      // 2. Create pending withdrawal - FIXED: removed account and wallet fields
       await tx.transaction.create({
         data: {
           userId: String(userId),
-          type: 'withdraw', // FIXED: was 'withdrawal'
+          type: 'withdrawal', // DB uses withdrawal, your GET maps to withdraw for frontend
           amount: withdrawAmount,
-          status: 'pending',
-          account: user.boundWallet.address, // for quick display
-          wallet: user.boundWallet // FIXED: snapshot so it doesn't change later
+          status: 'pending'
         }
       })
     })
