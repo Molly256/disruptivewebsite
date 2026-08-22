@@ -12,11 +12,18 @@ const VIP_CONFIG = {
 }
 
 const loadSet = async (vip, day, set) => {
-  const dbConfig = await prisma.taskSetConfig.findUnique({
-    where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } }
-  })
-  if (dbConfig?.data?.length > 0) return dbConfig.data
-  return null
+  try {
+    const mod = await import(`@/data/vip${vip}/day${day}/vip${vip}Set${set}.js`)
+    const key = `vip${vip}Set${set}`
+    return mod[key] || Object.values(mod)[0] || null
+  } catch (e) {
+    console.log('file load fail, fallback to DB', e.message)
+    const dbConfig = await prisma.taskSetConfig.findUnique({
+      where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } }
+    })
+    if (dbConfig?.data?.length > 0) return dbConfig.data
+    return null
+  }
 }
 
 const generateTaskCode = () => {
@@ -37,7 +44,7 @@ export async function POST(req) {
     } catch { currentProductsArray = [] }
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
-    const needed = config.tasksPerSet // 40 for VIP1, 45 for VIP2 etc.
+    const needed = config.tasksPerSet
 
     const currentDay = user.currentDay || 1
     const currentSet = user.currentSet || 1
@@ -54,21 +61,16 @@ export async function POST(req) {
       return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
     }
 
-    // has active task?
-    if (user.activeProducts && typeof user.activeProducts!== 'string' && user.activeProducts.length > 0) {
-      if (Array.isArray(user.activeProducts) && user.activeProducts.length > 0) {
-        // if activeProducts = 1 task and currentProducts already has full set, allow check to pass after submit
-        // but if activeProducts exists, block
-        const act = typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts) : user.activeProducts
-        if (act.length > 0) {
-          return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
-        }
-      }
+    let activeCheck = user.activeProducts
+    if (typeof activeCheck === 'string') {
+      try { activeCheck = JSON.parse(activeCheck) } catch { activeCheck = [] }
+    }
+    if (Array.isArray(activeCheck) && activeCheck.length > 0) {
+      return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
     let fileSet = []
     if (currentProductsArray.length >= needed) {
-      // user already started set, use his DB (so admin per-user edit stays)
       fileSet = currentProductsArray
     } else {
       fileSet = await loadSet(user.vipLevel, currentDay, currentSet)
@@ -113,7 +115,7 @@ export async function POST(req) {
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
-          currentTaskProducts: dataToSave, // 40 or 45 or 50 depending on VIP
+          currentTaskProducts: dataToSave,
           activeProducts: activeSnapshot
         }
       })

@@ -11,11 +11,18 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     let products = user.currentTaskProducts || []
+    if (typeof products === 'string') {
+      try { 
+        products = JSON.parse(products) 
+      } catch { 
+        products = [] 
+      }
+    }
+    
     if (products.length === 0) {
       return NextResponse.json({ error: 'User has no active tasks' }, { status: 400 })
     }
 
-    // Find task 4 in user's active set
     const updated = products.map(p => {
       if (Number(p.taskOrder || p.id) === Number(taskOrder)) {
         return {
@@ -35,6 +42,7 @@ export async function POST(req) {
     return NextResponse.json({ success: true, message: `User ${userId} task ${taskOrder} updated` })
 
   } catch (e) {
+    console.error('Edit user task error:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
