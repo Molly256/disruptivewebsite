@@ -10,9 +10,12 @@ export async function POST(req) {
     const tx = await prisma.transaction.findUnique({ where: { id: String(txId) } })
     if (!tx) return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
 
-    if (tx.status.toLowerCase() !== 'pending') {
-      return NextResponse.json({ error: 'Already processed' }, { status: 400 })
+    if (String(tx.status).toLowerCase() !== 'pending') {
+      return NextResponse.json({ error: 'Already processed: ' + tx.status }, { status: 400 })
     }
+
+    const user = await prisma.user.findUnique({ where: { id: String(tx.userId) } })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     await prisma.$transaction(async (p) => {
       await p.transaction.update({
@@ -20,12 +23,15 @@ export async function POST(req) {
         data: { status: 'rejected' }
       })
 
-      // On reject: return money to balance and remove freeze
+      const currentFreeze = Number(user.freezeAmount || 0)
+      const currentBalance = Number(user.walletBalance || 0)
+      const amount = Number(tx.amount)
+
       await p.user.update({
         where: { id: String(tx.userId) },
-        data: {
-          walletBalance: { increment: Number(tx.amount) },
-          freezeAmount: { decrement: Number(tx.amount) }
+        data: { 
+          walletBalance: currentBalance + amount,
+          freezeAmount: Math.max(0, currentFreeze - amount)
         }
       })
     })

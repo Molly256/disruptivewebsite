@@ -79,7 +79,7 @@ export default function AdminPage() {
     setActiveEditSet(setNum)
     if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
       const fixed = editUser.currentTaskProducts.map((item, idx) => ({
-     ...item,
+    ...item,
         taskOrder: item.taskOrder || item.id || idx+1,
         id: item.taskOrder || item.id || idx+1,
         image: `/vip${vipLevel}/day${day}/set${setNum}/photo${item.taskOrder || item.id || idx+1}.jpg`
@@ -122,9 +122,9 @@ export default function AdminPage() {
       const d2 = await r.json()
       if(r.ok) {
         const fixedUser = {
-       ...d2.user,
+      ...d2.user,
           currentTaskProducts: (d2.user.currentTaskProducts || []).map((item, idx) => ({
-         ...item,
+        ...item,
             image: `/vip${d2.user.vipLevel}/day${d2.user.currentDay || 1}/set${d2.user.currentSet || 1}/photo${item.taskOrder || idx+1}.jpg`
           }))
         }
@@ -176,7 +176,16 @@ export default function AdminPage() {
   }
 
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
-  const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
+  const handleWithdraw = async (txId, action) => {
+    try {
+      const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) });
+      const data = await res.json();
+      if(res.ok) { alert(`${action} success`); fetchWithdraws() }
+      else alert(`Failed: ${data.error || JSON.stringify(data)}`)
+    } catch(e) {
+      alert(`Failed: ${e.message}`)
+    }
+  }
   const handleSendNotif = async () => { if(!notifMessage) return alert('Enter message'); const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) }); if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed') }
   const handleGiveBonus = async () => { if(!bonusAmount) return alert('Enter amount'); const res = await fetch('/api/admin/give-bonus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: bonusUser.id, amount: parseFloat(bonusAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setBonusUser({...bonusUser, specialBonus: data.newBonus}); alert('Bonus Given'); setShowBonusInput(false); setBonusAmount('') } else alert('Failed') }
 
@@ -338,7 +347,7 @@ export default function AdminPage() {
                   <p style={{margin:'4px 0 0 0', fontSize:11, color:'#CCC', wordBreak:'break-all'}}>{tx.user?.boundWallet?.address || 'No address'}</p>
                 </div>
                 <p style={{fontSize:11, color:'#999', margin:'0 0 10px 0'}}>Status: {tx.status} | {new Date(tx.createdAt).toLocaleString()}</p>
-                {(tx.status === 'pending' || tx.status === 'PENDING') && (
+                {(tx.status?.toLowerCase() === 'pending') && (
                   <div style={{display:'flex', gap:10}}>
                     <button onClick={()=>handleWithdraw(tx.id, 'approve')} style={{flex:1, background:'#00C853', border:'none', padding:12, borderRadius:8, color:'#FFF', fontWeight:800, cursor:'pointer'}}>✅ Approve</button>
                     <button onClick={()=>handleWithdraw(tx.id, 'reject')} style={{flex:1, background:'red', border:'none', padding:12, borderRadius:8, color:'#FFF', fontWeight:800, cursor:'pointer'}}>❌ Reject</button>
