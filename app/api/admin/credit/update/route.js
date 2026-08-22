@@ -1,30 +1,33 @@
+export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(req){
   try{
     const { userId, newScore, action, adminId } = await req.json()
-    if(newScore < 0) newScore = 0
-    if(newScore > 100) newScore = 100
+    let score = Number(newScore)
+    if(score < 0) score = 0
+    if(score > 100) score = 100
 
     const updated = await prisma.user.update({
-      where: { id: userId },
-      data: { creditScore: newScore }
+      where: { id: String(userId) },
+      data: { creditScore: score }
     })
 
     // log
     if(adminId){
       await prisma.adminLog.create({
         data: {
-          adminId,
+          adminId: String(adminId),
           action: action === 'decrease'? 'decrease_credit' : 'increase_credit',
-          targetUserId: userId,
-          details: { newScore, username: updated.username }
+          targetUserId: String(userId),
+          details: { newScore: score, username: updated.username }
         }
       }).catch(()=>{})
     }
 
     return Response.json({success:true, creditScore: updated.creditScore})
   }catch(e){
+    console.error(e)
     return Response.json({error:e.message},{status:500})
   }
 }

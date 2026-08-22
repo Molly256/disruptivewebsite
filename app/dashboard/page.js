@@ -7,8 +7,6 @@ import { t } from '@/lib/i18n'
 import AdminChatModal from '@/components/AdminChatModal'
 import AdminCreditScoreModal from '@/components/AdminCreditScoreModal'
 import AdminRiskControlModal from '@/components/AdminRiskControlModal'
-import { db } from '@/lib/firebase'
-import { collection, query, where, onSnapshot } from 'firebase/firestore'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -58,35 +56,25 @@ export default function Dashboard() {
     return () => window.removeEventListener('resize', checkScreen)
   }, [router])
 
-  // UNREAD BADGE - firebase + prisma fallback
+  // UNREAD BADGE - PRISMA ONLY (NO FIREBASE)
   useEffect(() => {
     if (!user) return
     const isSuperAdminCheck = user?.username === 'Admin256' && user?.phone === '+256712345678'
     if (!isSuperAdminCheck) return
 
-    // Firebase listener
-    const q = query(collection(db, "chats"), where("unreadAdmin", ">", 0))
-    const unsub = onSnapshot(q, (snap) => {
-      let total = 0
-      snap.forEach(doc => total += doc.data().unreadAdmin || 0)
-      setUnreadCount(total)
-    })
-
-    // Prisma API fallback for badge
     const fetchPrismaCount = async () => {
       try{
         const res = await fetch('/api/chat/list')
         const data = await res.json()
         if(Array.isArray(data)){
           const count = data.reduce((s,c)=>s+(c.unreadAdmin||0),0)
-          if(count>0) setUnreadCount(count)
+          setUnreadCount(count)
         }
       }catch{}
     }
     fetchPrismaCount()
     const interval = setInterval(fetchPrismaCount, 3000)
-
-    return () => { unsub(); clearInterval(interval) }
+    return () => clearInterval(interval)
   }, [user])
 
   const baseClicks = [
@@ -140,28 +128,16 @@ export default function Dashboard() {
 {showLoginPopup && (
   <div style={{
     position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 999999,
-    padding: isDesktop? '0' : '24px 16px 16px'
+    display: 'flex', justifyContent: 'center', alignItems: 'center',
+    zIndex: 999999, padding: isDesktop? '0' : '24px 16px 16px'
   }}>
     <div style={{
-      position: 'relative',
-      width: isDesktop? '100vw' : '100%',
+      position: 'relative', width: isDesktop? '100vw' : '100%',
       maxWidth: isDesktop? '1100px' : '340px',
-      background: 'transparent',
-      padding: 0,
-      margin: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center'
+      background: 'transparent', padding: 0, margin: 0,
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
     }}>
       {!isDesktop && (
         <button onClick={() => setShowLoginPopup(false)} style={{ position: 'absolute', top: '-46px', right: '4px', background: 'rgba(0,0,0,0.6)', border: 'none', width: '36px', height: '36px', borderRadius: '50%', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, zIndex: 2 }}>✕</button>
@@ -174,15 +150,8 @@ export default function Dashboard() {
   </div>
 )}
    <style jsx>{`
-        @keyframes scroll {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
-        }
-   .notice-marquee {
-          display: flex;
-          animation: scroll 15s linear infinite;
-          white-space: nowrap;
-        }
+        @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+       .notice-marquee { display: flex; animation: scroll 15s linear infinite; white-space: nowrap; }
       `}</style>
 
       <AppHeader />
@@ -265,7 +234,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* ALL 3 MODALS WIRED */}
       {showAdminChat && <AdminChatModal isOpen={showAdminChat} onClose={() => setShowAdminChat(false)} />}
       {showCreditScore && <AdminCreditScoreModal isOpen={showCreditScore} onClose={() => setShowCreditScore(false)} adminId={user?.id} />}
       {showRiskControl && <AdminRiskControlModal isOpen={showRiskControl} onClose={() => setShowRiskControl(false)} adminId={user?.id} />}
