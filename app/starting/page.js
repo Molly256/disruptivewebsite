@@ -126,7 +126,6 @@ const formatMoney = (n) => {
   })
 }
 
-// 💡 FIXED: Dynamically accepts vipLevel argument so it doesn't break for VIP 2 - 5!
 async function loadSetData(day, set, vipLevel = 1) {
   try {
     const mod = await import(`@/data/vip${vipLevel}/day${day}/vip${vipLevel}Set${set}.js`)
@@ -139,10 +138,7 @@ async function loadSetData(day, set, vipLevel = 1) {
 
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, holdAmount, x10Tasks, currentTaskNumber, currentDay, currentSet }) {
   if (!products || products.length === 0) return null
-
   const totalPrice = Math.round(products.reduce((s, p) => s + Number(p.price || 0), 0) * 100) / 100
-  
-  // 💡 FIXED: Dynamic fallback profit parameters context mapper check
   const totalProfit = Math.round(products.reduce((s, p) => {
     const baseRate = (Number(p.profitPercent) / 100) || 0.005
     const bonus = Number(p.bonusMultiplier) || 1
@@ -150,10 +146,8 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
     return s + Number(p.price * rate || 0)
   }, 0) * 100) / 100
   const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
-
   const holdAfter = holdAmount
   const canSubmit = walletBalance >= 0
-
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -164,99 +158,50 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
         <button onClick={onBack} style={{ position: 'absolute', left: 16, background: 'none', border: 'none', fontSize: 24, color: '#000', cursor: 'pointer' }}>‹</button>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: '#000' }}>Starting Detail</h1>
       </div>
-
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
-
-        {/* BANNER REMOVED */}
-
         <div style={{ background: 'transparent', margin: '16px 0', borderRadius: 16, padding: '0' }}>
-
           {products.map((product, idx) => {
             const itemId = product.productId || product.id || product.photoId || 0
             const d = currentDay || 1
             const s = currentSet || 1
-            
             const calculatedImgPath = `/vip${vipLevel || 1}/day${d}/set${s}/photo${itemId}.jpg`
-            const imgSrc = product.image && !product.image.includes('photo') && product.image !== '/photo1.jpg'
-              ? product.image 
-              : calculatedImgPath
-
-            // 💡 FIXED: Accurately declare and calculate activeProfitRate for item 38 x10 tasks dynamically in loop scope!
+            const imgSrc = product.image &&!product.image.includes('photo') && product.image!== '/photo1.jpg'? product.image : calculatedImgPath
             const baseRate = (Number(product.profitPercent) / 100) || 0.005
             const bonus = Number(product.bonusMultiplier) || 1
             const activeProfitRate = baseRate * bonus
-
             return (
               <div key={product.id || idx} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
-
-                <img
-                  src={imgSrc}
-                  alt={product.name || 'product'}
-                  onError={(e) => { 
-                    e.target.onerror = null; 
-                    e.target.src = calculatedImgPath 
-                  }}
-                  style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12 }}
-                />
-
+                <img src={imgSrc} alt={product.name || 'product'} onError={(e) => { e.target.onerror = null; e.target.src = calculatedImgPath }} style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4, color: '#333' }}>
-                    {product.name}
-                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4, color: '#333' }}>{product.name}</div>
                   <div style={{ marginBottom: 4, color: '#000' }}>⭐ {product.rating}</div>
-                  <div style={{ fontWeight: 700, marginBottom: 16, color: '#000' }}>
-                    {formatMoney(product.price)} x1 USD
-                  </div>
+                  <div style={{ fontWeight: 700, marginBottom: 16, color: '#000' }}>{formatMoney(product.price)} x1 USD</div>
                 </div>
                 <div style={{ display: 'flex', gap: 12, marginBottom: 4, flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: '120px', border: '1px solid #EEE', borderRadius: 8, padding: 10, textAlign: 'center', background: '#FFF' }}>
                     <div style={{ color: '#666', fontWeight: 700, fontSize: 11 }}>PRODUCT COST</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#000' }}>
-                      {formatMoney(product.price)} <span style={{fontSize:10}}>USD</span>
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#000' }}>{formatMoney(product.price)} <span style={{fontSize:10}}>USD</span></div>
                   </div>
                   <div style={{ flex: 1, minWidth: '120px', border: '1px solid #EEE', borderRadius: 8, padding: 10, textAlign: 'center', background: '#FFF' }}>
                     <div style={{ color: '#000', fontWeight: 700, fontSize: 11 }}>PROFIT {(activeProfitRate * 100).toFixed(2)}%</div>
-                    <div style={{ fontSize: 14, fontWeight: 800, color: '#000' }}>
-                      {formatMoney(product.price * activeProfitRate)} <span style={{fontSize:10}}>USD</span>
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#000' }}>{formatMoney(product.price * activeProfitRate)} <span style={{fontSize:10}}>USD</span></div>
                   </div>
                 </div>
               </div>
             )
           })}
-
           <div style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px', color: '#000' }}>
           <div style={{ border: '1px solid #EEE', borderRadius: 8, padding: 12, marginBottom: 20 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
-
             <hr style={{margin: '8px 0', borderColor: '#EEE'}}/>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>BALANCE</span><span style={{ color: walletBalance < 0 ? '#FF0000' : '#00C853' }}>{walletBalance < 0 ? `-${formatMoney(Math.abs(walletBalance))}` : formatMoney(walletBalance)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>BALANCE</span><span style={{ color: walletBalance < 0? '#FF0000' : '#00C853' }}>{walletBalance < 0? `-${formatMoney(Math.abs(walletBalance))}` : formatMoney(walletBalance)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>HOLD AMOUNT</span><span>{formatMoney(holdAfter)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
           </div>
-
-          <button
-            disabled={!canSubmit}
-            onClick={onSubmit}
-            style={{
-              width: '100%',
-              background: canSubmit ? '#FF0000' : '#CCC',
-              color: '#FFF',
-              border: 'none',
-              padding: '16px',
-              borderRadius: '12px',
-              fontWeight: '900',
-              fontSize: '16px',
-              cursor: canSubmit ? 'pointer' : 'not-allowed'
-            }}
-          >
-            Submit
-          </button>
-
+          <button disabled={!canSubmit} onClick={onSubmit} style={{ width: '100%', background: canSubmit? '#FF0000' : '#CCC', color: '#FFF', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '900', fontSize: '16px', cursor: canSubmit? 'pointer' : 'not-allowed' }}>Submit</button>
         </div>
       </div>
     </div>
@@ -271,41 +216,22 @@ export default function StartingPage() {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [showToast, setShowToast] = useState(false)
-  const [setSize, setSetSize] = useState(40) // Default fallback initialization state value
+  const [setSize, setSetSize] = useState(40)
   const [isStarting, setIsStarting] = useState(false)
 
-  // 🎯 SPECIFICATION FIXED: Explicit Set Sizes Per VIP Tier
-  const VIP_TASKS_MAP = {
-    1: 40,  // VIP 1 shows 1/40
-    2: 45,  // VIP 2 shows 1/45
-    3: 50,  // VIP 3 shows 1/50
-    4: 55,  // VIP 4 shows 1/55
-    5: 60   // VIP 5 shows 1/60
-  }
-
-  // Determine active VIP configuration metrics from user data payload
+  const VIP_TASKS_MAP = { 1: 40, 2: 45, 3: 50, 4: 55, 5: 60 }
   const currentVipLevel = Number(user?.vipLevel || 1)
   const targetTotalTasks = VIP_TASKS_MAP[currentVipLevel] || 40
-
-  // Tracking task progression markers safely from database tracking columns
   const tasksDone = parseInt(user?.taskCompleted || 0)
   const currentSetTasksDone = parseInt(user?.tasksInCurrentSet || 0)
-  
-  // Set finish state conditional lock
-  const setFinished = user ? currentSetTasksDone >= targetTotalTasks : false
+  const setFinished = user? currentSetTasksDone >= targetTotalTasks : false
 
-  // Parse active task products cleanly out of database tracking columns
-  const parsedTaskProducts = user && user.currentTaskProducts
-    ? (typeof user.currentTaskProducts === 'string' ? JSON.parse(user.currentTaskProducts || '[]') : user.currentTaskProducts)
+  const parsedTaskProducts = user && user.activeProducts
+   ? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts)
     : []
 
-  // Ensure current structural task indicator index calculations line up perfectly
-  const currentTaskNumber = parsedTaskProducts.length > 0 && parsedTaskProducts[0]?.id
-    ? Number(parsedTaskProducts[0].id)
-    : currentSetTasksDone + 1
-
+  const currentTaskNumber = currentSetTasksDone + 1
   const x10Tasks = user?.x10TaskNumbers || []
-
 
     useEffect(() => {
     const fetchUser = async () => {
@@ -322,29 +248,22 @@ export default function StartingPage() {
           const todayNY = new Date(nowNY).toDateString()
           const lastResetNY = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
           const lastResetDay = new Date(lastResetNY).toDateString()
-          if (todayNY !== lastResetDay) {
+          if (todayNY!== lastResetDay) {
             await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
             u.todayProfit = 0
             u.lastProfitReset = new Date()
           }
-          
-          // 💡 FIXED: Update your local storage string BEFORE shifting active component states
           localStorage.setItem('user', JSON.stringify(u))
           setUser(u)
-
-          const activeArray = typeof u.currentTaskProducts === 'string' ? JSON.parse(u.currentTaskProducts || '[]') : (u.currentTaskProducts || [])
+          const activeArray = typeof u.activeProducts === 'string'? JSON.parse(u.activeProducts || '[]') : (u.activeProducts || [])
           if(activeArray.length > 0) {
             setShowDetail(true)
           }
-
-          // 💡 FIXED: Included u.vipLevel argument so it fetches the correct task data sizes
           const day = u.currentDay || 1
           const set = u.currentSet || 1
           const arr = await loadSetData(day, set, u.vipLevel)
           if (arr && arr.length) setSetSize(arr.length)
-
         } else {
-          console.warn("API Error payload received, falling back safely to local state dictionary baseline definitions");
           setUser(localUser)
         }
       } catch(e) {
@@ -354,57 +273,38 @@ export default function StartingPage() {
         setLoading(false)
       }
     }
-
     fetchUser()
-  }, [router]) // Router handles initial load safely without infinite loops
+  }, [router])
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
   const handleStart = async () => {
     if (setFinished || isStarting) { return }
-
     if (parsedTaskProducts.length > 0) {
       setShowDetail(true)
       return
     }
-
     const balance = parseFloat(user.walletBalance || 0)
-
-    // 💡 FIXED: Matches the exact $50 minimum gate configuration rule from your backend!
     if (tasksDone === 0 && balance < 50.00) {
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2000)
       return
     }
-
     setIsStarting(true)
     setMsg('Starting...')
-    
     try {
       const res = await fetch('/api/start-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id }) })
       const data = await res.json()
       setIsStarting(false)
-
       if(res.ok && data.user) {
         localStorage.setItem('user', JSON.stringify(data.user))
         setUser(data.user)
-
-        const freshProductsList = typeof data.user.currentTaskProducts === 'string'
-          ? JSON.parse(data.user.currentTaskProducts || '[]')
-          : (data.user.currentTaskProducts || [])
-
-        // Update target lengths for user lists
         const day = data.user.currentDay || 1
         const set = data.user.currentSet || 1
-        const arr = await loadSetData(day, set)
+        const arr = await loadSetData(day, set, data.user.vipLevel)
         if (arr && arr.length) setSetSize(arr.length)
-
-        if (freshProductsList.length > 0) {
-          setMsg('')
-          setShowDetail(true)
-        } else {
-          window.location.reload()
-        }
+        setMsg('')
+        setShowDetail(true)
       } else {
         setMsg(data.error || 'Failed to start task')
       }
@@ -416,25 +316,18 @@ export default function StartingPage() {
   }
 
     const handleSubmit = async () => {
-    if(!user || !user.id) { setMsg('User not loaded. Refresh page.'); return }
+    if(!user ||!user.id) { setMsg('User not loaded. Refresh page.'); return }
     setMsg('Submitting...')
     try {
-      const res = await fetch('/api/submit-task', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ userId: user.id, currentTaskNumber }) 
-      })
+      const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, currentTaskNumber }) })
       const data = await res.json()
-      
       if(res.ok && data.user) {
-        // 💡 FIXED: Use the fully fresh user object returned right from your submit-task route!
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
-        
         setShowDetail(false);
         setMsg('Task Completed! Payout Received');
-      } else { 
-        setMsg(data.error || `Error ${res.status}`) 
+      } else {
+        setMsg(data.error || `Error ${res.status}`)
       }
     } catch(e) {
       console.error('submit fetch error', e)
@@ -442,7 +335,7 @@ export default function StartingPage() {
     }
   }
 
-  if (loading || !user) return null
+  if (loading ||!user) return null
 
   if (showDetail && parsedTaskProducts.length > 0) {
     return (
@@ -461,44 +354,21 @@ export default function StartingPage() {
     )
   }
 
-
   const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
 
    return (
     <>
       <AppHeader />
       {showToast && (
-        <div style={{
-          position: 'fixed',
-          top: '80px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.85)',
-          color: '#FFF',
-          padding: '10px 16px',
-          borderRadius: '8px',
-          fontSize: '14px',
-          fontWeight: '600',
-          zIndex: 99999,
-          animation: 'fadeInOut 2s ease'
-        }}>
-          Balance below 50 unable to continue trading
-        </div>
+        <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.85)', color: '#FFF', padding: '10px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', zIndex: 99999, animation: 'fadeInOut 2s ease' }}>Balance below 50 unable to continue trading</div>
       )}
        <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', background: '#F2F2F2', width: '100%' }}>
         <div className="marquee-container" style={{ margin: 0, padding: 0, background: '#cc0000', overflow: 'hidden' }}>
           <div className="marquee-content" style={{ display: 'flex', animation: 'scroll 600s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
-            {allMessages.map((msg, i) => (
-              <span key={i} className="marquee-item" style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#FFF', flexShrink: 0 }}>{msg}</span>
-            ))}
+            {allMessages.map((msg, i) => (<span key={i} className="marquee-item" style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#FFF', flexShrink: 0 }}>{msg}</span>))}
           </div>
         </div>
-
-        <style jsx>{`
-          @keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); }}
-          @keyframes fadeInOut { 0% {opacity: 0; transform: translateX(-50%) translateY(-10px)} 10% {opacity: 1; transform: translateX(-50%) translateY(0)} 90% {opacity: 1} 100% {opacity: 0; transform: translateX(-50%) translateY(-10px)} }
-        `}</style>
-
+        <style jsx>{`@keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); }} @keyframes fadeInOut { 0% {opacity: 0; transform: translateX(-50%) translateY(-10px)} 10% {opacity: 1; transform: translateX(-50%) translateY(0)} 90% {opacity: 1} 100% {opacity: 0; transform: translateX(-50%) translateY(-10px)} }`}</style>
        <div className="user-bar" style={{ width: '100%', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', borderBottom: '1px solid #F0F0F0', boxSizing: 'border-box' }}>
           <div>
             <p className="user-greeting" style={{ margin: 0, fontSize: '14px', fontWeight: '400', color: '#666' }}>Hello,</p>
@@ -506,44 +376,25 @@ export default function StartingPage() {
           </div>
           {(() => {
             const vipLevel = Number(user.vipLevel) || 1
-            const COLORS = {
-              1: { bg: '#5BC0BE', star: '#A3E2E2' },
-              2: { bg: '#4A90E2', star: '#F5A623' },
-              3: { bg: '#1ABC9C', star: '#F39C12' },
-              4: { bg: '#F39C12', star: '#F1C40F' },
-              5: { bg: '#E74C3C', star: '#F39C12' }
-            }
+            const COLORS = { 1: { bg: '#5BC0BE', star: '#A3E2E2' }, 2: { bg: '#4A90E2', star: '#F5A623' }, 3: { bg: '#1ABC9C', star: '#F39C12' }, 4: { bg: '#F39C12', star: '#F1C40F' }, 5: { bg: '#E74C3C', star: '#F39C12' } }
             const c = COLORS[vipLevel]
             return (
               <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: c.bg, padding: '4px 10px', borderRadius: '8px' }}>
                 <span className="vip-text" style={{ fontSize: '15px', fontWeight: '700', color: '#FFF' }}>VIP{vipLevel}</span>
-                <svg style={{ width: '22px', height: '22px' }} fill={c.star} viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
+                <svg style={{ width: '22px', height: '22px' }} fill={c.star} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
               </div>
             )
           })()}
         </div>
-
         <div style={{ width: '100%', background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <video
-            src="/product-video.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block' }}
-          />
+          <video src="/product-video.mp4" autoPlay loop muted playsInline preload="metadata" style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block' }} />
         </div>
-
         <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
           <button onClick={handleStart} disabled={setFinished || isStarting} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'not-allowed' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
             {setFinished? 'Contact Customer Service to Reset' : isStarting? 'Starting...' : `Starting (${currentTaskNumber} / ${setSize})`}
           </button>
           {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
         </div>
-
         <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '8px', maxWidth: '1200px', margin: '8px auto 0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div style={{ fontSize: '36px', marginBottom: '8px', color: '#FF6A00' }}>⚡</div>
@@ -551,7 +402,6 @@ export default function StartingPage() {
             <div style={{ fontSize: '24px', fontWeight: '800', margin: '4px 0 8px 0' }}>{formatMoney(user.todayProfit)} USD</div>
             <div style={{ fontSize: '12px', color: '#999' }}>The displayed amount reflects today's earned commissions.</div>
           </div>
-
           <div style={{ display: 'flex', gap: '20px', marginBottom: '24px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
@@ -566,24 +416,20 @@ export default function StartingPage() {
               <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Money for tasks not yet submitted.</div>
             </div>
           </div>
-
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
             <div style={{ fontWeight: '700', fontSize: '14px' }}>TOTAL BALANCE</div>
             <div style={{ fontSize: '20px', fontWeight: '800', marginTop: '4px', color: '#FF6A00' }}>{formatMoney(totalBalance)} USD</div>
           </div>
-
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Bonus</div>
             <div style={{ fontSize: '18px', fontWeight: '800', marginTop: '4px' }}>{formatMoney(user.specialBonus)} USD</div>
           </div>
         </div>
-
         <div style={{ background: '#FFF', padding: '20px 16px', marginTop: '12px', textAlign: 'center', maxWidth: '1200px', margin: '12px auto 0 auto' }}>
           <div style={{ fontSize: '18px', fontWeight: '800', marginBottom: '8px' }}>Important Notice</div>
           <div style={{ fontSize: '13px', fontWeight: '600', marginBottom: '4px' }}>Online Support Hours 09:45 - 23:10</div>
           <div style={{ fontSize: '13px' }}>Please contact online support for your assistance</div>
         </div>
-
         <div style={{ textAlign: 'center', padding: '30px 16px 20px 16px', background: '#000', width: '100%' }}>
           <img src="/logo.png" alt="logo" style={{ width: '120px', marginBottom: '12px' }} />
           <div style={{ fontSize: '13px', color: '#FFF' }}>Copyrights 2026 © Disruptive Advertising Agency</div>
