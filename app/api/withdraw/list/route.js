@@ -11,12 +11,27 @@ export async function GET() {
       },
       orderBy: { createdAt: 'desc' },
       include: {
-        user: { select: { username: true, phone: true, boundWallet: true } }
+        user: {
+          select: {
+            id: true,
+            username: true,
+            phone: true,
+            walletBalance: true,
+            boundWallet: true
+          }
+        }
       }
     })
-    const normalized = transactions.map(tx => ({...tx, status: tx.status.toLowerCase(), type: 'withdraw' }))
+
+    const normalized = transactions.map(tx => ({
+      ...tx,
+      status: tx.status.toLowerCase(),
+      type: 'withdraw'
+    }))
+
     return NextResponse.json({ transactions: normalized })
   } catch (e) {
+    console.error(e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }

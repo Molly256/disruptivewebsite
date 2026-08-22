@@ -79,7 +79,7 @@ export default function AdminPage() {
     setActiveEditSet(setNum)
     if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
       const fixed = editUser.currentTaskProducts.map((item, idx) => ({
-      ...item,
+     ...item,
         taskOrder: item.taskOrder || item.id || idx+1,
         id: item.taskOrder || item.id || idx+1,
         image: `/vip${vipLevel}/day${day}/set${setNum}/photo${item.taskOrder || item.id || idx+1}.jpg`
@@ -122,9 +122,9 @@ export default function AdminPage() {
       const d2 = await r.json()
       if(r.ok) {
         const fixedUser = {
-        ...d2.user,
+       ...d2.user,
           currentTaskProducts: (d2.user.currentTaskProducts || []).map((item, idx) => ({
-          ...item,
+         ...item,
             image: `/vip${d2.user.vipLevel}/day${d2.user.currentDay || 1}/set${d2.user.currentSet || 1}/photo${item.taskOrder || idx+1}.jpg`
           }))
         }
@@ -324,7 +324,31 @@ export default function AdminPage() {
         )}
 
         {tab === 'deposit' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{depositUser &&!showDepositInput && <button onClick={()=>setShowDepositInput(true)} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Deposit to {depositUser.username} - Balance: ${depositUser.walletBalance}</button>}{showDepositInput && (<div><input value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Deposit</button></div>)}</div>)}
-        {tab === 'withdraw' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>{withdrawList.length === 0 && <p>No pending withdrawals</p>}{withdrawList.map(tx => (<div key={tx.id} style={{ border:'1px solid #333', padding:12, borderRadius:8, marginBottom:8 }}><p><b>{tx.user?.username}</b> - ${tx.amount}</p><p style={{fontSize:12}}>Status: {tx.status}</p>{(tx.status === 'pending' || tx.status === 'PENDING') && <div style={{display:'flex', gap:8}}><button onClick={()=>handleWithdraw(tx.id, 'approve')} style={{background:'#00C853', border:'none', padding:8, borderRadius:6, color:'#FFF'}}>Approve</button><button onClick={()=>handleWithdraw(tx.id, 'reject')} style={{background:'red', border:'none', padding:8, borderRadius:6, color:'#FFF'}}>Reject</button></div>}</div>))}</div>)}
+
+        {tab === 'withdraw' && (
+          <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
+            {withdrawList.length === 0 && <p>No pending withdrawals</p>}
+            {withdrawList.map(tx => (
+              <div key={tx.id} style={{ border:'1px solid #333', padding:14, borderRadius:10, marginBottom:12, background:'#111' }}>
+                <p style={{margin:'0 0 6px 0', fontSize:14}}><b>👤 Username: {tx.user?.username}</b> <span style={{color:'#999', fontSize:11}}>({tx.user?.phone})</span></p>
+                <p style={{margin:'0 0 8px 0', fontSize:15, fontWeight:800, color:'#FF1493'}}>💰 Amount: ${Number(tx.amount).toFixed(2)}</p>
+                <div style={{background:'#222', padding:10, borderRadius:8, marginBottom:10}}>
+                  <p style={{margin:0, fontSize:11, color:'#FFD700', fontWeight:800}}>💳 User Saved Wallet:</p>
+                  <p style={{margin:'4px 0 0 0', fontSize:13, color:'#FFF'}}>{tx.user?.boundWallet?.type || 'N/A'} - {tx.user?.boundWallet?.name || ''}</p>
+                  <p style={{margin:'4px 0 0 0', fontSize:11, color:'#CCC', wordBreak:'break-all'}}>{tx.user?.boundWallet?.address || 'No address'}</p>
+                </div>
+                <p style={{fontSize:11, color:'#999', margin:'0 0 10px 0'}}>Status: {tx.status} | {new Date(tx.createdAt).toLocaleString()}</p>
+                {(tx.status === 'pending' || tx.status === 'PENDING') && (
+                  <div style={{display:'flex', gap:10}}>
+                    <button onClick={()=>handleWithdraw(tx.id, 'approve')} style={{flex:1, background:'#00C853', border:'none', padding:12, borderRadius:8, color:'#FFF', fontWeight:800, cursor:'pointer'}}>✅ Approve</button>
+                    <button onClick={()=>handleWithdraw(tx.id, 'reject')} style={{flex:1, background:'red', border:'none', padding:12, borderRadius:8, color:'#FFF', fontWeight:800, cursor:'pointer'}}>❌ Reject</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {tab === 'notification' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={notifSearch} onChange={e => setNotifSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(notifSearch, setNotifUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{notifUser &&!showNotifInput && <button onClick={()=>setShowNotifInput(true)} style={{ background:'#FF1493', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Send Notification to {notifUser.username}</button>}{showNotifInput && (<div><textarea value={notifMessage} onChange={e => setNotifMessage(e.target.value)} placeholder="Message" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, height:80, color:'#000' }} /><button onClick={handleSendNotif} style={{ background:'#FF1493', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Send</button></div>)}</div>)}
         {tab === 'bonus' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={bonusSearch} onChange={e => setBonusSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(bonusSearch, setBonusUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{bonusUser &&!showBonusInput && <button onClick={()=>setShowBonusInput(true)} style={{ background:'gold', color:'#000', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Give Special Bonus to {bonusUser.username} - Current: ${bonusUser.specialBonus || 0}</button>}{showBonusInput && (<div><input value={bonusAmount} onChange={e => setBonusAmount(e.target.value)} placeholder="Bonus Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleGiveBonus} style={{ background:'gold', color:'#000', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Special Bonus</button></div>)}</div>)}
       </div>
