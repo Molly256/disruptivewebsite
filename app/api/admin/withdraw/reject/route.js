@@ -1,38 +1,44 @@
+export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(req) {
   try {
-    const { txId, adminId } = await req.json()
-    if (!txId || !adminId) return NextResponse.json({ error: 'txId, adminId required' }, { status: 400 })
+    const { txId } = await req.json()
+    if (!txId) return NextResponse.json({ error: 'Missing txId' }, { status: 400 })
 
-    const tx = await prisma.transaction.findUnique({ where: { id: txId }, include: { user: true } })
+    const tx = await prisma.transaction.findUnique({ where: { id: String(txId) } })
     if (!tx) return NextResponse.json({ error: 'Transaction not found' }, { status: 404 })
-    if (tx.type !== 'withdrawal') return NextResponse.json({ error: 'Not a withdrawal' }, { status: 400 }) // FIX 1
-    if (tx.status !== 'pending') return NextResponse.json({ error: 'Already processed' }, { status: 400 })
 
-    // Use transaction so refund + status change both succeed
-    await prisma.$transaction(async (prisma) => { // FIX 2
-      // 1. Mark rejected
-      await prisma.transaction.update({ where: { id: txId }, data: { status: 'rejected' } })
+    if (String(tx.status).toLowerCase() !== 'pending') {
+      return NextResponse.json({ error: 'Already processed: ' + tx.status }, { status: 400 })
+    }
 
-      // 2. Return money + reset freezeAmount
-      await prisma.user.update({ 
-        where: { id: tx.userId }, 
+    const user = await prisma.user.findUnique({ where: { id: String(tx.userId) } })
+    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+
+    await prisma.$transaction(async (p) => {
+      await p.transaction.update({
+        where: { id: String(txId) },
+        data: { status: 'rejected' }
+      })
+
+      const currentFreeze = Number(user.freezeAmount || 0)
+      const currentBalance = Number(user.walletBalance || 0)
+      const amount = Number(tx.amount)
+
+      await p.user.update({
+        where: { id: String(tx.userId) },
         data: { 
-          freezeAmount: { decrement: tx.amount },   // remove from freeze
-          walletBalance: { increment: tx.amount }   // return to wallet
+          walletBalance: currentBalance + amount,
+          freezeAmount: Math.max(0, currentFreeze - amount)
         }
       })
     })
 
-    await prisma.adminLog.create({ 
-      data: { adminId, action: `Rejected withdraw $${tx.amount.toFixed(2)} for ${tx.user.username}` }
-    })
-
     return NextResponse.json({ success: true })
-  } catch (e) { 
-    console.error(e)
-    return NextResponse.json({ error: e.message }, { status: 500 }) 
+  } catch (e) {
+    console.error('reject error:', e)
+    return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
