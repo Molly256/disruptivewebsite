@@ -20,7 +20,7 @@ export async function POST(req) {
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     const userTaskProducts = typeof user.currentTaskProducts === 'string'
-     ? JSON.parse(user.currentTaskProducts || '[]')
+    ? JSON.parse(user.currentTaskProducts || '[]')
       : (user.currentTaskProducts || [])
 
     if (userTaskProducts.length === 0) {
@@ -30,7 +30,7 @@ export async function POST(req) {
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
 
     const x10List = typeof user.x10TaskNumbers === 'string'
-     ? JSON.parse(user.x10TaskNumbers || '[]')
+    ? JSON.parse(user.x10TaskNumbers || '[]')
       : (user.x10TaskNumbers || [])
     const isX10DatabaseOverride = x10List.includes(Number(currentTaskNumber))
 
@@ -80,21 +80,22 @@ export async function POST(req) {
       nextSet = currentSet < config.totalSets? currentSet + 1 : 1
     }
 
-    // YOUR DEMAND: $90 task, $50 balance => -40 hold 90, deposit 40 => 0, submit => 90+profit, hold 0
-    const currentHold = parseFloat(user.holdAmount || 0) // 90
-    const currentWallet = parseFloat(user.walletBalance || 0) // 0 after deposit
-    const finalWallet = parseFloat((currentWallet + currentHold + totalProfit).toFixed(2)) // 0 + 90 + profit = 90+profit
+    const currentHold = parseFloat(user.holdAmount || 0)
+    const currentWallet = parseFloat(user.walletBalance || 0)
+    // Hold is price only, on submit: wallet + hold + profit
+    const finalWallet = parseFloat((currentWallet + currentHold + totalProfit).toFixed(2))
+    const finalHold = Math.max(0, parseFloat((currentHold - totalPrice).toFixed(2)))
 
     const updatedUser = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: {
           walletBalance: finalWallet,
-          holdAmount: 0, // 0 immediately on submit
+          holdAmount: finalHold,
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
-          currentTaskProducts: '[]',
-          activeProducts: '[]',
-          completedProducts: JSON.stringify(updatedCompletedProducts),
+          currentTaskProducts: [], // FIXED: array not string
+          activeProducts: [], // FIXED
+          completedProducts: updatedCompletedProducts, // FIXED: array not string
           taskCompleted: { increment: 1 },
           tasksInCurrentSet: nextTasksInCurrentSet,
           currentSet: nextSet
@@ -104,7 +105,7 @@ export async function POST(req) {
       if (activePendingTaskCard) {
         await tx.task.update({
           where: { id: activePendingTaskCard.id },
-          data: { status: 'completed', completedAt: new Date(), products: JSON.stringify(enrichedProducts) }
+          data: { status: 'completed', completedAt: new Date(), products: enrichedProducts }
         })
       } else {
         await tx.task.create({
@@ -115,7 +116,7 @@ export async function POST(req) {
             day: currentDay,
             setNumber: currentSet,
             progress: `D${currentDay} S${currentSet} T${currentTaskNumber}/${config.tasksPerSet}`,
-            products: JSON.stringify(enrichedProducts),
+            products: enrichedProducts,
             taskCode: `T${Date.now()}${userId.slice(-4)}`,
             completedAt: new Date()
           }
@@ -126,7 +127,7 @@ export async function POST(req) {
 
     return NextResponse.json({ success: true, user: updatedUser })
   } catch (err) {
-    console.error("Submission operational failure:", err)
+    console.error("Submission failure:", err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

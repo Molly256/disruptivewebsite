@@ -13,16 +13,30 @@ const VIP_CONFIG = {
   5: { tasksPerSet: 60, totalSets: 3, profit: 0.025 }
 }
 
-const loadSet = (vip, day, set) => {
+const loadSet = async (vip, day, set) => {
   try {
+    // 1. Try DB first (edited by admin)
+    const dbConfig = await prisma.taskSetConfig.findUnique({
+      where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } }
+    })
+    if (dbConfig?.data && Array.isArray(dbConfig.data) && dbConfig.data.length > 0) {
+      return dbConfig.data
+    }
+
+    // 2. Fallback to file
     const fileName = `vip${vip}Set${set}.js`
-    const filePath = path.join(process.cwd(), 'data', `vip${vip}/day${day}`, fileName)
+    let filePath = path.join(process.cwd(), 'data', `vip${vip}/day${day}`, fileName)
+    if (!fs.existsSync(filePath)) {
+      filePath = path.join(process.cwd(), 'data-source', `vip${vip}/day${day}`, fileName)
+    }
     if (!fs.existsSync(filePath)) return null
+
     const fileContent = fs.readFileSync(filePath, 'utf8')
     const cleanJsonString = fileContent.replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '').trim().replace(/;$/, '')
-    return eval(cleanJsonString)
+    const parsed = Function(`"use strict"; return (${cleanJsonString})`)()
+    return parsed
   } catch (err) {
-    console.error("Failed parsing task data array string:", err)
+    console.error("Failed parsing task data:", err)
     return null
   }
 }
@@ -60,10 +74,6 @@ export async function POST(req) {
         return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
       }
     }
-    // FIXED: Removed the walletVal < 0 block that stuck you on 1 task.
-    // Allow starting with negative? No, block NEXT start if still negative, but check happens AFTER current task is pending.
-    // Since we already checked active task above, this check is for next task. Keep it but it should block START, not DETAIL.
-    // If you WANT to allow starting next task even while negative to create demand chain, delete this whole block.
     if (completedCount > 0 && walletVal < 0) {
       return NextResponse.json({ error: 'Your balance is negative. Please deposit to continue.' }, { status: 400 })
     }
@@ -78,7 +88,7 @@ export async function POST(req) {
       return NextResponse.json({ error: `Set ${currentSet} completed. Contact admin to open next set.` }, { status: 400 })
     }
 
-    const fileSet = loadSet(user.vipLevel, currentDay, currentSet)
+    const fileSet = await loadSet(user.vipLevel, currentDay, currentSet)
     if (!fileSet) return NextResponse.json({ error: `Data missing or invalid for VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
 
     const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber || Number(p.taskOrder) === userCurrentTaskNumber)
@@ -89,7 +99,7 @@ export async function POST(req) {
     const activeProfitRate = baseRate * bonus
 
     const realImgPath = normalProduct.image &&!normalProduct.image.includes('photo') && normalProduct.image!== `/photo${userCurrentTaskNumber}.jpg`
-     ? normalProduct.image
+    ? normalProduct.image
       : `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`
 
     const productsToAssign = [{
@@ -110,14 +120,13 @@ export async function POST(req) {
     const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
 
     const innerItemsSnapshot = [{
-     ...productsToAssign[0],
+    ...productsToAssign[0],
       profit: profitAmount,
       reserveAmount: reserveAmount
     }]
 
-    // FIXED: Hold holds PRICE ONLY, not reserve. Wallet goes negative for demand.
-    const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2)) // 50 - 90 = -40
-    const newHold = parseFloat((user.holdAmount + pPrice).toFixed(2)) // 0 + 90 = 90 (price only)
+    const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
+    const newHold = parseFloat((user.holdAmount + pPrice).toFixed(2))
 
     const progressLabelString = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
 

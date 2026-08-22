@@ -131,3 +131,16 @@ model AdminLog {
 
   createdAt DateTime @default(now())
 }
+
+model TaskSetConfig {
+  id String @id @default(cuid())
+  vipLevel Int
+  day Int
+  setNum Int
+  data Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([vipLevel, day, setNum])
+  @@index([vipLevel, day])
+}
