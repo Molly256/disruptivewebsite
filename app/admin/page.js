@@ -75,11 +75,10 @@ export default function AdminPage() {
 
   const loadEditSet = async (vipLevel, day, setNum) => {
     if(!editUser) return alert('No user selected')
-    // FIX: clear selection when switching set - so only 1 task can be selected
     setSelectedEditItems([])
+    setActiveEditSet(setNum)
     if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
       setEditSetData(editUser.currentTaskProducts)
-      setActiveEditSet(setNum)
       return
     }
     try {
@@ -87,7 +86,6 @@ export default function AdminPage() {
       const data = await res.json()
       if(!res.ok) throw new Error(data.error)
       setEditSetData(data.items || [])
-      setActiveEditSet(setNum)
     } catch(e) {
       alert(`Failed to load set: ${e.message}`)
     }
@@ -118,16 +116,6 @@ export default function AdminPage() {
       const d2 = await r.json()
       if(r.ok) { setEditUser(d2.user); setEditSetData(d2.user.currentTaskProducts || []) }
     } catch(e) { alert(`Save failed: ${e.message}`) }
-  }
-
-  const getImageSrc = (item) => {
-    // FIX: simple - use image from API if exists, else build correct path
-    if(item?.image &&!item.image.includes('undefined')) return item.image
-    const vip = editUser?.vipLevel || 1
-    const day = editUser?.currentDay || 1
-    const set = activeEditSet || 1
-    const order = item?.taskOrder || item?.id || 1
-    return `/vip${vip}/day${day}/set${set}/photo${order}.jpg`
   }
 
   const editItem = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
@@ -193,6 +181,68 @@ export default function AdminPage() {
           <TabBtn id='bonus' label='Special Bonus' />
         </div>
 
+        {tab === 'edit' && (
+          <div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              <input value={editSearch} onChange={e => setEditSearch(e.target.value)} placeholder="Username or Phone" style={{ flex: 1, padding: 14, border: '2px solid #FF1493', borderRadius: 12, color: '#000' }} />
+              <button onClick={async () => {
+                const q = editSearch.trim();
+                if(!q) return alert('Enter search query');
+                const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                if(res.ok) { setEditUser(data.user); }
+                else alert(data.error || 'User not found');
+              }} style={{ background: '#FF1493', border: 'none', borderRadius: 12, padding: '0 18px', fontSize: 20, cursor: 'pointer' }}>🔍</button>
+            </div>
+            {editUser && (
+              <div style={{ background: '#000', color: '#FFF', padding: 20, borderRadius: 16 }}>
+                <div style={{ marginBottom: 16 }}>
+                  <p style={{ fontSize: 18, margin: '0 0 8px 0' }}><b>{editUser.username}</b></p>
+                  <p>💰 Balance: <b>${editUser.walletBalance || 0}</b></p>
+                  <p>👑 VIP Level: <b>VIP{editUser.vipLevel}</b></p>
+                  <p>📅 Day: <b>{editUser.currentDay || 1}</b></p>
+                  <p>📊 Progress: <b>{editUser.tasksInCurrentSet || 0}/{vipList.find(v=>v.id===editUser.vipLevel)?.tasks || 40}</b></p>
+                </div>
+                {[1,2,3].map(setNum => {
+                  const currentSet = editUser.currentSet || 1
+                  const isActive = setNum === currentSet
+                  return (
+                    <div key={setNum} style={{ marginTop: 16, border: '1px solid #333', borderRadius: 12, padding: 12, background: '#0a0a0a' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <p style={{ fontWeight: 800, margin: 0 }}>Set {setNum} {isActive && <span style={{ color: '#00C853', fontWeight: '900' }}>ACTIVE</span>}</p>
+                        <button onClick={() => loadEditSet(editUser.vipLevel, editUser.currentDay || 1, setNum)} style={{ background: 'red', color: '#FFF', border: 'none', padding: '10px 14px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Edit Set</button>
+                      </div>
+                      {activeEditSet === setNum && (
+                        <div style={{ marginTop: 14 }}>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, maxHeight: 400, overflowY: 'auto' }}>
+                            {editSetData.map(item => {
+                              const isSel = selectedEditItems.includes(item.taskOrder);
+                              return (
+                                <div key={`${activeEditSet}-${item.taskOrder}`} style={{ width: 140, background: '#111', padding: 6, borderRadius: 8, border: isSel? '2px solid red' : '1px solid #333', position:'relative' }}>
+                                  <div onClick={() => setSelectedEditItems(v => v.includes(item.taskOrder)? v.filter(x => x!== item.taskOrder) : [...v, item.taskOrder])} style={{ position: 'absolute', top:6, right:6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel? 'red' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex:2 }}>
+                                    {isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}
+                                  </div>
+                                  <img src={item.image} alt={item.name} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8, display:'block', background:'#222' }} />
+                                  <p style={{ fontSize: 11, margin: '4px 0', fontWeight: '800', color: '#00C853' }}>${parseFloat(item.price).toFixed(2)}</p>
+                                  <p style={{ fontSize: 9, margin: 0, color: '#CCC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
+                                  <button onClick={() => editItem(item)} style={{ width: '100%', marginTop: 4, background: '#FF1493', border: 'none', padding: 6, borderRadius: 6, color: '#FFF', fontSize: 11 }}>Edit Data</button>
+                                </div>
+                              )
+                            })}
+                          </div>
+                          {selectedEditItems.length > 0 && (
+                            <button onClick={handleSaveEditedData} style={{ background: '#00C853', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: '800' }}>💾 Save Data ({selectedEditItems.length} items)</button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {tab === 'upgrade' && (
           <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
@@ -252,73 +302,6 @@ export default function AdminPage() {
                   <button disabled={manageUser.currentSet === 3} onClick={handleResetToNextSet} style={{ background: manageUser.currentSet === 3? '#555':'red', color:'#FFF', border:'none', padding:'14px 20px', borderRadius:'12px', fontWeight:800, cursor: manageUser.currentSet === 3? 'not-allowed':'pointer', flex:1 }}>Reset to Next Set</button>
                   <button disabled={manageUser.currentDay === 5} onClick={handleNextDay} style={{ background: manageUser.currentDay === 5? '#555':'#00C853', color:'#FFF', border:'none', padding:'14px 20px', borderRadius:'12px', fontWeight:800, cursor: manageUser.currentDay === 5? 'not-allowed':'pointer', flex:1 }}>Next Day</button>
                 </div>
-                <p style={{fontSize:12, marginTop:10, color:'#aaa'}}>Note: Set 3 cannot be reset. Complete it then tap "Next Day"</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {tab === 'edit' && (
-          <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-              <input value={editSearch} onChange={e => setEditSearch(e.target.value)} placeholder="Username or Phone" style={{ flex: 1, padding: 14, border: '2px solid #FF1493', borderRadius: 12, color: '#000' }} />
-              <button onClick={async () => {
-                const q = editSearch.trim();
-                if(!q) return alert('Enter search query');
-                const res = await fetch(`/api/user/search?q=${encodeURIComponent(q)}`);
-                const data = await res.json();
-                if(res.ok) { setEditUser(data.user); }
-                else alert(data.error || 'User not found');
-              }} style={{ background: '#FF1493', border: 'none', borderRadius: 12, padding: '0 18px', fontSize: 20, cursor: 'pointer' }}>🔍</button>
-            </div>
-            {editUser && (
-              <div style={{ background: '#000', color: '#FFF', padding: 20, borderRadius: 16 }}>
-                <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: 18, margin: '0 0 8px 0' }}><b>{editUser.username}</b></p>
-                  <p>💰 Balance: <b>${editUser.walletBalance || 0}</b></p>
-                  <p>👑 VIP Level: <b>VIP{editUser.vipLevel}</b></p>
-                  <p>📅 Day: <b>{editUser.currentDay || 1}</b></p>
-                  <p>📊 Progress: <b>{editUser.tasksInCurrentSet || 0}/{vipList.find(v=>v.id===editUser.vipLevel)?.tasks || 40}</b></p>
-                </div>
-                {[1,2,3].map(setNum => {
-                  const currentSet = editUser.currentSet || 1
-                  const isActive = setNum === currentSet
-                  return (
-                    <div key={setNum} style={{ marginTop: 16, border: '1px solid #333', borderRadius: 12, padding: 12, background: '#0a0a0a' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <p style={{ fontWeight: 800, margin: 0 }}>Set {setNum} {isActive && <span style={{ color: '#00C853', fontWeight: '900' }}>ACTIVE</span>}</p>
-                        <button onClick={() => loadEditSet(editUser.vipLevel, editUser.currentDay || 1, setNum)} style={{ background: 'red', color: '#FFF', border: 'none', padding: '10px 14px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Edit Set</button>
-                      </div>
-                      {activeEditSet === setNum && (
-                        <div style={{ marginTop: 14 }}>
-                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, maxHeight: 400, overflowY: 'auto' }}>
-                            {editSetData.map(item => {
-                              const isSel = selectedEditItems.includes(item.taskOrder);
-                              return (
-                                <div key={item.taskOrder} style={{ width: 140, background: '#111', padding: 6, borderRadius: 8, border: isSel? '2px solid red' : '1px solid #333', position:'relative' }}>
-                                  <div onClick={() => setSelectedEditItems(v => v.includes(item.taskOrder)? v.filter(x => x!== item.taskOrder) : [...v, item.taskOrder])} style={{ position: 'absolute', top:6, right:6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel? 'red' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex:2 }}>
-                                    {isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}
-                                  </div>
-                                  <img
-                                    src={getImageSrc(item)}
-                                    onError={(e)=>{ e.target.onerror=null; e.target.src='/placeholder.jpg' }}
-                                    style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }}
-                                  />
-                                  <p style={{ fontSize: 11, margin: '4px 0', fontWeight: '800', color: '#00C853' }}>${parseFloat(item.price).toFixed(2)}</p>
-                                  <p style={{ fontSize: 9, margin: 0, color: '#CCC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
-                                  <button onClick={() => editItem(item)} style={{ width: '100%', marginTop: 4, background: '#FF1493', border: 'none', padding: 6, borderRadius: 6, color: '#FFF', fontSize: 11 }}>Edit Data</button>
-                                </div>
-                              )
-                            })}
-                          </div>
-                          {selectedEditItems.length > 0 && (
-                            <button onClick={handleSaveEditedData} style={{ background: '#00C853', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: '800' }}>💾 Save Data ({selectedEditItems.length} items)</button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
               </div>
             )}
           </div>
@@ -334,7 +317,7 @@ export default function AdminPage() {
         <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:999 }}>
           <div style={{ background:'#222', padding:20, borderRadius:16, width:'90%', maxWidth:400 }}>
             <h3 style={{color:'#FFF', marginBottom:12}}>Edit Task {editingPhoto.taskOrder}</h3>
-            <img src={getImageSrc(editingPhoto)} style={{ width:'100%', height:120, objectFit:'cover', borderRadius:8, marginBottom:10 }}/>
+            <img src={editingPhoto.image} alt={editingPhoto.name} style={{ width:'100%', height:120, objectFit:'cover', borderRadius:8, marginBottom:10 }}/>
             <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} placeholder="Name" style={{width:'100%', padding:12, marginBottom:10, borderRadius:8, border:'none', color:'#000'}}/>
             <input value={editData.price} onChange={e=>setEditData({...editData, price:e.target.value})} placeholder="Price" type="number" style={{width:'100%', padding:12, marginBottom:16, borderRadius:8, border:'none', color:'#000'}}/>
             <div style={{display:'flex', gap:8}}>
