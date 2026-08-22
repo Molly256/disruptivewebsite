@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import fs from 'fs'
-import path from 'path'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,31 +12,11 @@ const VIP_CONFIG = {
 }
 
 const loadSet = async (vip, day, set) => {
-  try {
-    // 1. Try DB first (edited by admin)
-    const dbConfig = await prisma.taskSetConfig.findUnique({
-      where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } }
-    })
-    if (dbConfig?.data && Array.isArray(dbConfig.data) && dbConfig.data.length > 0) {
-      return dbConfig.data
-    }
-
-    // 2. Fallback to file
-    const fileName = `vip${vip}Set${set}.js`
-    let filePath = path.join(process.cwd(), 'data', `vip${vip}/day${day}`, fileName)
-    if (!fs.existsSync(filePath)) {
-      filePath = path.join(process.cwd(), 'data-source', `vip${vip}/day${day}`, fileName)
-    }
-    if (!fs.existsSync(filePath)) return null
-
-    const fileContent = fs.readFileSync(filePath, 'utf8')
-    const cleanJsonString = fileContent.replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '').trim().replace(/;$/, '')
-    const parsed = Function(`"use strict"; return (${cleanJsonString})`)()
-    return parsed
-  } catch (err) {
-    console.error("Failed parsing task data:", err)
-    return null
-  }
+  const dbConfig = await prisma.taskSetConfig.findUnique({
+    where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } }
+  })
+  if (dbConfig?.data?.length > 0) return dbConfig.data
+  return null // no file fallback on Vercel
 }
 
 const generateTaskCode = () => {
@@ -50,17 +28,13 @@ const generateTaskCode = () => {
 export async function POST(req) {
   try {
     const { userId } = await req.json()
-    if (!userId) return NextResponse.json({ error: 'userId required' }, { status: 400 })
-
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
     let currentProductsArray = []
     try {
       currentProductsArray = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts || '[]') : (user.currentTaskProducts || [])
-    } catch {
-      currentProductsArray = []
-    }
+    } catch { currentProductsArray = [] }
 
     if (currentProductsArray.length > 0) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
@@ -68,67 +42,51 @@ export async function POST(req) {
 
     const completedCount = Number(user.taskCompleted || 0)
     const walletVal = parseFloat(user.walletBalance || 0)
-
-    if (completedCount === 0) {
-      if (walletVal < 50) {
-        return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
-      }
-    }
-    if (completedCount > 0 && walletVal < 0) {
-      return NextResponse.json({ error: 'Your balance is negative. Please deposit to continue.' }, { status: 400 })
+    if (completedCount === 0 && walletVal < 50) {
+      return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
     }
 
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
     const currentDay = user.currentDay || 1
     const currentSet = user.currentSet || 1
-    let tasksInCurrentSet = user.tasksInCurrentSet || 0
+    const tasksInCurrentSet = user.tasksInCurrentSet || 0
     const userCurrentTaskNumber = tasksInCurrentSet + 1
 
     if (tasksInCurrentSet >= config.tasksPerSet) {
-      return NextResponse.json({ error: `Set ${currentSet} completed. Contact admin to open next set.` }, { status: 400 })
+      return NextResponse.json({ error: `Set ${currentSet} completed. Contact admin.` }, { status: 400 })
     }
 
     const fileSet = await loadSet(user.vipLevel, currentDay, currentSet)
-    if (!fileSet) return NextResponse.json({ error: `Data missing or invalid for VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
+    if (!fileSet) return NextResponse.json({ error: `Admin hasn't configured VIP${user.vipLevel} Day${currentDay} Set${currentSet} yet. Please ask admin to save tasks in DB.` }, { status: 400 })
 
     const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber || Number(p.taskOrder) === userCurrentTaskNumber)
-    if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
+    if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in set` }, { status: 400 })
 
     const baseRate = (Number(normalProduct.profitPercent) / 100) || config.profit
     const bonus = Number(normalProduct.bonusMultiplier) || 1
     const activeProfitRate = baseRate * bonus
 
-    const realImgPath = normalProduct.image &&!normalProduct.image.includes('photo') && normalProduct.image!== `/photo${userCurrentTaskNumber}.jpg`
-    ? normalProduct.image
-      : `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`
+    const realImgPath = normalProduct.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`
 
     const productsToAssign = [{
       id: userCurrentTaskNumber,
       taskOrder: userCurrentTaskNumber,
-      productId: userCurrentTaskNumber,
-      photoId: userCurrentTaskNumber,
       name: normalProduct.name,
       price: parseFloat(normalProduct.price || 0),
-      rating: normalProduct.rating || 5.0,
       image: realImgPath,
       profitPercent: normalProduct.profitPercent || (baseRate * 100),
-      bonusMultiplier: bonus
+      bonusMultiplier: bonus,
+      profit: parseFloat((parseFloat(normalProduct.price) * activeProfitRate).toFixed(2))
     }]
 
-    const pPrice = parseFloat(productsToAssign[0].price || 0)
-    const profitAmount = parseFloat((pPrice * activeProfitRate).toFixed(2))
+    const pPrice = productsToAssign[0].price
+    const profitAmount = productsToAssign[0].profit
     const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-
-    const innerItemsSnapshot = [{
-    ...productsToAssign[0],
-      profit: profitAmount,
-      reserveAmount: reserveAmount
-    }]
+    const innerItemsSnapshot = [{...productsToAssign[0], reserveAmount }]
 
     const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + pPrice).toFixed(2))
-
-    const progressLabelString = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
+    const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
 
     const updatedUser = await prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -140,26 +98,24 @@ export async function POST(req) {
           activeProducts: innerItemsSnapshot
         }
       })
-
       await tx.task.create({
         data: {
           userId,
           vipLevel: user.vipLevel,
           day: currentDay,
           setNumber: currentSet,
-          progress: progressLabelString,
+          progress: progressLabel,
           status: 'pending',
           products: innerItemsSnapshot,
           taskCode: generateTaskCode()
         }
       })
-
       return await tx.user.findUnique({ where: { id: userId } })
     })
 
     return NextResponse.json({ success: true, user: updatedUser })
   } catch (err) {
-    console.error('[START-TASK CRASH]', err)
+    console.error('[START-TASK]', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

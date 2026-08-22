@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
-import path from 'path'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req) {
   try {
-    const { vipLevel, day, setNum, data, adminId } = await req.json()
+    const { vipLevel, day, setNum, data } = await req.json()
 
     if (!vipLevel || !day || !setNum || !data) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
@@ -16,57 +15,34 @@ export async function POST(req) {
     const d = Number(day)
     const s = Number(setNum)
 
-    const fileName = `vip${v}Set${s}.js`
-    const folderPath = path.join(process.cwd(), 'data', `vip${v}`, `day${d}`)
-    const filePath = path.join(folderPath, fileName)
-
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true })
-    }
-
-    // load existing file
-    let existingItems = []
-    if (fs.existsSync(filePath)) {
-      try {
-        const content = fs.readFileSync(filePath, 'utf8')
-        const clean = content.replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '').trim().replace(/;$/, '')
-        existingItems = Function(`"use strict"; return (${clean})`)()
-      } catch {
-        existingItems = []
-      }
-    }
-
-    // merge edited prices
-    const editedMap = new Map(data.map(i => [Number(i.taskOrder || i.id), i]))
-    
-    let merged = []
-    if (existingItems.length > 0) {
-      merged = existingItems.map(item => {
-        const num = Number(item.taskOrder || item.id)
-        if (editedMap.has(num)) {
-          const edit = editedMap.get(num)
-          return {
-            ...item,
-            name: edit.name ?? item.name,
-            price: parseFloat(edit.price ?? item.price)
-          }
+    // Save to DB - NOT to file
+    const saved = await prisma.taskSetConfig.upsert({
+      where: {
+        vipLevel_day_setNum: {
+          vipLevel: v,
+          day: d,
+          setNum: s
         }
-        return item
-      })
-    } else {
-      merged = data
-    }
-
-    const fileContent = `export const vip${v}Set${s} = ${JSON.stringify(merged, null, 2)};\n`
-    fs.writeFileSync(filePath, fileContent, 'utf8')
+      },
+      update: {
+        data: data
+      },
+      create: {
+        vipLevel: v,
+        day: d,
+        setNum: s,
+        data: data
+      }
+    })
 
     return NextResponse.json({ 
       success: true, 
-      message: `File ${fileName} saved for ALL users` 
+      message: `VIP${v} Day${d} Set${s} saved to DB for ALL users`,
+      saved
     })
 
   } catch (e) {
-    console.error('SAVE FILE ERROR:', e)
+    console.error('SAVE DB ERROR:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
