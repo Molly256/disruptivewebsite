@@ -44,8 +44,8 @@ export async function GET(req) {
       return NextResponse.json({ error: `File ${fileName} did not resolve into array` }, { status: 500 })
     }
 
-    const formattedItems = items.map(item => {
-      const taskNum = item.taskOrder || item.id || 1
+    const formattedItems = items.map((item, idx) => {
+      const taskNum = item.taskOrder || item.id || (idx + 1)
       return {
         ...item,
         id: taskNum,
@@ -55,6 +55,7 @@ export async function GET(req) {
         profitPercent: item.profitPercent,
         bonusMultiplier: item.bonusMultiplier,
         rating: item.rating || 5.0,
+        // IMPORTANT: This requires photos in /public/vipX/dayY/setZ/photoN.jpg
         image: `/vip${vipLevel}/day${day}/set${set}/photo${taskNum}.jpg`
       }
     })

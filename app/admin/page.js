@@ -75,6 +75,8 @@ export default function AdminPage() {
 
   const loadEditSet = async (vipLevel, day, setNum) => {
     if(!editUser) return alert('No user selected')
+    // FIX: clear selection when switching set - so only 1 task can be selected
+    setSelectedEditItems([])
     if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
       setEditSetData(editUser.currentTaskProducts)
       setActiveEditSet(setNum)
@@ -119,7 +121,8 @@ export default function AdminPage() {
   }
 
   const getImageSrc = (item) => {
-    if(item?.image && item.image!== '/photo1.jpg' &&!item.image.includes('undefined')) return item.image
+    // FIX: simple - use image from API if exists, else build correct path
+    if(item?.image &&!item.image.includes('undefined')) return item.image
     const vip = editUser?.vipLevel || 1
     const day = editUser?.currentDay || 1
     const set = activeEditSet || 1
@@ -296,7 +299,11 @@ export default function AdminPage() {
                                   <div onClick={() => setSelectedEditItems(v => v.includes(item.taskOrder)? v.filter(x => x!== item.taskOrder) : [...v, item.taskOrder])} style={{ position: 'absolute', top:6, right:6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel? 'red' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex:2 }}>
                                     {isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}
                                   </div>
-                                  <img src={getImageSrc(item)} onError={(e)=>{e.target.src=`/vip${editUser.vipLevel}/day${editUser.currentDay||1}/set${activeEditSet}/photo${item.taskOrder}.jpg`}} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
+                                  <img
+                                    src={getImageSrc(item)}
+                                    onError={(e)=>{ e.target.onerror=null; e.target.src='/placeholder.jpg' }}
+                                    style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }}
+                                  />
                                   <p style={{ fontSize: 11, margin: '4px 0', fontWeight: '800', color: '#00C853' }}>${parseFloat(item.price).toFixed(2)}</p>
                                   <p style={{ fontSize: 9, margin: 0, color: '#CCC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
                                   <button onClick={() => editItem(item)} style={{ width: '100%', marginTop: 4, background: '#FF1493', border: 'none', padding: 6, borderRadius: 6, color: '#FFF', fontSize: 11 }}>Edit Data</button>
