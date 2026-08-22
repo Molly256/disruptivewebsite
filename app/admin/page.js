@@ -73,10 +73,8 @@ export default function AdminPage() {
     if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
   }
 
-    // FIXED: Load set FROM THAT USER
   const loadEditSet = async (vipLevel, day, setNum) => {
     if(!editUser) return alert('No user selected')
-    // if user is doing this set now, show his live tasks
     if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
       setEditSetData(editUser.currentTaskProducts)
       setActiveEditSet(setNum)
@@ -93,7 +91,6 @@ export default function AdminPage() {
     }
   }
 
-  // FIXED: Save to THAT USER ONLY
   const handleSaveEditedData = async () => {
     if(selectedEditItems.length === 0) return alert('Select items to save')
     try {
@@ -121,11 +118,19 @@ export default function AdminPage() {
     } catch(e) { alert(`Save failed: ${e.message}`) }
   }
 
+  const getImageSrc = (item) => {
+    if(item?.image && item.image!== '/photo1.jpg' &&!item.image.includes('undefined')) return item.image
+    const vip = editUser?.vipLevel || 1
+    const day = editUser?.currentDay || 1
+    const set = activeEditSet || 1
+    const order = item?.taskOrder || item?.id || 1
+    return `/vip${vip}/day${day}/set${set}/photo${order}.jpg`
+  }
+
   const editItem = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
 
   const saveEdit = () => {
     setEditSetData(prev => prev.map(p => Number(p.taskOrder) === Number(editingPhoto.taskOrder)? {...p, name: editData.name, price: parseFloat(editData.price)} : p));
-    setSelectedEditItems(prev => prev.includes(editingPhoto.taskOrder)? prev : [...prev, editingPhoto.taskOrder]);
     setEditingPhoto(null);
   }
 
@@ -163,7 +168,6 @@ export default function AdminPage() {
     }
   }
 
-
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
   const handleWithdraw = async (txId, action) => { const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) }); if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert('Failed') }
   const handleSendNotif = async () => { if(!notifMessage) return alert('Enter message'); const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) }); if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed') }
@@ -178,7 +182,7 @@ export default function AdminPage() {
           <TabBtn id='upgrade' label='Upgrade VIP' />
           <TabBtn id='resetset' label='Reset Set' />
           <TabBtn id='password' label='Reset Password' />
-          <TabBtn id='manage' label='Manage Progress' /> {/* NEW */}
+          <TabBtn id='manage' label='Manage Progress' />
           <TabBtn id='edit' label='Edit Tasks' />
           <TabBtn id='deposit' label='Deposit' />
           <TabBtn id='withdraw' label='Withdraw' />
@@ -226,14 +230,12 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* NEW MANAGE PROGRESS TAB */}
         {tab === 'manage' && (
           <div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
               <input value={manageSearch} onChange={e => setManageSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} />
               <button onClick={()=>searchUser(manageSearch, setManageUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button>
             </div>
-
             {manageUser && (
               <div>
                 <h3 style={{marginBottom:12}}><b>{manageUser.username}</b></h3>
@@ -241,33 +243,11 @@ export default function AdminPage() {
                 <p>💰 Balance: <b>${manageUser.walletBalance || 0}</b></p>
                 <p>📅 Day: <b>{manageUser.currentDay || 1}/5</b></p>
                 <p>📦 Set: <b>{manageUser.currentSet || 1}/3</b></p>
-                <p>✅ Sets Today: <b>{manageUser.completedSetsToday || 0}/3</b></p> {/* ADDED */}
+                <p>✅ Sets Today: <b>{manageUser.completedSetsToday || 0}/3</b></p>
                 <p>📊 Progress: <b>{manageUser.tasksInCurrentSet || 0}/{vipList.find(v=>v.id===manageUser.vipLevel)?.tasks || 40}</b></p>
-
                 <div style={{display:'flex', gap:10, marginTop:20, flexWrap:'wrap'}}>
-                  {/* RED RESET BUTTON */}
-                  <button
-                    disabled={manageUser.currentSet === 3}
-                    onClick={handleResetToNextSet}
-                    style={{
-                      background: manageUser.currentSet === 3? '#555':'red',
-                      color:'#FFF', border:'none', padding:'14px 20px', borderRadius:'12px',
-                      fontWeight:800, cursor: manageUser.currentSet === 3? 'not-allowed':'pointer', flex:1
-                    }}>
-                    Reset to Next Set
-                  </button>
-
-                  {/* GREEN NEXT DAY BUTTON */}
-                  <button
-                    disabled={manageUser.currentDay === 5}
-                    onClick={handleNextDay}
-                    style={{
-                      background: manageUser.currentDay === 5? '#555':'#00C853',
-                      color:'#FFF', border:'none', padding:'14px 20px', borderRadius:'12px',
-                      fontWeight:800, cursor: manageUser.currentDay === 5? 'not-allowed':'pointer', flex:1
-                    }}>
-                    Next Day
-                  </button>
+                  <button disabled={manageUser.currentSet === 3} onClick={handleResetToNextSet} style={{ background: manageUser.currentSet === 3? '#555':'red', color:'#FFF', border:'none', padding:'14px 20px', borderRadius:'12px', fontWeight:800, cursor: manageUser.currentSet === 3? 'not-allowed':'pointer', flex:1 }}>Reset to Next Set</button>
+                  <button disabled={manageUser.currentDay === 5} onClick={handleNextDay} style={{ background: manageUser.currentDay === 5? '#555':'#00C853', color:'#FFF', border:'none', padding:'14px 20px', borderRadius:'12px', fontWeight:800, cursor: manageUser.currentDay === 5? 'not-allowed':'pointer', flex:1 }}>Next Day</button>
                 </div>
                 <p style={{fontSize:12, marginTop:10, color:'#aaa'}}>Note: Set 3 cannot be reset. Complete it then tap "Next Day"</p>
               </div>
@@ -275,7 +255,6 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* EDIT TASKS TAB */}
         {tab === 'edit' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
@@ -289,7 +268,6 @@ export default function AdminPage() {
                 else alert(data.error || 'User not found');
               }} style={{ background: '#FF1493', border: 'none', borderRadius: 12, padding: '0 18px', fontSize: 20, cursor: 'pointer' }}>🔍</button>
             </div>
-
             {editUser && (
               <div style={{ background: '#000', color: '#FFF', padding: 20, borderRadius: 16 }}>
                 <div style={{ marginBottom: 16 }}>
@@ -299,22 +277,15 @@ export default function AdminPage() {
                   <p>📅 Day: <b>{editUser.currentDay || 1}</b></p>
                   <p>📊 Progress: <b>{editUser.tasksInCurrentSet || 0}/{vipList.find(v=>v.id===editUser.vipLevel)?.tasks || 40}</b></p>
                 </div>
-
                 {[1,2,3].map(setNum => {
                   const currentSet = editUser.currentSet || 1
                   const isActive = setNum === currentSet
                   return (
                     <div key={setNum} style={{ marginTop: 16, border: '1px solid #333', borderRadius: 12, padding: 12, background: '#0a0a0a' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <p style={{ fontWeight: 800, margin: 0 }}>
-                          Set {setNum} {isActive && <span style={{ color: '#00C853', fontWeight: '900' }}>ACTIVE</span>}
-                        </p>
-                        <button onClick={() => loadEditSet(editUser.vipLevel, editUser.currentDay || 1, setNum)}
-                          style={{ background: 'red', color: '#FFF', border: 'none', padding: '10px 14px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>
-                          Edit Set
-                        </button>
+                        <p style={{ fontWeight: 800, margin: 0 }}>Set {setNum} {isActive && <span style={{ color: '#00C853', fontWeight: '900' }}>ACTIVE</span>}</p>
+                        <button onClick={() => loadEditSet(editUser.vipLevel, editUser.currentDay || 1, setNum)} style={{ background: 'red', color: '#FFF', border: 'none', padding: '10px 14px', borderRadius: 12, fontWeight: 700, cursor: 'pointer' }}>Edit Set</button>
                       </div>
-
                       {activeEditSet === setNum && (
                         <div style={{ marginTop: 14 }}>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, maxHeight: 400, overflowY: 'auto' }}>
@@ -322,11 +293,10 @@ export default function AdminPage() {
                               const isSel = selectedEditItems.includes(item.taskOrder);
                               return (
                                 <div key={item.taskOrder} style={{ width: 140, background: '#111', padding: 6, borderRadius: 8, border: isSel? '2px solid red' : '1px solid #333', position:'relative' }}>
-                                  <div onClick={() => setSelectedEditItems(v => v.includes(item.taskOrder)? v.filter(x => x!== item.taskOrder) : [...v, item.taskOrder])}
-                                    style={{ position: 'absolute', top:6, right:6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel? 'red' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex:2 }}>
+                                  <div onClick={() => setSelectedEditItems(v => v.includes(item.taskOrder)? v.filter(x => x!== item.taskOrder) : [...v, item.taskOrder])} style={{ position: 'absolute', top:6, right:6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel? 'red' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex:2 }}>
                                     {isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}
                                   </div>
-                                  <img src={item.image} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
+                                  <img src={getImageSrc(item)} onError={(e)=>{e.target.src=`/vip${editUser.vipLevel}/day${editUser.currentDay||1}/set${activeEditSet}/photo${item.taskOrder}.jpg`}} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8 }} />
                                   <p style={{ fontSize: 11, margin: '4px 0', fontWeight: '800', color: '#00C853' }}>${parseFloat(item.price).toFixed(2)}</p>
                                   <p style={{ fontSize: 9, margin: 0, color: '#CCC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
                                   <button onClick={() => editItem(item)} style={{ width: '100%', marginTop: 4, background: '#FF1493', border: 'none', padding: 6, borderRadius: 6, color: '#FFF', fontSize: 11 }}>Edit Data</button>
@@ -334,11 +304,8 @@ export default function AdminPage() {
                               )
                             })}
                           </div>
-
                           {selectedEditItems.length > 0 && (
-                            <button onClick={handleSaveEditedData} style={{ background: '#00C853', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: '800' }}>
-                              💾 Save Data ({selectedEditItems.length} items)
-                            </button>
+                            <button onClick={handleSaveEditedData} style={{ background: '#00C853', color: '#FFF', border: 'none', padding: 14, borderRadius: 12, width: '100%', fontWeight: '800' }}>💾 Save Data ({selectedEditItems.length} items)</button>
                           )}
                         </div>
                       )}
@@ -351,20 +318,16 @@ export default function AdminPage() {
         )}
 
         {tab === 'deposit' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={depositSearch} onChange={e => setDepositSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(depositSearch, setDepositUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{depositUser &&!showDepositInput && <button onClick={()=>setShowDepositInput(true)} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Deposit to {depositUser.username} - Balance: ${depositUser.walletBalance}</button>}{showDepositInput && (<div><input value={depositAmount} onChange={e => setDepositAmount(e.target.value)} placeholder="Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleDeposit} style={{ background:'#00C853', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Deposit</button></div>)}</div>)}
-
         {tab === 'withdraw' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}>{withdrawList.length === 0 && <p>No pending withdrawals</p>}{withdrawList.map(tx => (<div key={tx.id} style={{ border:'1px solid #333', padding:12, borderRadius:8, marginBottom:8 }}><p><b>{tx.user?.username}</b> - ${tx.amount}</p><p style={{fontSize:12}}>Status: {tx.status}</p>{tx.status === 'PENDING' && <div style={{display:'flex', gap:8}}><button onClick={()=>handleWithdraw(tx.id, 'approve')} style={{background:'#00C853', border:'none', padding:8, borderRadius:6, color:'#FFF'}}>Approve</button><button onClick={()=>handleWithdraw(tx.id, 'reject')} style={{background:'red', border:'none', padding:8, borderRadius:6, color:'#FFF'}}>Reject</button></div>}</div>))}</div>)}
-
         {tab === 'notification' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={notifSearch} onChange={e => setNotifSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(notifSearch, setNotifUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{notifUser &&!showNotifInput && <button onClick={()=>setShowNotifInput(true)} style={{ background:'#FF1493', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Send Notification to {notifUser.username}</button>}{showNotifInput && (<div><textarea value={notifMessage} onChange={e => setNotifMessage(e.target.value)} placeholder="Message" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, height:80, color:'#000' }} /><button onClick={handleSendNotif} style={{ background:'#FF1493', color:'#FFF', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Send</button></div>)}</div>)}
-
         {tab === 'bonus' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={bonusSearch} onChange={e => setBonusSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(bonusSearch, setBonusUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{bonusUser &&!showBonusInput && <button onClick={()=>setShowBonusInput(true)} style={{ background:'gold', color:'#000', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Give Special Bonus to {bonusUser.username} - Current: ${bonusUser.specialBonus || 0}</button>}{showBonusInput && (<div><input value={bonusAmount} onChange={e => setBonusAmount(e.target.value)} placeholder="Bonus Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleGiveBonus} style={{ background:'gold', color:'#000', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Special Bonus</button></div>)}</div>)}
       </div>
       <BottomNav />
-
       {editingPhoto && (
         <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:999 }}>
           <div style={{ background:'#222', padding:20, borderRadius:16, width:'90%', maxWidth:400 }}>
             <h3 style={{color:'#FFF', marginBottom:12}}>Edit Task {editingPhoto.taskOrder}</h3>
-            <img src={editingPhoto.image} style={{ width:'100%', height:120, objectFit:'cover', borderRadius:8, marginBottom:10 }}/>
+            <img src={getImageSrc(editingPhoto)} style={{ width:'100%', height:120, objectFit:'cover', borderRadius:8, marginBottom:10 }}/>
             <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} placeholder="Name" style={{width:'100%', padding:12, marginBottom:10, borderRadius:8, border:'none', color:'#000'}}/>
             <input value={editData.price} onChange={e=>setEditData({...editData, price:e.target.value})} placeholder="Price" type="number" style={{width:'100%', padding:12, marginBottom:16, borderRadius:8, border:'none', color:'#000'}}/>
             <div style={{display:'flex', gap:8}}>
