@@ -24,8 +24,6 @@ export default function RecordsPage() {
   const handleSubmitTask = async (task) => {
     if(submittingId) return 
     setSubmittingId(task.id)
-
-    // 💡 FIXED: Safely extract numeric currentTaskNumber from task.progress (e.g., "D1 S1 T5/40" -> 5)
     let extractedTaskNumber = 1
     if (task.progress && task.progress.includes('T')) {
       const match = task.progress.match(/T(\d+)/)
@@ -34,17 +32,13 @@ export default function RecordsPage() {
       const productsList = typeof task.products === 'string' ? JSON.parse(task.products) : (task.products || [])
       if (productsList.length > 0) extractedTaskNumber = Number(productsList[0].id || 1)
     }
-
-    // 💡 FIXED: Now sends the precise currentTaskNumber parameter expected by your backend route!
     const res = await fetch('/api/submit-task', { 
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify({ userId: user.id, currentTaskNumber: extractedTaskNumber }) 
     })
-    
     const data = await res.json()
     setSubmittingId(null)
-    
     if(res.ok) {
       setTasks(p => p.map(t => t.id === task.id ? {...t, status: 'completed'} : t))
       setUser(data.user)
@@ -73,12 +67,11 @@ export default function RecordsPage() {
       <div style={{ padding: '0 16px 16px' }}>
         {filteredTasks.length === 0? <div style={{ textAlign: 'center', padding: '40px 0', color: '#999', fontSize: '14px' }}>No records found</div> : filteredTasks.map(task => {
           const productsList = typeof task.products === 'string'? JSON.parse(task.products) : (task.products || [])
-
           const fullyFormed = productsList.map(item => {
             const day = task.day || 1
             const set = task.setNumber || 1
             const vip = task.vipLevel || user.vipLevel || 1 
-            const pid = item.productId || item.id || item.photoId || 0 
+            const pid = item.productId || item.id || item.taskOrder || 1 
             return {
               id: pid,
               name: item.name || `Product Item #${pid}`,
@@ -88,10 +81,8 @@ export default function RecordsPage() {
               bonus: Number(item.bonusMultiplier) || 1
             }
           })
-
           const totalCost = fullyFormed.reduce((s, p) => s + p.price, 0)
           const totalProfit = fullyFormed.reduce((s, p) => s + p.profit, 0)
-
           return (
             <div key={task.id} style={{ background: '#FFF', borderRadius: '12px', padding: '16px', marginBottom: '12px', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingRight: task.status === 'completed'? '90px' : '0' }}>
@@ -101,7 +92,7 @@ export default function RecordsPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
                 {fullyFormed.map((prod, idx) => (
                   <div key={idx} style={{ display: 'flex', gap: '12px' }}>
-                    <img src={prod.image} alt="" onError={(e)=>{e.target.src='/placeholder.jpg'}} style={{ width: '80px', height: '80px', objectFit: 'contain', background: '#F5F5F5', borderRadius: '8px' }} /> 
+                    <img src={prod.image} alt={prod.name} style={{ width: '80px', height: '80px', objectFit: 'cover', background: '#F5F5F5', borderRadius: '8px', display:'block' }} /> 
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#000', marginBottom: '4px' }}>[{prod.id}] {prod.name} {prod.bonus > 1? `x${prod.bonus}` : ''}</div>
                       <div style={{ fontSize: '14px', fontWeight: '700', color: '#000', marginBottom: '4px' }}>{prod.price.toFixed(2)} x1 USD</div>
@@ -115,7 +106,6 @@ export default function RecordsPage() {
                   <div><div style={{ fontSize: '12px', color: '#666' }}>Total Amount</div><div style={{ fontSize: '15px', fontWeight: '800', color: '#000' }}>{totalCost.toFixed(2)} <span style={{ fontSize: 12 }}>USD</span></div></div>
                   <div><div style={{ fontSize: '12px', color: '#666' }}>Profit</div><div style={{ fontSize: '15px', fontWeight: '800', color: '#FF0000' }}>{totalProfit.toFixed(2)} <span style={{ fontSize: 12 }}>USD</span></div></div>
                 </div>
-                {/* 💡 FIXED: Pass the whole task object inside your click payload */}
                 {task.status === 'pending' && <button disabled={submittingId === task.id} onClick={() => handleSubmitTask(task)} style={{ background: submittingId === task.id? '#CCC' : '#FF0000', color: '#FFF', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', fontSize: '14px', cursor: submittingId === task.id? 'not-allowed' : 'pointer' }}>{submittingId === task.id? 'Submitting...' : 'Submit'}</button>}
               </div>
             </div>

@@ -78,7 +78,13 @@ export default function AdminPage() {
     setSelectedEditItems([])
     setActiveEditSet(setNum)
     if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
-      setEditSetData(editUser.currentTaskProducts)
+      const fixed = editUser.currentTaskProducts.map((item, idx) => ({
+       ...item,
+        taskOrder: item.taskOrder || item.id || idx+1,
+        id: item.taskOrder || item.id || idx+1,
+        image: `/vip${vipLevel}/day${day}/set${setNum}/photo${item.taskOrder || item.id || idx+1}.jpg`
+      }))
+      setEditSetData(fixed)
       return
     }
     try {
@@ -114,7 +120,17 @@ export default function AdminPage() {
       setSelectedEditItems([])
       const r = await fetch(`/api/user/search?q=${encodeURIComponent(editUser.username)}`)
       const d2 = await r.json()
-      if(r.ok) { setEditUser(d2.user); setEditSetData(d2.user.currentTaskProducts || []) }
+      if(r.ok) {
+        const fixedUser = {
+         ...d2.user,
+          currentTaskProducts: (d2.user.currentTaskProducts || []).map((item, idx) => ({
+           ...item,
+            image: `/vip${d2.user.vipLevel}/day${d2.user.currentDay || 1}/set${d2.user.currentSet || 1}/photo${item.taskOrder || idx+1}.jpg`
+          }))
+        }
+        setEditUser(fixedUser);
+        setEditSetData(fixedUser.currentTaskProducts || [])
+      }
     } catch(e) { alert(`Save failed: ${e.message}`) }
   }
 
