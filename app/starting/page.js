@@ -173,7 +173,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             const d = currentDay || 1
             const s = currentSet || 1
             const calculatedImgPath = `/vip${vipLevel || 1}/day${d}/set${s}/photo${itemId}.jpg`
-            const imgSrc = product.image &&!product.image.includes('undefined') && product.image!== '/photo1.jpg'? product.image : calculatedImgPath
+            const imgSrc = product.image &&!product.image.includes('photo') && product.image!== '/photo1.jpg'? product.image : calculatedImgPath
             const baseRate = (Number(product.profitPercent) / 100) || 0.005
             const bonus = Number(product.bonusMultiplier) || 1
             const activeProfitRate = baseRate * bonus
@@ -235,7 +235,7 @@ export default function StartingPage() {
   const setFinished = user? currentSetTasksDone >= targetTotalTasks : false
 
   const parsedTaskProducts = user && user.activeProducts
-  ? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts)
+ ? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts)
     : []
 
   const currentTaskNumber = currentSetTasksDone + 1
