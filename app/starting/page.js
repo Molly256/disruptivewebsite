@@ -5,7 +5,7 @@ import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 import { t } from '@/lib/i18n'
 
-const VIP_PROFIT = { 1: 0.005, 2: 0.01, 3: 0.015, 4: 0.02, 5: 0.025 } // 0.5% to 2.5%
+const VIP_PROFIT = { 1: 0.005, 2: 0.01, 3: 0.015, 4: 0.02, 5: 0.025 }
 
 const winnerMessages = [
   'John56 user wins 102.00 USD prize in the task.',
@@ -118,8 +118,14 @@ const winnerMessages = [
 const SCROLL_TIME = 1000
 const HOLD_TIME = 900
 const CYCLE_TIME = SCROLL_TIME + HOLD_TIME
+
+const round2 = (n) => {
+  const v = Math.round(Number(n) * 100) / 100
+  return Math.abs(v) < 0.005? 0 : v
+}
+
 const formatMoney = (n) => {
-  const num = Number(n) || 0
+  const num = round2(n)
   return num.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -138,16 +144,18 @@ async function loadSetData(day, set, vipLevel = 1) {
 
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, holdAmount, x10Tasks, currentTaskNumber, currentDay, currentSet }) {
   if (!products || products.length === 0) return null
-  const totalPrice = Math.round(products.reduce((s, p) => s + Number(p.price || 0), 0) * 100) / 100
-  const totalProfit = Math.round(products.reduce((s, p) => {
+  const safeWallet = round2(walletBalance)
+  const safeHold = round2(holdAmount)
+  const totalPrice = round2(products.reduce((s, p) => s + Number(p.price || 0), 0))
+  const totalProfit = round2(products.reduce((s, p) => {
     const baseRate = (Number(p.profitPercent) / 100) || 0.005
     const bonus = Number(p.bonusMultiplier) || 1
     const rate = baseRate * bonus
     return s + Number(p.price * rate || 0)
-  }, 0) * 100) / 100
-  const totalReserve = Math.round((totalPrice + totalProfit) * 100) / 100
-  const holdAfter = holdAmount
-  const canSubmit = walletBalance >= 0
+  }, 0))
+  const totalReserve = round2(totalPrice + totalProfit)
+  const holdAfter = safeHold
+  const canSubmit = safeWallet >= 0
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -161,17 +169,17 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
         <div style={{ background: 'transparent', margin: '16px 0', borderRadius: 16, padding: '0' }}>
           {products.map((product, idx) => {
-            const itemId = product.productId || product.id || product.photoId || 0
+            const itemId = product.productId || product.id || product.photoId || product.taskOrder || 0
             const d = currentDay || 1
             const s = currentSet || 1
             const calculatedImgPath = `/vip${vipLevel || 1}/day${d}/set${s}/photo${itemId}.jpg`
-            const imgSrc = product.image &&!product.image.includes('photo') && product.image!== '/photo1.jpg'? product.image : calculatedImgPath
+            const imgSrc = product.image &&!product.image.includes('undefined') && product.image!== '/photo1.jpg'? product.image : calculatedImgPath
             const baseRate = (Number(product.profitPercent) / 100) || 0.005
             const bonus = Number(product.bonusMultiplier) || 1
             const activeProfitRate = baseRate * bonus
             return (
               <div key={product.id || idx} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
-                <img src={imgSrc} alt={product.name || 'product'} onError={(e) => { e.target.onerror = null; e.target.src = calculatedImgPath }} style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12 }} />
+                <img src={imgSrc} alt={product.name || 'product'} style={{ width: '100%', height: 180, objectFit: 'contain', background: '#FFF', marginBottom: 12, display: 'block' }} />
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 8, lineHeight: 1.4, color: '#333' }}>{product.name}</div>
                   <div style={{ marginBottom: 4, color: '#000' }}>⭐ {product.rating}</div>
@@ -195,7 +203,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Created At</span><span>{createdAt}</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}><span>Task Code</span><span>{taskCode}</span></div>
             <hr style={{margin: '8px 0', borderColor: '#EEE'}}/>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>BALANCE</span><span style={{ color: walletBalance < 0? '#FF0000' : '#00C853' }}>{walletBalance < 0? `-${formatMoney(Math.abs(walletBalance))}` : formatMoney(walletBalance)} USD</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>BALANCE</span><span style={{ color: safeWallet < 0? '#FF0000' : '#00C853' }}>{formatMoney(safeWallet)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>TOTAL PRICE</span><span>{formatMoney(totalPrice)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>TOTAL PROFIT</span><span>{formatMoney(totalProfit)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>HOLD AMOUNT</span><span>{formatMoney(holdAfter)} USD</span></div>
@@ -227,7 +235,7 @@ export default function StartingPage() {
   const setFinished = user? currentSetTasksDone >= targetTotalTasks : false
 
   const parsedTaskProducts = user && user.activeProducts
-   ? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts)
+  ? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts)
     : []
 
   const currentTaskNumber = currentSetTasksDone + 1
@@ -243,6 +251,8 @@ export default function StartingPage() {
         const data = await res.json()
         if(res.ok && data.user) {
           let u = data.user
+          u.walletBalance = round2(u.walletBalance)
+          u.holdAmount = round2(u.holdAmount)
           const lastReset = new Date(u.lastProfitReset)
           const nowNY = new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
           const todayNY = new Date(nowNY).toDateString()
@@ -264,6 +274,8 @@ export default function StartingPage() {
           const arr = await loadSetData(day, set, u.vipLevel)
           if (arr && arr.length) setSetSize(arr.length)
         } else {
+          localUser.walletBalance = round2(localUser.walletBalance)
+          localUser.holdAmount = round2(localUser.holdAmount)
           setUser(localUser)
         }
       } catch(e) {
@@ -284,7 +296,7 @@ export default function StartingPage() {
       setShowDetail(true)
       return
     }
-    const balance = parseFloat(user.walletBalance || 0)
+    const balance = round2(user.walletBalance || 0)
     if (tasksDone === 0 && balance < 50.00) {
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2000)
@@ -297,6 +309,8 @@ export default function StartingPage() {
       const data = await res.json()
       setIsStarting(false)
       if(res.ok && data.user) {
+        data.user.walletBalance = round2(data.user.walletBalance)
+        data.user.holdAmount = round2(data.user.holdAmount)
         localStorage.setItem('user', JSON.stringify(data.user))
         setUser(data.user)
         const day = data.user.currentDay || 1
@@ -322,6 +336,8 @@ export default function StartingPage() {
       const res = await fetch('/api/submit-task', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, currentTaskNumber }) })
       const data = await res.json()
       if(res.ok && data.user) {
+        data.user.walletBalance = round2(data.user.walletBalance)
+        data.user.holdAmount = round2(data.user.holdAmount)
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
         setShowDetail(false);
@@ -354,7 +370,7 @@ export default function StartingPage() {
     )
   }
 
-  const totalBalance = (user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0)
+  const totalBalance = round2((user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0))
 
    return (
     <>
@@ -406,7 +422,7 @@ export default function StartingPage() {
             <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>
               <div style={{ fontSize: '32px', marginBottom: '6px', color: '#FF6A00' }}>👛</div>
               <div style={{ color: '#FF6A00', fontWeight: '700', fontSize: '14px' }}>BALANCE</div>
-              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0', color: user.walletBalance < 0? '#FF0000' : '#000' }}>{formatMoney(user.walletBalance)} USD</div>
+              <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0', color: round2(user.walletBalance) < 0? '#FF0000' : '#000' }}>{formatMoney(user.walletBalance)} USD</div>
               <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>The total balance reflects deposited + hold + special bonus.</div>
             </div>
             <div style={{ flex: 1, minWidth: '280px', maxWidth: '400px', textAlign: 'center' }}>

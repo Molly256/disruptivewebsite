@@ -32,6 +32,12 @@ const generateTaskCode = () => {
   return `${date}${rand}`
 }
 
+// helper: round to 2 and kill -0
+const round2 = (n) => {
+  const v = Math.round(Number(n) * 100) / 100
+  return Math.abs(v) < 0.005? 0 : v
+}
+
 export async function POST(req) {
   try {
     const { userId } = await req.json()
@@ -56,7 +62,7 @@ export async function POST(req) {
     }
 
     const completedCount = Number(user.taskCompleted || 0)
-    const walletVal = parseFloat(user.walletBalance || 0)
+    const walletVal = round2(user.walletBalance || 0)
     if (completedCount === 0 && walletVal < 50) {
       return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
     }
@@ -92,19 +98,20 @@ export async function POST(req) {
       id: userCurrentTaskNumber,
       taskOrder: userCurrentTaskNumber,
       name: normalProduct.name,
-      price: parseFloat(normalProduct.price || 0),
+      price: round2(normalProduct.price || 0),
       image: normalProduct.image,
       profitPercent: normalProduct.profitPercent || (baseRate * 100),
       bonusMultiplier: bonus,
-      profit: parseFloat((parseFloat(normalProduct.price) * activeProfitRate).toFixed(2))
+      profit: round2(parseFloat(normalProduct.price) * activeProfitRate)
     }
 
-    const reserveAmount = parseFloat((singleProduct.price + singleProduct.profit).toFixed(2))
+    const reserveAmount = round2(singleProduct.price + singleProduct.profit)
     const activeSnapshot = [{...singleProduct, reserveAmount }]
 
     const pPrice = singleProduct.price
-    const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
-    const newHold = parseFloat((user.holdAmount + pPrice).toFixed(2))
+    // FIXED: use round2 to avoid -0.00
+    const newWallet = round2(Number(user.walletBalance) - pPrice)
+    const newHold = round2(Number(user.holdAmount || 0) + pPrice)
     const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${needed}`
 
     const updatedUser = await prisma.$transaction(async (tx) => {
