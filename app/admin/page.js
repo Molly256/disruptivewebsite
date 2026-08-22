@@ -73,12 +73,15 @@ export default function AdminPage() {
     if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
   }
 
-  // FIXED: Load set - global file, no userId
+    // FIXED: Load set FROM THAT USER
   const loadEditSet = async (vipLevel, day, setNum) => {
     if(!editUser) return alert('No user selected')
-    const vipData = vipList.find(v => v.id === vipLevel)
-    if(!vipData) return alert(`VIP level ${vipLevel} not found`)
-
+    // if user is doing this set now, show his live tasks
+    if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
+      setEditSetData(editUser.currentTaskProducts)
+      setActiveEditSet(setNum)
+      return
+    }
     try {
       const res = await fetch(`/api/admin/get-set-data?vipLevel=${vipLevel}&day=${day}&set=${setNum}`)
       const data = await res.json()
@@ -90,35 +93,32 @@ export default function AdminPage() {
     }
   }
 
-  // FIXED: Save to FILE for ALL users - Option A
+  // FIXED: Save to THAT USER ONLY
   const handleSaveEditedData = async () => {
     if(selectedEditItems.length === 0) return alert('Select items to save')
-    const vipLevel = editUser.vipLevel
-    const day = editUser.currentDay || 1
-    const setNum = activeEditSet
-
-    const updatedItems = editSetData.filter(item => selectedEditItems.includes(item.taskOrder))
-
-    const res = await fetch('/api/admin/save-set-data', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        vipLevel,
-        day,
-        setNum,
-        data: updatedItems,
-        adminId: admin.id
-      })
-    })
-
-    if(res.ok) {
-      alert(`File vip${vipLevel}Set${setNum}.js saved for ALL users! New price shows when user taps START.`)
+    try {
+      for (const taskOrder of selectedEditItems) {
+        const item = editSetData.find(i => Number(i.taskOrder) === Number(taskOrder))
+        const res = await fetch('/api/admin/tasks/edit-user-task', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            userId: editUser.id,
+            taskOrder: taskOrder,
+            newPrice: item.price,
+            newName: item.name,
+            adminId: admin.id
+          })
+        })
+        const d = await res.json()
+        if(!res.ok) throw new Error(d.error)
+      }
+      alert(`Updated for ${editUser.username} only!`)
       setSelectedEditItems([])
-      loadEditSet(vipLevel, day, setNum)
-    } else {
-      const err = await res.json()
-      alert(`Save failed: ${err.error}`)
-    }
+      const r = await fetch(`/api/user/search?q=${encodeURIComponent(editUser.username)}`)
+      const d2 = await r.json()
+      if(r.ok) { setEditUser(d2.user); setEditSetData(d2.user.currentTaskProducts || []) }
+    } catch(e) { alert(`Save failed: ${e.message}`) }
   }
 
   const editItem = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }

@@ -16,7 +16,7 @@ const loadSet = async (vip, day, set) => {
     where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } }
   })
   if (dbConfig?.data?.length > 0) return dbConfig.data
-  return null // no file fallback on Vercel
+  return null
 }
 
 const generateTaskCode = () => {
@@ -36,8 +36,16 @@ export async function POST(req) {
       currentProductsArray = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts || '[]') : (user.currentTaskProducts || [])
     } catch { currentProductsArray = [] }
 
-    if (currentProductsArray.length > 0) {
-      return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
+    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
+    const needed = config.tasksPerSet // 40 for VIP1, 45 for VIP2 etc.
+
+    const currentDay = user.currentDay || 1
+    const currentSet = user.currentSet || 1
+    const tasksInCurrentSet = user.tasksInCurrentSet || 0
+    const userCurrentTaskNumber = tasksInCurrentSet + 1
+
+    if (tasksInCurrentSet >= needed) {
+      return NextResponse.json({ error: `Set ${currentSet} completed.` }, { status: 400 })
     }
 
     const completedCount = Number(user.taskCompleted || 0)
@@ -46,56 +54,67 @@ export async function POST(req) {
       return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
     }
 
-    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
-    const currentDay = user.currentDay || 1
-    const currentSet = user.currentSet || 1
-    const tasksInCurrentSet = user.tasksInCurrentSet || 0
-    const userCurrentTaskNumber = tasksInCurrentSet + 1
-
-    if (tasksInCurrentSet >= config.tasksPerSet) {
-      return NextResponse.json({ error: `Set ${currentSet} completed. Contact admin.` }, { status: 400 })
+    // has active task?
+    if (user.activeProducts && typeof user.activeProducts!== 'string' && user.activeProducts.length > 0) {
+      if (Array.isArray(user.activeProducts) && user.activeProducts.length > 0) {
+        // if activeProducts = 1 task and currentProducts already has full set, allow check to pass after submit
+        // but if activeProducts exists, block
+        const act = typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts) : user.activeProducts
+        if (act.length > 0) {
+          return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
+        }
+      }
     }
 
-    const fileSet = await loadSet(user.vipLevel, currentDay, currentSet)
-    if (!fileSet) return NextResponse.json({ error: `Admin hasn't configured VIP${user.vipLevel} Day${currentDay} Set${currentSet} yet. Please ask admin to save tasks in DB.` }, { status: 400 })
+    let fileSet = []
+    if (currentProductsArray.length >= needed) {
+      // user already started set, use his DB (so admin per-user edit stays)
+      fileSet = currentProductsArray
+    } else {
+      fileSet = await loadSet(user.vipLevel, currentDay, currentSet)
+      if (!fileSet) return NextResponse.json({ error: `Admin hasn't configured VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
+      fileSet = [...fileSet].sort((a,b)=> Number(a.taskOrder||a.id) - Number(b.taskOrder||b.id))
+      if (fileSet.length!== needed) {
+        return NextResponse.json({ error: `Set has ${fileSet.length} tasks but VIP${user.vipLevel} needs ${needed}. Ask admin to save ${needed} tasks.` }, { status: 400 })
+      }
+    }
 
-    const normalProduct = fileSet.find(p => Number(p.id) === userCurrentTaskNumber || Number(p.taskOrder) === userCurrentTaskNumber)
-    if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in set` }, { status: 400 })
+    const normalProduct = fileSet.find(p => Number(p.taskOrder || p.id) === userCurrentTaskNumber)
+    if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in set (have ${fileSet.length})` }, { status: 400 })
 
     const baseRate = (Number(normalProduct.profitPercent) / 100) || config.profit
     const bonus = Number(normalProduct.bonusMultiplier) || 1
     const activeProfitRate = baseRate * bonus
 
-    const realImgPath = normalProduct.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`
-
-    const productsToAssign = [{
+    const singleProduct = {
       id: userCurrentTaskNumber,
       taskOrder: userCurrentTaskNumber,
       name: normalProduct.name,
       price: parseFloat(normalProduct.price || 0),
-      image: realImgPath,
+      image: normalProduct.image,
       profitPercent: normalProduct.profitPercent || (baseRate * 100),
       bonusMultiplier: bonus,
       profit: parseFloat((parseFloat(normalProduct.price) * activeProfitRate).toFixed(2))
-    }]
+    }
 
-    const pPrice = productsToAssign[0].price
-    const profitAmount = productsToAssign[0].profit
-    const reserveAmount = parseFloat((pPrice + profitAmount).toFixed(2))
-    const innerItemsSnapshot = [{...productsToAssign[0], reserveAmount }]
+    const reserveAmount = parseFloat((singleProduct.price + singleProduct.profit).toFixed(2))
+    const activeSnapshot = [{...singleProduct, reserveAmount }]
 
+    const pPrice = singleProduct.price
     const newWallet = parseFloat((user.walletBalance - pPrice).toFixed(2))
     const newHold = parseFloat((user.holdAmount + pPrice).toFixed(2))
-    const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${config.tasksPerSet}`
+    const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${needed}`
 
     const updatedUser = await prisma.$transaction(async (tx) => {
+      const dataToSave = currentProductsArray.length >= needed? currentProductsArray : fileSet
+
       await tx.user.update({
         where: { id: userId },
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
-          currentTaskProducts: innerItemsSnapshot,
-          activeProducts: innerItemsSnapshot
+          currentTaskProducts: dataToSave, // 40 or 45 or 50 depending on VIP
+          activeProducts: activeSnapshot
         }
       })
       await tx.task.create({
@@ -106,7 +125,7 @@ export async function POST(req) {
           setNumber: currentSet,
           progress: progressLabel,
           status: 'pending',
-          products: innerItemsSnapshot,
+          products: activeSnapshot,
           taskCode: generateTaskCode()
         }
       })

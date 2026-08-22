@@ -19,20 +19,21 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    const userTaskProducts = typeof user.currentTaskProducts === 'string'
-    ? JSON.parse(user.currentTaskProducts || '[]')
-      : (user.currentTaskProducts || [])
-
-    if (userTaskProducts.length === 0) {
-      return NextResponse.json({ error: 'No active task found to submit.' }, { status: 400 })
-    }
-
     const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
 
-    const x10List = typeof user.x10TaskNumbers === 'string'
-    ? JSON.parse(user.x10TaskNumbers || '[]')
-      : (user.x10TaskNumbers || [])
-    const isX10DatabaseOverride = x10List.includes(Number(currentTaskNumber))
+    let currentTaskProducts = []
+    try { currentTaskProducts = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts||'[]') : (user.currentTaskProducts||[]) } catch { currentTaskProducts = [] }
+
+    let activeProducts = []
+    try { activeProducts = typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts||'[]') : (user.activeProducts||[]) } catch { activeProducts = [] }
+
+    // use active (1 task) not 40 tasks
+    const toSubmit = activeProducts.length>0? activeProducts : currentTaskProducts.slice(0,1)
+
+    if (toSubmit.length === 0) return NextResponse.json({ error: 'No active task found to submit.' }, { status: 400 })
+
+    const x10List = typeof user.x10TaskNumbers === 'string'? JSON.parse(user.x10TaskNumbers||'[]') : (user.x10TaskNumbers||[])
+    const isX10 = x10List.includes(Number(currentTaskNumber))
 
     const currentDay = user.currentDay || 1
     const currentSet = user.currentSet || 1
@@ -41,48 +42,38 @@ export async function POST(req) {
     let totalProfit = 0
     const enrichedProducts = []
 
-    userTaskProducts.forEach(ut => {
+    toSubmit.forEach(ut => {
       const pPrice = parseFloat(ut.price || 0)
-      const fileProfitPercent = parseFloat(ut.profitPercent)
-      const baseRate =!isNaN(fileProfitPercent)? (fileProfitPercent / 100) : config.profit
-      const bonus = isX10DatabaseOverride? 10 : (Number(ut.bonusMultiplier) || 1)
-      const activeProfitRate = baseRate * bonus
-      const pProfit = parseFloat((pPrice * activeProfitRate).toFixed(2))
+      const baseRate =!isNaN(parseFloat(ut.profitPercent))? (parseFloat(ut.profitPercent)/100) : config.profit
+      const bonus = isX10? 10 : (Number(ut.bonusMultiplier)||1)
+      const pProfit = parseFloat((pPrice * baseRate * bonus).toFixed(2))
       totalPrice += pPrice
       totalProfit += pProfit
-      const pid = ut.productId || ut.id || ut.photoId || 0
-      enrichedProducts.push({
-        productId: pid,
-        taskOrder: ut.taskOrder || currentTaskNumber || ut.id,
-        price: pPrice,
-        name: ut.name || `Product ${pid}`,
-        profit: pProfit,
-        image: ut.image || `/vip${user.vipLevel}/day${currentDay}/set${currentSet}/photo${pid}.jpg`
-      })
+      enrichedProducts.push({...ut, price: pPrice, profit: pProfit })
     })
 
     const activePendingTaskCard = await prisma.task.findFirst({
-      where: { userId: userId, status: 'pending', setNumber: currentSet },
+      where: { userId, status: 'pending', setNumber: currentSet },
       orderBy: { createdAt: 'desc' }
     })
 
     let completedArr = []
-    if (user.completedProducts) {
-      completedArr = typeof user.completedProducts === 'string'? JSON.parse(user.completedProducts || '[]') : user.completedProducts
-    }
+    try { completedArr = typeof user.completedProducts === 'string'? JSON.parse(user.completedProducts||'[]') : (user.completedProducts||[]) } catch { completedArr=[] }
+
     const updatedCompletedProducts = [...completedArr,...enrichedProducts]
 
     let tasksInCurrentSet = Number(user.tasksInCurrentSet || 0)
     let nextTasksInCurrentSet = tasksInCurrentSet + 1
     let nextSet = currentSet
+    let isSetComplete = false
     if (nextTasksInCurrentSet >= config.tasksPerSet) {
+      isSetComplete = true
       nextTasksInCurrentSet = 0
       nextSet = currentSet < config.totalSets? currentSet + 1 : 1
     }
 
     const currentHold = parseFloat(user.holdAmount || 0)
     const currentWallet = parseFloat(user.walletBalance || 0)
-    // Hold is price only, on submit: wallet + hold + profit
     const finalWallet = parseFloat((currentWallet + currentHold + totalProfit).toFixed(2))
     const finalHold = Math.max(0, parseFloat((currentHold - totalPrice).toFixed(2)))
 
@@ -93,9 +84,10 @@ export async function POST(req) {
           walletBalance: finalWallet,
           holdAmount: finalHold,
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
-          currentTaskProducts: [], // FIXED: array not string
-          activeProducts: [], // FIXED
-          completedProducts: updatedCompletedProducts, // FIXED: array not string
+          // KEEP 40/45 until set finishes, clear only when set done
+          currentTaskProducts: isSetComplete? [] : currentTaskProducts,
+          activeProducts: [],
+          completedProducts: updatedCompletedProducts,
           taskCompleted: { increment: 1 },
           tasksInCurrentSet: nextTasksInCurrentSet,
           currentSet: nextSet
@@ -107,21 +99,8 @@ export async function POST(req) {
           where: { id: activePendingTaskCard.id },
           data: { status: 'completed', completedAt: new Date(), products: enrichedProducts }
         })
-      } else {
-        await tx.task.create({
-          data: {
-            userId,
-            status: 'completed',
-            vipLevel: user.vipLevel,
-            day: currentDay,
-            setNumber: currentSet,
-            progress: `D${currentDay} S${currentSet} T${currentTaskNumber}/${config.tasksPerSet}`,
-            products: enrichedProducts,
-            taskCode: `T${Date.now()}${userId.slice(-4)}`,
-            completedAt: new Date()
-          }
-        })
       }
+
       return await tx.user.findUnique({ where: { id: userId } })
     })
 
