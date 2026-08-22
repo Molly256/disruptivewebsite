@@ -11,7 +11,6 @@ export default function RecordsPage() {
   const [activeTab, setActiveTab] = useState('All')
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
-  const [submittingId, setSubmittingId] = useState(null) 
 
   useEffect(() => {
     const saved = localStorage.getItem('user')
@@ -20,33 +19,6 @@ export default function RecordsPage() {
     setUser(u)
     fetch(`/api/tasks?userId=${u.id}`).then(r => r.json()).then(d => { setTasks(d.tasks || []); setLoading(false) })
   }, [router])
-
-  const handleSubmitTask = async (task) => {
-    if(submittingId) return 
-    setSubmittingId(task.id)
-    let extractedTaskNumber = 1
-    if (task.progress && task.progress.includes('T')) {
-      const match = task.progress.match(/T(\d+)/)
-      if (match) extractedTaskNumber = Number(match[1])
-    } else {
-      const productsList = typeof task.products === 'string' ? JSON.parse(task.products) : (task.products || [])
-      if (productsList.length > 0) extractedTaskNumber = Number(productsList[0].taskOrder || productsList[0].id || 1)
-    }
-    const res = await fetch('/api/submit-task', { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify({ userId: user.id, currentTaskNumber: extractedTaskNumber }) 
-    })
-    const data = await res.json()
-    setSubmittingId(null)
-    if(res.ok) {
-      setTasks(p => p.map(t => t.id === task.id ? {...t, status: 'completed'} : t))
-      setUser(data.user)
-      localStorage.setItem('user', JSON.stringify(data.user))
-    } else {
-      alert(data.error || 'Submit failed')
-    }
-  }
 
   const filteredTasks = tasks.filter(t => activeTab === 'All' || t.status.toLowerCase() === activeTab.toLowerCase())
 
@@ -87,9 +59,9 @@ export default function RecordsPage() {
           const totalProfit = fullyFormed.reduce((s, p) => s + p.profit, 0)
           return (
             <div key={task.id} style={{ background: '#FFF', borderRadius: '12px', padding: '16px', marginBottom: '12px', position: 'relative' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingRight: task.status === 'completed'? '90px' : '0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingRight: task.status === 'completed'? '90px' : '90px' }}>
                 <div style={{ fontSize: '12px', fontWeight: '600', color: '#666' }}>D{task.day || 1} S{task.setNumber || 1} • {new Date(task.createdAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</div>
-                <div style={{ position: task.status === 'completed'? 'absolute' : 'static', top: '16px', right: '16px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', background: task.status === 'completed'? '#00C853' : '#FF0000', color: '#FFF' }}>{t(task.status === 'completed'? 'Completed' : 'Pending')}</div>
+                <div style={{ position: 'absolute', top: '16px', right: '16px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', background: task.status === 'completed'? '#00C853' : '#FF0000', color: '#FFF' }}>{t(task.status === 'completed'? 'Completed' : 'Pending')}</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
                 {fullyFormed.map((prod, idx) => (
@@ -108,7 +80,6 @@ export default function RecordsPage() {
                   <div><div style={{ fontSize: '12px', color: '#666' }}>Total Amount</div><div style={{ fontSize: '15px', fontWeight: '800', color: '#000' }}>{totalCost.toFixed(2)} <span style={{ fontSize: 12 }}>USD</span></div></div>
                   <div><div style={{ fontSize: '12px', color: '#666' }}>Profit</div><div style={{ fontSize: '15px', fontWeight: '800', color: '#FF0000' }}>{totalProfit.toFixed(2)} <span style={{ fontSize: 12 }}>USD</span></div></div>
                 </div>
-                {task.status === 'pending' && <button disabled={submittingId === task.id} onClick={() => handleSubmitTask(task)} style={{ background: submittingId === task.id? '#CCC' : '#FF0000', color: '#FFF', border: 'none', padding: '10px 20px', borderRadius: '8px', fontWeight: '700', fontSize: '14px', cursor: submittingId === task.id? 'not-allowed' : 'pointer' }}>{submittingId === task.id? 'Submitting...' : 'Submit'}</button>}
               </div>
             </div>
           )
