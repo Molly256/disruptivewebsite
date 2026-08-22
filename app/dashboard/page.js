@@ -96,108 +96,105 @@ export default function Dashboard() {
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
 
       {/* 🎯 STEP 3: LOGIN OVERLAY POPUP LAYER MODAL */}
-            {/* 🎯 FIXED: TRUE DESKTOP FULL-SCREEN COVERAGE (CRASH-PROOF & VERCEL-APPROVED) */}
-      {showLoginPopup && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.9)', // Solid dark background overlay for desktop focus
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 999999, // Floats safely over everything including headers
-          padding: isDesktop ? '0' : '24px 16px 16px' 
-        }}>
-          <div style={{
-            position: 'relative', 
-            // 💡 FIXED: Expands wide on desktop for full coverage, stays compact on phone
-            width: isDesktop ? '90vw' : '100%',
-            maxWidth: isDesktop ? '1100px' : '340px', 
-            background: 'transparent', 
-            padding: 0,                
-            margin: 0,
+{/* 🎯 FIXED: TRUE DESKTOP FULL-SCREEN COVERAGE */}
+{showLoginPopup && (
+  <div style={{
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999999,
+    padding: isDesktop ? '0' : '24px 16px 16px' 
+  }}>
+    <div style={{
+      position: 'relative', 
+      width: isDesktop ? '100vw' : '100%',
+      maxWidth: isDesktop ? '1100px' : '340px', 
+      background: 'transparent', 
+      padding: 0,                
+      margin: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      
+      {/* ✕ THE SOLE FLOATING CLOSE ANCHOR BUTTON - PHONE ONLY */}
+      {!isDesktop && (
+        <button 
+          onClick={() => setShowLoginPopup(false)} 
+          style={{
+            position: 'absolute',
+            top: '-46px', 
+            right: '4px', 
+            background: 'rgba(0,0,0,0.6)', 
+            border: 'none',
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            color: '#FFFFFF', 
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            
-            {/* ✕ THE SOLE FLOATING CLOSE ANCHOR BUTTON - PHONE ONLY */}
-            {!isDesktop && (
-              <button 
-                onClick={() => setShowLoginPopup(false)} 
-                style={{
-                  position: 'absolute',
-                  top: '-46px', 
-                  right: '4px', 
-                  background: 'rgba(0,0,0,0.6)', 
-                  border: 'none',
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  color: '#FFFFFF', 
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  lineHeight: 1,
-                  zIndex: 2
-                }}
-              >
-                ✕
-              </button>
-            )}
-            
-            {/* RAW IMAGE FROM PUBLIC/LOGIN.JPG RENDERING WITH FULL DESKTOP SCALE */}
-            <img 
-              src="/login.jpg" 
-              alt="Welcome Notice" 
-              onError={(e) => { e.target.src = '/placeholder.jpg' }}
-              style={{
-                // 💡 FIXED: Force full 100% expansion width inside the wide desktop wrapper box!
-                width: '100%',
-                height: 'auto',
-                maxHeight: isDesktop ? '75vh' : '70vh', 
-                objectFit: 'contain',
-                display: 'block',
-                margin: 0,
-                padding: 0,
-                borderRadius: '12px' 
-              }} 
-            />
+            justifyContent: 'center',
+            lineHeight: 1,
+            zIndex: 2
+          }}
+        >
+          ✕
+        </button>
+      )}
+      
+      {/* RAW IMAGE FROM PUBLIC/LOGIN.JPG RENDERING WITH FULL DESKTOP SCALE */}
+      <img 
+        src="/login.jpg" 
+        alt="Welcome Notice" 
+        onError={(e) => { e.target.src = '/placeholder.jpg' }}
+        style={{
+          width: '100%',
+          height: 'auto',
+          maxHeight: isDesktop ? '90vh' : '70vh', 
+          objectFit: 'contain',
+          display: 'block',
+          margin: 0,
+          padding: 0,
+          borderRadius: '12px' 
+        }} 
+      />
 
-            {/* 🚨 SOLID RED ACTION CLOSING BUTTON - DESKTOP ONLY */}
-            {isDesktop && (
-              <button 
-                onClick={() => setShowLoginPopup(false)} 
-                style={{
-                  width: '160px', 
-                  padding: '12px 0',
-                  background: '#FF0000',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: '900',
-                  fontSize: '15px',
-                  cursor: 'pointer',
-                  marginTop: '24px',
-                  boxShadow: '0 4px 12px rgba(255,0,0,0.3)'
-                }}
-              >
-                Close
-              </button>
-            )}
-
-          </div>
-        </div>
+      {/* 🚨 SOLID RED ACTION CLOSING BUTTON - DESKTOP ONLY */}
+      {isDesktop && (
+        <button 
+          onClick={() => setShowLoginPopup(false)} 
+          style={{
+            width: '160px', 
+            padding: '12px 0',
+            background: '#FF0000',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: '8px',
+            fontWeight: '900',
+            fontSize: '15px',
+            cursor: 'pointer',
+            marginTop: '24px',
+            boxShadow: '0 4px 12px rgba(255,0,0,0.3)'
+          }}
+        >
+          Close
+        </button>
       )}
 
-        <style jsx>{`
+    </div>
+  </div>
+)}
+   <style jsx>{`
         @keyframes scroll {
           0% { transform: translateX(100%); }
           100% { transform: translateX(-100%); }
