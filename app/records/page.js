@@ -30,7 +30,7 @@ export default function RecordsPage() {
       if (match) extractedTaskNumber = Number(match[1])
     } else {
       const productsList = typeof task.products === 'string' ? JSON.parse(task.products) : (task.products || [])
-      if (productsList.length > 0) extractedTaskNumber = Number(productsList[0].id || 1)
+      if (productsList.length > 0) extractedTaskNumber = Number(productsList[0].taskOrder || productsList[0].id || 1)
     }
     const res = await fetch('/api/submit-task', { 
       method: 'POST', 
@@ -71,13 +71,15 @@ export default function RecordsPage() {
             const day = task.day || 1
             const set = task.setNumber || 1
             const vip = task.vipLevel || user.vipLevel || 1 
-            const pid = item.productId || item.id || item.taskOrder || 1 
+            const pid = item.taskOrder || item.productId || item.id || 1
+            const calculatedPath = `/vip${vip}/day${day}/set${set}/photo${pid}.jpg`
+            const validImage = item.image && !item.image.includes('photo') && item.image !== '/photo1.jpg' && !item.image.includes('undefined') ? item.image : calculatedPath
             return {
               id: pid,
               name: item.name || `Product Item #${pid}`,
               price: Number(item.price || 0),
               profit: Number(item.profit || 0),
-              image: item.image || `/vip${vip}/day${day}/set${set}/photo${pid}.jpg`, 
+              image: validImage, 
               bonus: Number(item.bonusMultiplier) || 1
             }
           })
@@ -87,12 +89,12 @@ export default function RecordsPage() {
             <div key={task.id} style={{ background: '#FFF', borderRadius: '12px', padding: '16px', marginBottom: '12px', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingRight: task.status === 'completed'? '90px' : '0' }}>
                 <div style={{ fontSize: '12px', fontWeight: '600', color: '#666' }}>D{task.day || 1} S{task.setNumber || 1} • {new Date(task.createdAt).toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}</div>
-                <div style={{ position: task.status === 'completed'? 'absolute' : 'static', top: '16px', right: '16px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', background: task.status === 'completed'? '#00C853' : '#FF0000', color: '#000' }}>{t(task.status === 'completed'? 'Completed' : 'Pending')}</div>
+                <div style={{ position: task.status === 'completed'? 'absolute' : 'static', top: '16px', right: '16px', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', background: task.status === 'completed'? '#00C853' : '#FF0000', color: '#FFF' }}>{t(task.status === 'completed'? 'Completed' : 'Pending')}</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
                 {fullyFormed.map((prod, idx) => (
                   <div key={idx} style={{ display: 'flex', gap: '12px' }}>
-                    <img src={prod.image} alt={prod.name} style={{ width: '80px', height: '80px', objectFit: 'cover', background: '#F5F5F5', borderRadius: '8px', display:'block' }} /> 
+                    <img src={prod.image} alt={prod.name} style={{ width: '80px', height: '80px', objectFit: 'contain', background: '#F5F5F5', borderRadius: '8px', display:'block' }} /> 
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#000', marginBottom: '4px' }}>[{prod.id}] {prod.name} {prod.bonus > 1? `x${prod.bonus}` : ''}</div>
                       <div style={{ fontSize: '14px', fontWeight: '700', color: '#000', marginBottom: '4px' }}>{prod.price.toFixed(2)} x1 USD</div>
