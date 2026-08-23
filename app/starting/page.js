@@ -229,7 +229,7 @@ export default function StartingPage() {
 
   const VIP_TASKS_MAP = { 1: 40, 2: 45, 3: 50, 4: 55, 5: 60 }
   const currentVipLevel = Number(user?.vipLevel || 1)
-  const targetTotalTasks = VIP_TASKS_MAP[currentVipLevel] || 40
+  const targetTotalTasks = Number(user?.totalTasks) || VIP_TASKS_MAP[currentVipLevel] || 40
   const tasksDone = parseInt(user?.taskCompleted || 0)
   const currentSetTasksDone = parseInt(user?.tasksInCurrentSet || 0)
   const setFinished = user? currentSetTasksDone >= targetTotalTasks : false
@@ -405,7 +405,7 @@ export default function StartingPage() {
         </div>
         <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
           <button onClick={handleStart} disabled={setFinished || isStarting} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'not-allowed' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
-            {setFinished? 'Contact Customer Service to Reset' : isStarting? 'Starting...' : `Starting (${currentTaskNumber} / ${setSize})`}
+            {setFinished? 'Contact Customer Service to Reset' : isStarting? 'Starting...' : `Starting (${currentTaskNumber} / ${targetTotalTasks})`}
           </button>
           {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
         </div>
