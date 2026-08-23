@@ -32,7 +32,6 @@ const generateTaskCode = () => {
   return `${date}${rand}`
 }
 
-// helper: round to 2 and kill -0
 const round2 = (n) => {
   const v = Math.round(Number(n) * 100) / 100
   return Math.abs(v) < 0.005? 0 : v
@@ -44,13 +43,9 @@ export async function POST(req) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    let currentProductsArray = []
-    try {
-      currentProductsArray = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts || '[]') : (user.currentTaskProducts || [])
-    } catch { currentProductsArray = [] }
-
-    const config = VIP_CONFIG[user.vipLevel] || VIP_CONFIG[1]
-    const needed = config.tasksPerSet
+    const vipLevel = Number(user.vipLevel) || 1
+    const config = VIP_CONFIG[vipLevel] || VIP_CONFIG[1]
+    const needed = config.tasksPerSet // VIP1=40, VIP2=45
 
     const currentDay = user.currentDay || 1
     const currentSet = user.currentSet || 1
@@ -75,15 +70,23 @@ export async function POST(req) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
-    let fileSet = []
-    if (currentProductsArray.length >= needed) {
-      fileSet = currentProductsArray
+    // FIX: reload if VIP changed or totalTasks mismatch
+    let fileSet = null
+    let cached = []
+    try {
+      cached = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts || '[]') : (user.currentTaskProducts || [])
+    } catch { cached = [] }
+
+    const cacheValid = cached.length === needed && Number(user.totalTasks) === needed
+
+    if (cacheValid) {
+      fileSet = cached
     } else {
-      fileSet = await loadSet(user.vipLevel, currentDay, currentSet)
-      if (!fileSet) return NextResponse.json({ error: `Admin hasn't configured VIP${user.vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
+      fileSet = await loadSet(vipLevel, currentDay, currentSet)
+      if (!fileSet) return NextResponse.json({ error: `Admin hasn't configured VIP${vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
       fileSet = [...fileSet].sort((a,b)=> Number(a.taskOrder||a.id) - Number(b.taskOrder||b.id))
       if (fileSet.length!== needed) {
-        return NextResponse.json({ error: `Set has ${fileSet.length} tasks but VIP${user.vipLevel} needs ${needed}. Ask admin to save ${needed} tasks.` }, { status: 400 })
+        return NextResponse.json({ error: `Set has ${fileSet.length} tasks but VIP${vipLevel} needs ${needed}. Ask admin to save ${needed} tasks.` }, { status: 400 })
       }
     }
 
@@ -109,27 +112,25 @@ export async function POST(req) {
     const activeSnapshot = [{...singleProduct, reserveAmount }]
 
     const pPrice = singleProduct.price
-    // FIXED: use round2 to avoid -0.00
     const newWallet = round2(Number(user.walletBalance) - pPrice)
     const newHold = round2(Number(user.holdAmount || 0) + pPrice)
     const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${needed}`
 
     const updatedUser = await prisma.$transaction(async (tx) => {
-      const dataToSave = currentProductsArray.length >= needed? currentProductsArray : fileSet
-
       await tx.user.update({
         where: { id: userId },
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
-          currentTaskProducts: dataToSave,
-          activeProducts: activeSnapshot
+          currentTaskProducts: fileSet,
+          activeProducts: activeSnapshot,
+          totalTasks: needed // FORCE 45 for VIP2, 40 for VIP1
         }
       })
       await tx.task.create({
         data: {
           userId,
-          vipLevel: user.vipLevel,
+          vipLevel: vipLevel,
           day: currentDay,
           setNumber: currentSet,
           progress: progressLabel,
