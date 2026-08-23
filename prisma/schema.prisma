@@ -23,17 +23,15 @@ model User {
 
   avatar String?
 
-  // VIP & TASK FIELDS - ADMIN CONTROLLED
   vipLevel Int @default(1)
   vipId Int @default(1)
 
-  currentDay Int @default(1) // 1 to 5. Admin sets this
-  currentSet Int @default(1) // 1 to 3. Admin sets this
-  tasksInCurrentSet Int @default(0) // 0-120. Progress in current set
-  taskCompleted Int @default(0) // total tasks done ever
-  totalTasks Int @default(40) // for display. changes per vip
+  currentDay Int @default(1)
+  currentSet Int @default(1)
+  tasksInCurrentSet Int @default(0)
+  taskCompleted Int @default(0)
+  totalTasks Int @default(40)
 
-  // MONEY FIELDS
   walletBalance Float @default(0.00)
   holdAmount Float @default(0.00)
   freezeAmount Float @default(0.00)
@@ -44,17 +42,13 @@ model User {
   creditScore Int @default(100)
   isAdmin Boolean @default(false)
 
-  // RISK CONTROL - NEW LINE ADDED
   isRiskControlled Boolean @default(false)
-
-  // BIND WALLET - ONLY LINE ADDED
   boundWallet Json?
 
-  // TASK DATA
-  currentTaskProducts Json @default("[]") // active task snapshot
-  activeProducts Json @default("[]") // duplicate for frontend
-  completedProducts Json @default("[]") // history of completed products
-  x10TaskNumbers Json @default("[]") // [3,7,15] task numbers that get x10 profit
+  currentTaskProducts Json @default("[]")
+  activeProducts Json @default("[]")
+  completedProducts Json @default("[]")
+  x10TaskNumbers Json @default("[]")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -70,25 +64,19 @@ model User {
   @@index([inviteCode])
 }
 
-// Task table: 1 row per task submission
 model Task {
   id String @id @default(cuid())
   userId String
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   vipLevel Int
-  day Int // 1 to 5
-  setNumber Int // 1 to 3
-
-  progress String @default("0/40") // "D1 S2 T5/40"
-  status String @default("pending") // "pending" | "completed"
-
-  products Json @default("[]") // [{id, name, price, profit, image}]
-  taskCode String? @unique // unique code for this task
-
+  day Int
+  setNumber Int
+  progress String @default("0/40")
+  status String @default("pending")
+  products Json @default("[]")
+  taskCode String? @unique
   createdAt DateTime @default(now())
   completedAt DateTime?
-
   @@index([userId, status])
   @@index([userId, day, setNumber])
   @@index([taskCode])
@@ -98,15 +86,12 @@ model Transaction {
   id String @id @default(cuid())
   userId String
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  type String // deposit, withdraw, profit, reserve
+  type String
   amount Float
-  status String @default("pending") // pending, success, failed
-  account String? // bank, usdt address
-
+  status String @default("pending")
+  account String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([userId])
   @@index([type])
   @@index([status])
@@ -116,11 +101,9 @@ model Notification {
   id String @id @default(cuid())
   userId String
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   message String
   isRead Boolean @default(false)
   createdAt DateTime @default(now())
-
   @@index([userId, isRead])
 }
 
@@ -128,11 +111,9 @@ model AdminLog {
   id String @id @default(cuid())
   adminId String
   admin User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
-
-  action String // "reset_set", "change_vip", "add_balance"
+  action String
   targetUserId String?
   details Json?
-
   createdAt DateTime @default(now())
 }
 
@@ -144,7 +125,6 @@ model TaskSetConfig {
   data Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@unique([vipLevel, day, setNum])
   @@index([vipLevel, day])
 }
@@ -154,11 +134,11 @@ model Chat {
   userId String?
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  guestId String? @unique
+  guestId String?
   guestName String?
   displayName String
 
-  isGuest Boolean @default(true)
+  isGuest Boolean @default(false)
   lastMessage String?
   unreadAdmin Int @default(0)
   unreadUser Int @default(0)
@@ -176,12 +156,34 @@ model Message {
   chatId String
   chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
-  text String
-  sender String
+  text String @db.Text
+  sender String // user | support | system - for admin
+  senderRole String // user | support | system - for frontend compat
   senderName String
+  image String? @db.Text
+  isRead Boolean @default(false)
   status String @default("delivered")
   timeString String?
   createdAt DateTime @default(now())
 
   @@index([chatId, createdAt])
+}
+
+model ContactMessage {
+  id String @id @default(cuid())
+  userId String?
+  guestId String?
+  username String
+  email String?
+  message String @db.Text
+  reply String? @db.Text
+  isGuest Boolean @default(false)
+  isRead Boolean @default(false)
+  status String @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([guestId])
+  @@index([createdAt])
 }

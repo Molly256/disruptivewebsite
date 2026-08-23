@@ -235,7 +235,7 @@ export default function StartingPage() {
   const setFinished = user? currentSetTasksDone >= targetTotalTasks : false
 
   const parsedTaskProducts = user && user.activeProducts
- ? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts)
+? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts)
     : []
 
   const currentTaskNumber = currentSetTasksDone + 1
@@ -370,8 +370,6 @@ export default function StartingPage() {
     )
   }
 
-  const totalBalance = round2((user.walletBalance || 0) + (user.holdAmount || 0) + (user.specialBonus || 0))
-
    return (
     <>
       <AppHeader />
@@ -431,10 +429,6 @@ export default function StartingPage() {
               <div style={{ fontSize: '18px', fontWeight: '800', margin: '4px 0 8px 0' }}>{formatMoney(user.holdAmount)} USD</div>
               <div style={{ fontSize: '11px', color: '#999', lineHeight: '1.4' }}>Money for tasks not yet submitted.</div>
             </div>
-          </div>
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div style={{ fontWeight: '700', fontSize: '14px' }}>TOTAL BALANCE</div>
-            <div style={{ fontSize: '20px', fontWeight: '800', marginTop: '4px', color: '#FF6A00' }}>{formatMoney(totalBalance)} USD</div>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontWeight: '700', fontSize: '14px' }}>Special Bonus</div>
