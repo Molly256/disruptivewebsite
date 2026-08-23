@@ -11,70 +11,67 @@ export async function POST(req){
     const uid = String(userId)
     const isGuestFlag = isGuest || uid.startsWith('guest_')
     const uname = username || (isGuestFlag ? `Guest-${uid.slice(-4)}` : 'User')
+    const text = String(message).slice(0,2000)
 
-    // 1. Save to contact table - this is what chat/list will pull
     const contact = await prisma.contactMessage.create({
       data: {
         userId: uid,
         guestId: isGuestFlag ? uid : null,
         username: uname,
         email: email || '',
-        message: String(message).slice(0,2000),
+        message: text,
         isGuest: isGuestFlag,
-        isRead: false
+        isRead: false,
+        status: 'pending'
       }
     })
 
-    // 2. ALSO create/update Chat so admin Chat inbox pulls it
-    // This is the key: Chat must pull from Contact
-    try{
-      let chat = null
-      if(isGuestFlag){
-        chat = await prisma.chat.findUnique({ where: { guestId: uid } }).catch(()=>null)
-      } else {
-        chat = await prisma.chat.findFirst({ where: { userId: uid } }).catch(()=>null)
-      }
-
-      if(!chat){
-        chat = await prisma.chat.create({
-          data: {
-            userId: isGuestFlag ? null : uid,
-            guestId: isGuestFlag ? uid : null,
-            guestName: isGuestFlag ? uname : null,
-            displayName: uname, // real username for logged, SwiftFox-4821 for guest
-            isGuest: isGuestFlag,
-            lastMessage: String(message).slice(0,200),
-            unreadAdmin: 1,
-            unreadUser: 0
-          }
-        })
-      } else {
-        await prisma.chat.update({
-          where: { id: chat.id },
-          data: {
-            lastMessage: String(message).slice(0,200),
-            displayName: uname,
-            updatedAt: new Date(),
-            unreadAdmin: { increment: 1 }
-          }
-        })
-      }
-
-      // also create Message so it appears in chat thread
-      await prisma.message.create({
-        data: {
-          chatId: chat.id,
-          text: String(message).slice(0,2000),
-          sender: 'user',
-          senderName: uname,
-          timeString: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      })
-    }catch(e){ 
-      console.error('chat upsert err', e.message) 
+    // create chat
+    let chat = null
+    if(isGuestFlag){
+      chat = await prisma.chat.findFirst({ where: { guestId: uid } })
+    } else {
+      chat = await prisma.chat.findFirst({ where: { userId: uid } })
     }
 
-    return Response.json({ success: true, contact })
+    if(!chat){
+      chat = await prisma.chat.create({
+        data: {
+          userId: isGuestFlag ? null : uid,
+          guestId: isGuestFlag ? uid : null,
+          guestName: isGuestFlag ? uname : null,
+          displayName: uname,
+          isGuest: isGuestFlag,
+          lastMessage: text.slice(0,200),
+          unreadAdmin: 1,
+          unreadUser: 0
+        }
+      })
+    } else {
+      await prisma.chat.update({
+        where: { id: chat.id },
+        data: {
+          lastMessage: text.slice(0,200),
+          displayName: uname,
+          updatedAt: new Date(),
+          unreadAdmin: { increment: 1 }
+        }
+      })
+    }
+
+    await prisma.message.create({
+      data: {
+        chatId: chat.id,
+        text: text,
+        sender: 'user',
+        senderRole: 'user', // <-- THIS WAS MISSING, frontend checks this
+        senderName: uname,
+        status: 'delivered',
+        timeString: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    })
+
+    return Response.json({ success: true, contact, chatId: chat.id })
   }catch(e){
     console.error(e)
     return Response.json({error:e.message},{status:500})
