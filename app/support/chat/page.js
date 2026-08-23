@@ -20,7 +20,7 @@ export default function ChatSupport() {
   const loadFromBackend = async () => {
     if (!user?.id) return
     try {
-      const res = await fetch(`/api/chat/messages?userId=${user.id}`)
+      const res = await fetch(`/api/chat/messages?userId=${user.id}`, { cache: 'no-store' })
       const data = await res.json()
       if (data.messages && data.messages.length > 0) {
         const formatted = data.messages.map(m => {
@@ -39,26 +39,23 @@ export default function ChatSupport() {
         })
         setMessages(formatted)
       }
-    } catch (e) {
-      console.error(e)
-    }
+    } catch (e) { console.error(e) }
   }
 
   useEffect(() => {
     if (!user?.id) return
     const init = async () => {
       try {
-        const res = await fetch(`/api/chat/messages?userId=${user.id}`)
+        const res = await fetch(`/api/chat/messages?userId=${user.id}`, { cache: 'no-store' })
         const data = await res.json()
         if (!data.messages || data.messages.length === 0) {
           setMessages([
-            { id: Date.now(), type: 'system', text: 'Welcome to Customer Service. How can we assist you today?', timestamp: Date.now() },
-            { id: Date.now() + 1, type: 'support', text: 'Welcome to our online support service.\n\nTo help us assist you more efficiently, please keep this chat window open during your inquiry. Thank you for your cooperation.', timestamp: Date.now() + 1 }
+            { id: 'sys1', type: 'system', text: 'Welcome to Customer Service. How can we assist you today?', timestamp: Date.now() },
+            { id: 'sys2', type: 'support', text: 'Welcome to our online support service.\n\nTo help us assist you more efficiently, please keep this chat window open during your inquiry. Thank you for your cooperation.', timestamp: Date.now() + 1 }
           ])
         } else {
           await loadFromBackend()
         }
-        // mark read
         await fetch('/api/chat/read', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: user.id }) }).catch(()=>{})
         localStorage.setItem('chatLastRead', Date.now().toString())
       } catch (e) { console.error(e) }
@@ -74,34 +71,25 @@ export default function ChatSupport() {
     if (!text.trim() &&!imageUrl) return
     if (!user?.id) { alert('Please login first'); return }
 
-    const tempMsg = {
-      id: Date.now(),
-      type: 'user',
-      sender: 'user',
-      text: text.trim(),
-      image: imageUrl,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      timestamp: Date.now()
-    }
-    setMessages(prev => [...prev, tempMsg])
+    const messageText = text.trim() || 'Image sent'
     setInput('')
     setShowEmoji(false)
 
     try {
-      // SINGLE API - creates ContactMessage + Chat + Message
-      // username = real logged username like "Ali" (admin will see Ali, not Guest)
+      // SINGLE API ONLY - no local temp message
       await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
-          username: user.username, // REAL USERNAME
+          username: user.username,
           email: user.email || '',
-          message: text.trim() || 'Image sent',
+          message: messageText,
           isGuest: false
         })
       })
-      setTimeout(loadFromBackend, 800)
+      // load real message from DB (1 only)
+      setTimeout(loadFromBackend, 500)
     } catch (e) { console.error('send failed', e) }
   }
 

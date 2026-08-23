@@ -39,9 +39,9 @@ export default function GuestSupportChat() {
     const uid = id || guestId
     if(!uid) return
     try{
-      const res = await fetch(`/api/chat/messages?userId=${uid}`)
+      const res = await fetch(`/api/chat/messages?userId=${uid}`, { cache: 'no-store' })
       const data = await res.json()
-      if(data.messages && data.messages.length>0){
+      if(data.messages){
         const formatted = data.messages.map(m=>{
           const role = m.senderRole || m.sender
           return {
@@ -70,26 +70,21 @@ export default function GuestSupportChat() {
   const sendMessage = async () => {
     if (!input.trim()) return
     const textToSend = input.trim()
-
-    const newMsg = { id: Date.now(), text: textToSend, sender: 'user', timestamp: Date.now() }
-    setMessages(prev => [...prev, newMsg])
-    setInput('')
+    setInput('') // clear immediately, NO local push
 
     try{
-      // SINGLE FETCH - /api/contact already creates ContactMessage + Chat + Message
-      // username = random unique name like SwiftFox-4821 (admin will see this)
       await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: guestId,
-          username: guestName, // Random name for guest
+          username: guestName,
           email: '',
           message: textToSend,
           isGuest: true
         })
       })
-      setTimeout(()=> loadMessages(guestId), 800)
+      setTimeout(()=> loadMessages(guestId), 500)
     }catch(e){
       console.error('send failed', e)
     }
