@@ -161,7 +161,13 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 
-  const isComboTask = products.some(p => p.isCombo === true)
+  // FIXED: detects combo by ANY x10 marker, not just isCombo
+  const isComboTask = products.some(p =>
+    p.isCombo === true ||
+    Number(p.profitPercent) >= 5 ||
+    Number(p.bonusMultiplier) >= 10 ||
+    Number(p.comboMultiplier) >= 10
+  )
 
   const handleSubmitClick = () => {
     if (isComboTask) {

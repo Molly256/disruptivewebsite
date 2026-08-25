@@ -45,7 +45,7 @@ export async function POST(req) {
 
     const vipLevel = Number(user.vipLevel) || 1
     const config = VIP_CONFIG[vipLevel] || VIP_CONFIG[1]
-    const needed = config.tasksPerSet // VIP1=40, VIP2=45
+    const needed = config.tasksPerSet
 
     const currentDay = user.currentDay || 1
     const currentSet = user.currentSet || 1
@@ -70,7 +70,6 @@ export async function POST(req) {
       return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
     }
 
-    // FIX: reload if VIP changed or totalTasks mismatch
     let fileSet = null
     let cached = []
     try {
@@ -97,14 +96,20 @@ export async function POST(req) {
     const bonus = Number(normalProduct.bonusMultiplier) || 1
     const activeProfitRate = baseRate * bonus
 
+    // FIXED: KEEP COMBO FIELDS
     const singleProduct = {
       id: userCurrentTaskNumber,
       taskOrder: userCurrentTaskNumber,
+      productId: normalProduct.productId || normalProduct.id,
       name: normalProduct.name,
       price: round2(normalProduct.price || 0),
       image: normalProduct.image,
+      rating: normalProduct.rating,
       profitPercent: normalProduct.profitPercent || (baseRate * 100),
       bonusMultiplier: bonus,
+      isCombo: normalProduct.isCombo || false,
+      comboMultiplier: normalProduct.comboMultiplier || 1,
+      costMultiplier: normalProduct.costMultiplier || 1,
       profit: round2(parseFloat(normalProduct.price) * activeProfitRate)
     }
 
@@ -124,7 +129,7 @@ export async function POST(req) {
           holdAmount: newHold,
           currentTaskProducts: fileSet,
           activeProducts: activeSnapshot,
-          totalTasks: needed // FORCE 45 for VIP2, 40 for VIP1
+          totalTasks: needed
         }
       })
       await tx.task.create({
