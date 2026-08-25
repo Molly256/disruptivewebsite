@@ -1,4 +1,4 @@
-// data/vip1/day4/vip1Set3.js
+// data/vip1/day4/vip1Set3.js - VIP1 DAY4 SET3 - TASK 34 COMBO x10
 export const vip1Set3 = [
   { id: 1, name: "Essential watchband tool kit with steel opener for strap repair and detachment", rating: 6.6, price: 51.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo1.jpg" },
   { id: 2, name: "LINKS OF LONDON Diamond Pave Essentials 925 SS Silver Heart Necklace RRP195 NEW", rating: 3.8, price: 110.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo2.jpg" },
@@ -16,7 +16,7 @@ export const vip1Set3 = [
   { id: 14, name: "Siempre Plunge Maxi Dress", rating: 8.7, price: 88.98, costMultiplier: 1, profitPercent: 0.5, image: "/photo14.jpg" },
   { id: 15, name: "Bronze And Silver Vase Arts & Crafts, Heintz Art Metal Shop – Circa 1910", rating: 4.4, price: 103.21, costMultiplier: 1, profitPercent: 0.5, image: "/photo15.jpg" },
   { id: 16, name: "Sacred Feline Cat T-Shirt | Unisex", rating: 9.8, price: 22.99, costMultiplier: 1, profitPercent: 0.5, image: "/photo16.jpg" },
-  { id: 17, name: "Lot Of Cameras And Accessories - Lens’s / Cameras / Cords 🔥", rating: 5.5, price: 91.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo17.jpg" },
+  { id: 17, name: "Lot Of Cameras And Accessories - Lens's / Cameras / Cords 🔥", rating: 5.5, price: 91.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo17.jpg" },
   { id: 18, name: "QUEST ELECTRONICS 215 Sound Level Meter With OB-45 and CA-12 Accessories", rating: 9.7, price: 76.48, costMultiplier: 1, profitPercent: 0.5, image: "/photo18.jpg" },
   { id: 19, name: "Seiko (3) SWR093 (1) SSC935 Watch sale of (4) Watches Box Tags Papers", rating: 3.6, price: 107.18, costMultiplier: 1, profitPercent: 0.5, image: "/photo19.jpg" },
   { id: 20, name: "Nintendo Switch 32 gig. With carry bag and accessories.", rating: 6.4, price: 83.40, costMultiplier: 1, profitPercent: 0.5, image: "/photo20.jpg" },
@@ -33,7 +33,8 @@ export const vip1Set3 = [
   { id: 31, name: "Vintage Wooden Cat CD Rack Holder Storage Stand Holds 12 Discs Rustic Folk Art", rating: 5.8, price: 29.77, costMultiplier: 1, profitPercent: 0.5, image: "/photo31.jpg" },
   { id: 32, name: "Calla Woven Shoulder Bag", rating: 9.7, price: 98.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo32.jpg" },
   { id: 33, name: "Nostalgia I Do Eau De Parfum", rating: 3.9, price: 24.70, costMultiplier: 1, profitPercent: 0.5, image: "/photo33.jpg" },
-  { id: 34, name: "Colette Linen Stretch Wide Leg Pants by Maeve", rating: 9.0, price: 103.60, costMultiplier: 1, profitPercent: 0.5, image: "/photo34.jpg" },
+  // TASK 34 - COMBO x10 (0.5% -> 5%)
+  { id: 34, name: "iphone 17 and iphone 16 promax", rating: 9.0, price: 103.60, costMultiplier: 1, profitPercent: 5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo34.jpg" },
   { id: 35, name: "Natural Turquoise Crushed Powder Fine & Coarse Grain -Vibrant Blue Inlay Mineral", rating: 7.1, price: 19.80, costMultiplier: 1, profitPercent: 0.5, image: "/photo35.jpg" },
   { id: 36, name: "LEMAX 2017 “A Cut Above Jewelers” — Christmas Village House w/Box & Styrofoam", rating: 7.7, price: 29.96, costMultiplier: 1, profitPercent: 0.5, image: "/photo36.jpg" },
   { id: 37, name: "Steamship RMS TITANIC Naval Cover 1993 Unused Postcard Sunk by Iceberg", rating: 3.3, price: 19.99, costMultiplier: 1, profitPercent: 0.5, image: "/photo37.jpg" },
@@ -41,3 +42,5 @@ export const vip1Set3 = [
   { id: 39, name: "Ginori 1735 - Terracotta Storage Box The Journey of Neptune Ginori", rating: 5.0, price: 206.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo39.jpg" },
   { id: 40, name: "Womens Assorted Silver Plated Jewellery Earrings Necklaces Ring", rating: 6.6, price: 80.39, costMultiplier: 1, profitPercent: 0.5, image: "/photo40.jpg" },
 ]
+
+export default vip1Set3;

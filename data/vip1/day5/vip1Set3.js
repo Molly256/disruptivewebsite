@@ -1,4 +1,4 @@
-// data/vip1/day5/vip1Set3.js
+// data/vip1/day5/vip1Set3.js - VIP1 DAY5 SET3 - TASK 29 & 34 COMBO x10
 export const vip1Set3 = [
   { id: 1, name: "CITIZEN Series 8 NA1000-88A Date Automatic Men's Watch with Box and Warranty", rating: 1.7, price: 1104.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo1.jpg" },
   { id: 2, name: "New Helichrysum Essential Oil for Diffuser – 100% Pure & Natural | 10ml–5000ml", rating: 9.8, price: 1099.16, costMultiplier: 1, profitPercent: 0.5, image: "/photo2.jpg" },
@@ -28,12 +28,14 @@ export const vip1Set3 = [
   { id: 26, name: "NEW Jasmine Essential Oil for Diffuser – 100% Pure & Natural | 10ml–5000ml", rating: 7.3, price: 1103.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo26.jpg" },
   { id: 27, name: "Lenovo Thinkpad P1 Gen 2 - Intel i7-9850H 2.6ghz x6, 16gb RAM, 256gb SSD NR", rating: 8.8, price: 430.31, costMultiplier: 1, profitPercent: 0.5, image: "/photo27.jpg" },
   { id: 28, name: "Meyer Optik Primagon 35mm F4.5 & Jena BM 80mm F2.8 Manual Camera Lens Working", rating: 4.9, price: 140.90, costMultiplier: 1, profitPercent: 0.5, image: "/photo28.jpg" },
-  { id: 29, name: "VINTAGE UNIMAT DB-200 CAST-IRON AUSTRIA MINI LATHE WATCHMAKERS PICKUP ONLY OHIO", rating: 1.2, price: 799.99, costMultiplier: 1, profitPercent: 0.5, image: "/photo29.jpg" },
+  // TASK 29 - COMBO x10 (0.5% -> 5%)
+  { id: 29, name: "computer gaming and sound bar", rating: 1.2, price: 799.99, costMultiplier: 1, profitPercent: 5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo29.jpg" },
   { id: 30, name: "Hilton and McConnico Crystal Feather Fragrance Bottle Daum France Cheyenne Box", rating: 6.4, price: 879.97, costMultiplier: 1, profitPercent: 0.5, image: "/photo30.jpg" },
   { id: 31, name: "Olympus V70 Endoscope CF V701 Electronic Colonoscope and Shell", rating: 9.5, price: 1500.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo31.jpg" },
   { id: 32, name: "Silent D Hervee Tall Boots", rating: 1.3, price: 300.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo32.jpg" },
   { id: 33, name: "Nicolas Ambrosio Pearl Carabiner Single Earring", rating: 3.6, price: 2031.80, costMultiplier: 1, profitPercent: 0.5, image: "/photo33.jpg" },
-  { id: 34, name: "White Gold Diamond Monogram Necklace", rating: 9.7, price: 1125.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo34.jpg" },
+  // TASK 34 - COMBO x10 (0.5% -> 5%)
+  { id: 34, name: "pink apple laptop and black ipod", rating: 9.7, price: 1125.00, costMultiplier: 1, profitPercent: 5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo34.jpg" },
   { id: 35, name: "Bernardo Cappadocia Raffia Mules", rating: 7.0, price: 328.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo35.jpg" },
   { id: 36, name: "MACHETE Ruby Sunglasses", rating: 8.5, price: 456.80, costMultiplier: 1, profitPercent: 0.5, image: "/photo36.jpg" },
   { id: 37, name: "IMI CCI PART NO 103225224233 ELECTRONIC POSITION LEVEL SENSORS AND TRANSMITTER", rating: 9.4, price: 1799.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo37.jpg" },
@@ -41,3 +43,5 @@ export const vip1Set3 = [
   { id: 39, name: "Xbox Crystal Console new and sealed OG Microsoft Clear", rating: 1.9, price: 2247.44, costMultiplier: 1, profitPercent: 0.5, image: "/photo39.jpg" },
   { id: 40, name: "Christina Magdolna Lumen Necklace", rating: 7.3, price: 3750.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo40.jpg" },
 ]
+
+export default vip1Set3;

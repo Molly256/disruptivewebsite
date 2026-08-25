@@ -143,6 +143,7 @@ async function loadSetData(day, set, vipLevel = 1) {
 }
 
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, holdAmount, x10Tasks, currentTaskNumber, currentDay, currentSet }) {
+  const [showCombo, setShowCombo] = useState(false)
   if (!products || products.length === 0) return null
   const safeWallet = round2(walletBalance)
   const safeHold = round2(holdAmount)
@@ -159,6 +160,16 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+  const isComboTask = products.some(p => p.isCombo === true)
+
+  const handleSubmitClick = () => {
+    if (isComboTask) {
+      setShowCombo(true)
+      return
+    }
+    onSubmit()
+  }
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
@@ -209,11 +220,21 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, marginBottom: 8 }}><span>HOLD AMOUNT</span><span>{formatMoney(holdAfter)} USD</span></div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 16 }}><span>TO PAY/HOLD</span><span>{formatMoney(totalReserve)} USD</span></div>
           </div>
-          <button disabled={!canSubmit} onClick={onSubmit} style={{ width: '100%', background: canSubmit? '#FF0000' : '#CCC', color: '#FFF', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '900', fontSize: '16px', cursor: canSubmit? 'pointer' : 'not-allowed' }}>Submit</button>
+          <button disabled={!canSubmit} onClick={handleSubmitClick} style={{ width: '100%', background: canSubmit? '#FF0000' : '#CCC', color: '#FFF', border: 'none', padding: '16px', borderRadius: '12px', fontWeight: '900', fontSize: '16px', cursor: canSubmit? 'pointer' : 'not-allowed' }}>Submit</button>
         </div>
       </div>
     </div>
     <BottomNav />
+    {showCombo && (
+      <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div style={{ background: '#FFF', borderRadius: 16, overflow: 'hidden', maxWidth: 400, width: '100%' }}>
+          <img src="/combo.jpg" alt="combo" style={{ width: '100%', display: 'block' }} />
+          <div style={{ padding: 12, display: 'flex', justifyContent: 'center' }}>
+            <button onClick={() => { setShowCombo(false); onSubmit(); }} style={{ background: '#FF0000', color: '#FFF', border: 'none', padding: '8px 28px', borderRadius: 999, fontWeight: 800, cursor: 'pointer' }}>Close</button>
+          </div>
+        </div>
+      </div>
+    )}
   </div>
   )
 }
