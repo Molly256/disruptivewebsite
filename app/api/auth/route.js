@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 function generateInviteCode(phone) {
-  const last6 = phone.slice(-6).padStart(6, '0') // take last 6 digits
+  const last6 = phone.slice(-6).padStart(6, '0')
   return `${last6}DI`
 }
 
@@ -11,7 +11,6 @@ export async function POST(req) {
     const body = await req.json()
     const { action } = body
 
-    // REGISTER
     if (action === 'register') {
       const {
         username,
@@ -21,17 +20,15 @@ export async function POST(req) {
         loginPassword,
         transactionPassword,
         gender,
-        invitedBy // CODE THEY TYPED - WHO INVITED THEM
+        invitedBy
       } = body
 
       if (!username || !phone || !loginPassword || !transactionPassword || !gender) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
       }
-
       if (!countryCode) {
         return NextResponse.json({ error: 'Country code missing' }, { status: 400 })
       }
-
       if (!invitedBy) {
         return NextResponse.json({ error: 'Invite code is required' }, { status: 400 })
       }
@@ -39,14 +36,12 @@ export async function POST(req) {
       const existingUser = await prisma.user.findFirst({
         where: { OR: [{ username }, { phone }] }
       })
-
       if (existingUser) {
         return NextResponse.json({ error: 'Username or phone already exists' }, { status: 400 })
       }
 
-      // check if inviteCode exists in DB
       const inviter = await prisma.user.findFirst({
-        where: { inviteCode: invitedBy }
+        where: { inviteCode: invitedBy.trim().toUpperCase() }
       })
       if (!inviter) {
         return NextResponse.json({ error: 'Invalid Invite Code' }, { status: 400 })
@@ -61,26 +56,22 @@ export async function POST(req) {
           loginPassword,
           transactionPassword,
           gender,
-          inviteCode: generateInviteCode(phone), 
-          referredBy: invitedBy, 
+          inviteCode: generateInviteCode(phone),
+          referredBy: invitedBy.trim().toUpperCase(),
+          inviterId: inviter.id, // <--- THE FIX
 
-          // 💡 FIXED: Scrubbed vipId and setsCompleted ghost columns
           vipLevel: 1,
-          currentDay: 1,           // Added default initializer
-          currentSet: 1,           // Added default initializer
-          tasksInCurrentSet: 0,    
+          currentDay: 1,
+          currentSet: 1,
+          tasksInCurrentSet: 0,
           taskCompleted: 0,
-          totalTasks: 40,          
-
+          totalTasks: 40,
           walletBalance: 0,
           holdAmount: 0,
-          // 💡 FIXED: Scrubbed bonus ghost column
           specialBonus: 0,
           todayProfit: 0,
           lastProfitReset: new Date(),
           creditScore: 100,
-
-          // 💡 FIXED: Explicit JSON array baseline initialization formatting
           currentTaskProducts: '[]',
           activeProducts: '[]',
           completedProducts: '[]',
@@ -94,12 +85,9 @@ export async function POST(req) {
       }, { status: 201 })
     }
 
-    // LOGIN
     if (action === 'login') {
       const { loginType, username, phone, countryCode, password } = body
-
       let user = null
-
       if (loginType === 'username') {
         if (!username) return NextResponse.json({ error: 'Username required' }, { status: 400 })
         user = await prisma.user.findFirst({ where: { username } })
@@ -107,14 +95,8 @@ export async function POST(req) {
         if (!phone) return NextResponse.json({ error: 'Phone required' }, { status: 400 })
         user = await prisma.user.findFirst({ where: { phone } })
       }
-
-      if (!user) {
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
-      }
-
-      if (user.loginPassword !== password) {
-        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
-      }
+      if (!user) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+      if (user.loginPassword !== password) return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
 
       const res = NextResponse.json({
         success: true,
@@ -124,8 +106,8 @@ export async function POST(req) {
           phone: user.phone,
           gender: user.gender,
           vipLevel: user.vipLevel,
-          currentDay: user.currentDay, // Send dynamic paths parameters
-          currentSet: user.currentSet, // Send dynamic paths parameters
+          currentDay: user.currentDay,
+          currentSet: user.currentSet,
           walletBalance: user.walletBalance,
           holdAmount: user.holdAmount,
           specialBonus: user.specialBonus,
@@ -133,12 +115,11 @@ export async function POST(req) {
           lastProfitReset: user.lastProfitReset,
           currentTaskProducts: user.currentTaskProducts,
           taskCompleted: user.taskCompleted,
-          tasksInCurrentSet: user.tasksInCurrentSet, 
-          totalTasks: user.totalTasks,               
+          tasksInCurrentSet: user.tasksInCurrentSet,
+          totalTasks: user.totalTasks,
           inviteCode: user.inviteCode
         }
       })
-
       res.cookies.set('session', String(user.id), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -146,12 +127,9 @@ export async function POST(req) {
         maxAge: 60 * 60 * 24 * 7,
         path: '/'
       })
-
       return res
     }
-
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
-
   } catch (e) {
     console.error("AUTH ERROR:", e)
     if (e.code === 'P2002') {
