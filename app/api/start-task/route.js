@@ -17,7 +17,6 @@ const loadSet = async (vip, day, set) => {
     const key = `vip${vip}Set${set}`
     return mod[key] || Object.values(mod)[0] || null
   } catch (e) {
-    console.log('file load fail, fallback to DB', e.message)
     const dbConfig = await prisma.taskSetConfig.findUnique({
       where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } }
     })
@@ -53,7 +52,7 @@ export async function POST(req) {
     const userCurrentTaskNumber = tasksInCurrentSet + 1
 
     if (tasksInCurrentSet >= needed) {
-      return NextResponse.json({ error: `Set ${currentSet} completed.` }, { status: 400 })
+      return NextResponse.json({ error: `Set ${currentSet} completed - Contact customer service` }, { status: 400 })
     }
 
     const completedCount = Number(user.taskCompleted || 0)
@@ -92,33 +91,40 @@ export async function POST(req) {
     const normalProduct = fileSet.find(p => Number(p.taskOrder || p.id) === userCurrentTaskNumber)
     if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in set (have ${fileSet.length})` }, { status: 400 })
 
+    // === FIXED REAL PRICE WITH MULTIPLIER ===
+    const rawPrice = Number(normalProduct.price || 0)
+    const costMult = Number(normalProduct.costMultiplier || 1)
+    const realPrice = round2(rawPrice * costMult) // THIS is what user must pay
+
     const baseRate = (Number(normalProduct.profitPercent) / 100) || config.profit
     const bonus = Number(normalProduct.bonusMultiplier) || 1
     const activeProfitRate = baseRate * bonus
 
-    // FIXED: KEEP COMBO FIELDS
     const singleProduct = {
       id: userCurrentTaskNumber,
       taskOrder: userCurrentTaskNumber,
       productId: normalProduct.productId || normalProduct.id,
       name: normalProduct.name,
-      price: round2(normalProduct.price || 0),
+      price: realPrice, // FIXED: use realPrice not raw
+      rawPrice: rawPrice,
       image: normalProduct.image,
       rating: normalProduct.rating,
       profitPercent: normalProduct.profitPercent || (baseRate * 100),
       bonusMultiplier: bonus,
       isCombo: normalProduct.isCombo || false,
       comboMultiplier: normalProduct.comboMultiplier || 1,
-      costMultiplier: normalProduct.costMultiplier || 1,
-      profit: round2(parseFloat(normalProduct.price) * activeProfitRate)
+      costMultiplier: costMult,
+      profit: round2(realPrice * activeProfitRate)
     }
 
     const reserveAmount = round2(singleProduct.price + singleProduct.profit)
     const activeSnapshot = [{...singleProduct, reserveAmount }]
 
-    const pPrice = singleProduct.price
-    const newWallet = round2(Number(user.walletBalance) - pPrice)
-    const newHold = round2(Number(user.holdAmount || 0) + pPrice)
+    // === FIXED HOLD = ONLY CURRENT TASK, NOT CUMULATIVE ===
+    const newWallet = round2(Number(user.walletBalance) - realPrice)
+    const newHold = round2(realPrice) // not oldHold + price, just current task
+
+    // If user already has leftover hold from bug, reset it to realPrice
     const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${needed}`
 
     const updatedUser = await prisma.$transaction(async (tx) => {
