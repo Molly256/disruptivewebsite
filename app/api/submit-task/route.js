@@ -34,7 +34,6 @@ export async function POST(req) {
     const isX10 = x10List.includes(Number(currentTaskNumber))
 
     const currentSet = user.currentSet || 1
-
     let totalPrice = 0
     let totalProfit = 0
     const enrichedProducts = []
@@ -56,7 +55,6 @@ export async function POST(req) {
 
     let completedArr = []
     try { completedArr = typeof user.completedProducts === 'string'? JSON.parse(user.completedProducts||'[]') : (user.completedProducts||[]) } catch { completedArr=[] }
-    const updatedCompletedProducts = [...completedArr,...enrichedProducts]
 
     let tasksInCurrentSet = Number(user.tasksInCurrentSet || 0)
     let nextTasksInCurrentSet = tasksInCurrentSet + 1
@@ -68,21 +66,16 @@ export async function POST(req) {
       nextSet = currentSet < config.totalSets? currentSet + 1 : 1
     }
 
-    const currentHold = parseFloat(user.holdAmount || 0)
-    const currentWallet = parseFloat(user.walletBalance || 0)
-    const finalWallet = parseFloat((currentWallet + currentHold + totalProfit).toFixed(2))
-    const finalHold = Math.max(0, parseFloat((currentHold - totalPrice).toFixed(2)))
-
     const updatedUser = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: {
-          walletBalance: finalWallet,
-          holdAmount: finalHold,
+          walletBalance: { increment: totalProfit },
+          holdAmount: { decrement: totalPrice },
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
           currentTaskProducts: isSetComplete? [] : currentTaskProducts,
           activeProducts: [],
-          completedProducts: updatedCompletedProducts,
+          completedProducts: [...completedArr,...enrichedProducts],
           taskCompleted: { increment: 1 },
           tasksInCurrentSet: nextTasksInCurrentSet,
           currentSet: nextSet
@@ -96,7 +89,6 @@ export async function POST(req) {
         })
       }
 
-      // === REFERRAL 20% + HISTORY SAME AS DEPOSIT ===
       if (user.inviterId && totalProfit > 0) {
         const rewardAmount = parseFloat((totalProfit * 0.20).toFixed(2))
         if (rewardAmount > 0) {
@@ -107,29 +99,28 @@ export async function POST(req) {
               referralEarnings: { increment: rewardAmount }
             }
           })
-
           await tx.referralReward.create({
             data: {
-              earnerId: user.inviterId,
-              fromUserId: user.id,
-              amount: rewardAmount,
-              sourceProfit: totalProfit,
-              percent: 20
+              inviterId: user.inviterId,
+              inviteeId: user.id,
+              inviteeUsername: user.username,
+              taskProfit: totalProfit,
+              rewardAmount: rewardAmount,
+              rate: 0.20,
+              vipLevel: user.vipLevel,
+              taskNumber: Number(currentTaskNumber)||0
             }
           })
-
-          // Save in History button - EXACT same style as your deposit
           await tx.transaction.create({
             data: {
               userId: user.inviterId,
               type: 'referral_bonus',
               amount: rewardAmount,
-              status: 'completed'
+              status: 'success'
             }
           })
         }
       }
-
       return await tx.user.findUnique({ where: { id: userId } })
     })
 
