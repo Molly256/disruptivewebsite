@@ -9,7 +9,6 @@ export default function Sidebar() {
   const pathname = usePathname()
   const headerHeight = 48
 
-  // ONLY RENDER ON HOMEPAGE
   if (pathname!== '/') return null
 
   const toggleMenu = (menu) => {
@@ -19,6 +18,11 @@ export default function Sidebar() {
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
     setMenuOpen(false)
+  }
+
+  const goToLogin = () => {
+    setMenuOpen(false)
+    router.push('/login')
   }
 
   const goToRegistration = () => {
@@ -37,12 +41,12 @@ export default function Sidebar() {
   return (
     <>
       <style>{`
-      .desktop-nav {
+    .desktop-nav {
           display: flex;
           align-items: center;
           gap: 20px;
         }
-      .menu-btn {
+    .menu-btn {
           display: none;
           background: none;
           border: none;
@@ -57,10 +61,10 @@ export default function Sidebar() {
           transform: translateY(-50%);
         }
         @media (max-width: 1024px) {
-        .desktop-nav { display: none!important; }
-        .menu-btn { display: flex!important; }
+      .desktop-nav { display: none!important; }
+      .menu-btn { display: flex!important; }
         }
-      .desktop-nav-item {
+    .desktop-nav-item {
           color: #000;
           display: flex;
           align-items: center;
@@ -69,7 +73,7 @@ export default function Sidebar() {
           font-size: 14px;
           font-weight: 500;
         }
-      .desktop-talk-btn {
+    .desktop-talk-btn {
           background: #cc0000;
           color: #fff;
           font-weight: 500;
@@ -139,7 +143,7 @@ export default function Sidebar() {
               <path d="M1 1L5 5L9 1" stroke="#cc0000" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <button className="desktop-talk-btn" onClick={goToRegistration}>GET STARTED</button>
+          <button className="desktop-talk-btn" onClick={goToLogin}>LOGIN</button>
         </nav>
 
         <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>
@@ -210,7 +214,7 @@ export default function Sidebar() {
           ))}
 
           <button
-            onClick={goToRegistration}
+            onClick={goToLogin}
             style={{
               background: '#cc0000',
               color: '#fff',
@@ -223,17 +227,19 @@ export default function Sidebar() {
               cursor: 'pointer'
             }}
           >
-            GET STARTED
+            LOGIN
           </button>
         </div>
       )}
 
+      {/* FLOATING BUTTON - LEFT BOTTOM - GOES TO REGISTRATION */}
       <div
         onClick={goToRegistration}
         style={{
           position:'fixed',
           bottom:'20px',
-          right:'20px',
+          left:'20px',
+          right:'auto',
           zIndex:1000,
           background:'#e60000',
           color:'#fff',
@@ -242,7 +248,7 @@ export default function Sidebar() {
           letterSpacing:'1px',
           padding:'16px 24px',
           borderRadius:'50px',
-          cursor:'grab',
+          cursor:'pointer',
           boxShadow:'0 4px 12px rgba(0,0,0,0.3)',
           userSelect:'none',
           touchAction:'none'

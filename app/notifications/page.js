@@ -28,13 +28,11 @@ export default function NotificationsPage() {
       const data = await res.json()
       if(res.ok) {
         setNotifications(data.notifications || [])
-        // 1. Mark as read only after we successfully loaded them
         await markAsRead(userId)
       } else {
         setError(data.error || 'Failed to load notifications')
       }
     } catch(e) {
-      console.error(e)
       setError('Network error')
     }
     setLoading(false)
@@ -47,11 +45,8 @@ export default function NotificationsPage() {
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({userId})
       })
-      // update local state so unread bubble disappears on profile
       setNotifications(prev => prev.map(n => ({...n, read: true})))
-    } catch(e) {
-      console.error('Mark as read failed', e)
-    }
+    } catch(e) {}
   }
 
   if(!user) return null
@@ -59,15 +54,33 @@ export default function NotificationsPage() {
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
       <AppHeader />
+      <style jsx>{`
+       .page-wrapper {
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 16px;
+          box-sizing: border-box;
+        }
+        @media (min-width: 768px) {
+         .page-wrapper {
+            max-width: 700px;
+            padding: 24px;
+          }
+        }
+        @media (min-width: 1200px) {
+         .page-wrapper {
+            max-width: 800px;
+          }
+        }
+      `}</style>
 
-      <div style={{ padding: 16, maxWidth: 500, margin: '0 auto' }}>
-        {/* HEADER */}
+      <div className="page-wrapper">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => router.back()} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', fontSize: 18, cursor: 'pointer' }}>←</button>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: '#000' }}>Notifications</h1>
         </div>
 
-        {/* NOTIFICATIONS LIST */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {loading? (
             <p style={{textAlign:'center', color:'#999'}}>Loading...</p>
@@ -99,11 +112,9 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        {/* FOOTER */}
         <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '20px' }}>
           <p style={{ fontSize: '14px', color: '#666', fontWeight: '400' }}>Copyrights 2026 © Disruptive Advertising Agency</p>
         </div>
-
       </div>
       <BottomNav />
     </div>

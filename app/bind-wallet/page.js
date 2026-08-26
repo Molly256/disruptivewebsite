@@ -20,7 +20,6 @@ export default function BindWalletPage() {
     if (!savedUser) { router.push('/login'); return }
     const u = JSON.parse(savedUser)
     setUser(u)
-    // BUG2 FIX: prefill if already bound
     if(u.boundWallet){
       setWithdrawType(u.boundWallet.type || 'BTC')
       setWalletName(u.boundWallet.name || '')
@@ -34,7 +33,6 @@ export default function BindWalletPage() {
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         userId: user.id,
-        // BUG1 FIX: send as boundWallet object
         boundWallet: { type: withdrawType, name: walletName, address: walletAddress }
       })
     })
@@ -63,7 +61,28 @@ export default function BindWalletPage() {
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
       <AppHeader />
 
-      <div style={{ padding: 16, maxWidth: 500, margin: '0 auto' }}>
+      <style jsx>{`
+      .page-wrapper {
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 16px;
+          box-sizing: border-box;
+        }
+        @media (min-width: 768px) {
+        .page-wrapper {
+            max-width: 700px;
+            padding: 24px;
+          }
+        }
+        @media (min-width: 1200px) {
+        .page-wrapper {
+            max-width: 800px;
+          }
+        }
+      `}</style>
+
+      <div className="page-wrapper">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => router.back()} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', fontSize: 18, cursor: 'pointer' }}>←</button>
           <h1 style={{ fontSize: 18, fontWeight: 700 }}>{t('bindWallet')}</h1>

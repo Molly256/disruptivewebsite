@@ -46,14 +46,12 @@ export default function AccountInfoPage() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [msg, setMsg] = useState('')
-  const [msgTx, setMsgTx] = useState('') // separate for tx
+  const [msgTx, setMsgTx] = useState('')
 
-  // password states
   const [oldPass, setOldPass] = useState('')
   const [newPass, setNewPass] = useState('')
   const [repeatPass, setRepeatPass] = useState('')
 
-  // tx password states
   const [oldTxPass, setOldTxPass] = useState('')
   const [newTxPass, setNewTxPass] = useState('')
   const [repeatTxPass, setRepeatTxPass] = useState('')
@@ -83,7 +81,6 @@ export default function AccountInfoPage() {
     if(!oldPass ||!newPass ||!repeatPass) { setMsg(t('fillAllFields')); return }
     if(newPass!== repeatPass) { setMsg(t('passwordsDontMatch')); return }
     if(newPass === oldPass) { setMsg(t('newPassDifferent')); return }
-
     const data = await saveToDB({type: 'password', oldPass, newPass})
     setMsg(data.error || t('passwordUpdated'))
     if(data.user) { setOldPass(''); setNewPass(''); setRepeatPass('') }
@@ -93,7 +90,6 @@ export default function AccountInfoPage() {
     setMsgTx('')
     if(!oldTxPass ||!newTxPass ||!repeatTxPass) { setMsgTx(t('fillAllFields')); return }
     if(newTxPass!== repeatTxPass) { setMsgTx(t('passwordsDontMatch')); return }
-
     const data = await saveToDB({type: 'txpassword', oldPass: oldTxPass, newPass: newTxPass})
     setMsgTx(data.error || t('txPasswordUpdated'))
     if(data.user) { setOldTxPass(''); setNewTxPass(''); setRepeatTxPass('') }
@@ -105,7 +101,28 @@ export default function AccountInfoPage() {
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
       <AppHeader />
 
-      <div style={{ padding: 16, maxWidth: 500, margin: '0 auto' }}>
+      <style jsx>{`
+       .page-wrapper {
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 16px;
+          box-sizing: border-box;
+        }
+        @media (min-width: 768px) {
+         .page-wrapper {
+            max-width: 700px;
+            padding: 24px;
+          }
+        }
+        @media (min-width: 1200px) {
+         .page-wrapper {
+            max-width: 800px;
+          }
+        }
+      `}</style>
+
+      <div className="page-wrapper">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => router.back()} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', fontSize: 18, cursor: 'pointer' }}>←</button>
           <h1 style={{ fontSize: 18, fontWeight: 700 }}>{t('accountInfo')}</h1>
@@ -149,7 +166,6 @@ export default function AccountInfoPage() {
         <div style={{ textAlign: 'center', marginTop: '20px', paddingBottom: '20px' }}>
           <p style={{ fontSize: '14px', color: '#666', fontWeight: '400' }}>Copyrights 2026 © Disruptive Advertising Agency</p>
         </div>
-
       </div>
       <BottomNav />
     </div>

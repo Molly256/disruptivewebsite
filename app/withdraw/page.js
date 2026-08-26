@@ -22,9 +22,7 @@ export default function WithdrawPage() {
   }, [router])
 
   useEffect(() => {
-    if(showHistory && user) {
-      fetchTransactions()
-    }
+    if(showHistory && user) fetchTransactions()
   }, [showHistory, activeTab, user])
 
   const fetchTransactions = async () => {
@@ -45,8 +43,6 @@ export default function WithdrawPage() {
 
   const handleWithdraw = async () => {
     setMsg('')
-
-    // === RISK CONTROL CHECK - NEW ===
     try{
       const riskRes = await fetch('/api/withdraw/check', {
         method: 'POST',
@@ -58,23 +54,17 @@ export default function WithdrawPage() {
         showBlackToast(riskData.message || 'Your account is under risk control please go to customer service now.')
         return
       }
-    }catch(e){
-      console.error('risk check failed', e)
-    }
-    // === END RISK CONTROL CHECK ===
-
+    }catch(e){}
     const amount = withdrawAmount === 'ALL'? Number(user.walletBalance) : Number(withdrawAmount)
     if(amount <= 0) { setMsg(t('pleaseEnterAmount')); return }
     if(!user.boundWallet) { setMsg(t('pleaseBindWallet')); return }
     if(!txPassConfirm) { setMsg(t('enterTxPass')); return }
-
     const res = await fetch('/api/withdraw/request', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({userId: user.id, amount, txPass: txPassConfirm})
     })
     const data = await res.json()
-
     if(res.ok) {
       setUser(data.user)
       localStorage.setItem('user', JSON.stringify(data.user))
@@ -91,7 +81,6 @@ export default function WithdrawPage() {
 
   const totalBalance = Number(user.walletBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const freezeAmount = Number(user.freezeAmount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-
   const filteredTx = transactions.filter(tx => {
     if(tx.type!== 'withdraw' && tx.type!== 'deposit' && tx.type!== 'special_bonus') return false
     if(activeTab === 'reviewing') return tx.status === 'pending'
@@ -99,49 +88,40 @@ export default function WithdrawPage() {
     if(activeTab === 'reject') return tx.status === 'rejected'
     return false
   })
-
   const formatUSDate = (dateStr) => {
     const d = new Date(dateStr)
-    return d.toLocaleString('en-US', {
-      timeZone: 'America/New_York',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    }).replace(/(\d+)\/(\d+)\/(\d+), (\d+:\d+)/, '$3/$1/$2/$4')
+    return d.toLocaleString('en-US', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).replace(/(\d+)\/(\d+)\/(\d+), (\d+:\d+)/, '$3/$1/$2/$4')
   }
-
-  const getTxLabel = (type) => {
-    if(type === 'special_bonus') return 'special bonus'
-    return type
-  }
-
+  const getTxLabel = (type) => { if(type === 'special_bonus') return 'special bonus'; return type }
   const TabBtn = ({ id, label }) => (
-    <button
-      onClick={() => setActiveTab(id)}
-      style={{
-        flex: 1,
-        padding: '10px 0',
-        border: 'none',
-        borderRadius: 8,
-        background: activeTab === id? '#FF0000' : 'transparent',
-        color: activeTab === id? '#FFF' : '#000',
-        fontSize: 14,
-        fontWeight: 600,
-        cursor: 'pointer'
-      }}
-    >
-      {label}
-    </button>
+    <button onClick={() => setActiveTab(id)} style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 8, background: activeTab === id? '#FF0000' : 'transparent', color: activeTab === id? '#FFF' : '#000', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>{label}</button>
   )
 
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
       <AppHeader />
+      <style jsx>{`
+      .page-wrapper {
+          width: 100%;
+          max-width: 100%;
+          margin: 0 auto;
+          padding: 16px;
+          box-sizing: border-box;
+        }
+        @media (min-width: 768px) {
+        .page-wrapper {
+            max-width: 700px;
+            padding: 24px;
+          }
+        }
+        @media (min-width: 1200px) {
+        .page-wrapper {
+            max-width: 800px;
+          }
+        }
+      `}</style>
 
-      <div style={{ padding: 16, maxWidth: 500, margin: '0 auto' }}>
+      <div className="page-wrapper">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => router.back()} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', fontSize: 18, cursor: 'pointer' }}>←</button>
           <h1 style={{ fontSize: 18, fontWeight: 700, color: '#000' }}>{t('withdraw')}</h1>
@@ -161,7 +141,6 @@ export default function WithdrawPage() {
             <span style={{ fontSize: 14, color: '#666' }}>{t('freeze')}</span>
             <span style={{ fontSize: 16, fontWeight: 800, color: '#FF0000' }}>{freezeAmount} USD</span>
           </div>
-
           {showHistory && (
             <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid #EEE' }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
