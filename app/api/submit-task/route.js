@@ -66,11 +66,14 @@ export async function POST(req) {
       nextSet = currentSet < config.totalSets? currentSet + 1 : 1
     }
 
+    // FIXED: return hold + profit
+    const returnToWallet = parseFloat((totalPrice + totalProfit).toFixed(2))
+
     const updatedUser = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: {
-          walletBalance: { increment: totalProfit },
+          walletBalance: { increment: returnToWallet },
           holdAmount: { decrement: totalPrice },
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
           currentTaskProducts: isSetComplete? [] : currentTaskProducts,
