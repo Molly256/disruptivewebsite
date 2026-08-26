@@ -78,11 +78,12 @@ export default function AdminPage() {
     setSelectedEditItems([])
     setActiveEditSet(setNum)
     if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
-      const fixed = editUser.currentTaskProducts.map((item, idx) => ({
-    ...item,
-        taskOrder: item.taskOrder || item.id || idx+1,
-        id: item.taskOrder || item.id || idx+1,
-        image: `/vip${vipLevel}/day${day}/set${setNum}/photo${item.taskOrder || item.id || idx+1}.jpg`
+      const fixed = editUser.currentTaskProducts.filter(Boolean).map((item, idx) => ({
+   ...item,
+        taskOrder: Number(item.taskOrder || item.id || idx+1),
+        id: Number(item.taskOrder || item.id || idx+1),
+        price: Number(item.price || 0),
+        image: item.image || `/vip${vipLevel}/day${day}/set${setNum}/photo${item.taskOrder || item.id || idx+1}.jpg`
       }))
       setEditSetData(fixed)
       return
@@ -91,7 +92,13 @@ export default function AdminPage() {
       const res = await fetch(`/api/admin/get-set-data?vipLevel=${vipLevel}&day=${day}&set=${setNum}`)
       const data = await res.json()
       if(!res.ok) throw new Error(data.error)
-      setEditSetData(data.items || [])
+      const fixed = (data.items || []).filter(Boolean).map((item, idx) => ({
+       ...item,
+        taskOrder: Number(item.taskOrder || item.id || idx+1),
+        id: Number(item.taskOrder || item.id || idx+1),
+        price: Number(item.price || 0)
+      }))
+      setEditSetData(fixed)
     } catch(e) {
       alert(`Failed to load set: ${e.message}`)
     }
@@ -100,32 +107,44 @@ export default function AdminPage() {
   const handleSaveEditedData = async () => {
     if(selectedEditItems.length === 0) return alert('Select items to save')
     try {
+      let saved = 0
       for (const taskOrder of selectedEditItems) {
         const item = editSetData.find(i => Number(i.taskOrder) === Number(taskOrder))
+        if(!item){
+          console.warn(`Task ${taskOrder} not found, skipping`)
+          continue
+        }
+        if(item.price === undefined || item.price === null){
+          console.warn(`Task ${taskOrder} has no price, skipping`)
+          continue
+        }
         const res = await fetch('/api/admin/tasks/edit-user-task', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({
             userId: editUser.id,
-            taskOrder: taskOrder,
-            newPrice: item.price,
+            taskOrder: Number(taskOrder),
+            newPrice: Number(item.price),
             newName: item.name,
             adminId: admin.id
           })
         })
         const d = await res.json()
-        if(!res.ok) throw new Error(d.error)
+        if(!res.ok) throw new Error(d.error || `Failed task ${taskOrder}`)
+        saved++
       }
-      alert(`Updated for ${editUser.username} only!`)
+      if(saved === 0) return alert('No valid tasks to save')
+      alert(`Updated ${saved} task(s) for ${editUser.username} only!`)
       setSelectedEditItems([])
       const r = await fetch(`/api/user/search?q=${encodeURIComponent(editUser.username)}`)
       const d2 = await r.json()
       if(r.ok) {
         const fixedUser = {
-      ...d2.user,
-          currentTaskProducts: (d2.user.currentTaskProducts || []).map((item, idx) => ({
-        ...item,
-            image: `/vip${d2.user.vipLevel}/day${d2.user.currentDay || 1}/set${d2.user.currentSet || 1}/photo${item.taskOrder || idx+1}.jpg`
+     ...d2.user,
+          currentTaskProducts: (d2.user.currentTaskProducts || []).filter(Boolean).map((item, idx) => ({
+       ...item,
+            taskOrder: Number(item.taskOrder || idx+1),
+            image: item.image || `/vip${d2.user.vipLevel}/day${d2.user.currentDay || 1}/set${d2.user.currentSet || 1}/photo${item.taskOrder || idx+1}.jpg`
           }))
         }
         setEditUser(fixedUser);
@@ -134,10 +153,12 @@ export default function AdminPage() {
     } catch(e) { alert(`Save failed: ${e.message}`) }
   }
 
-  const editItem = (item) => { setEditingPhoto(item); setEditData({name: item.name, price: item.price}) }
+  const editItem = (item) => { if(!item) return; setEditingPhoto(item); setEditData({name: item.name || '', price: Number(item.price || 0)}) }
 
   const saveEdit = () => {
-    setEditSetData(prev => prev.map(p => Number(p.taskOrder) === Number(editingPhoto.taskOrder)? {...p, name: editData.name, price: parseFloat(editData.price)} : p));
+    if(!editingPhoto) return
+    const tOrder = Number(editingPhoto.taskOrder)
+    setEditSetData(prev => prev.filter(Boolean).map(p => Number(p.taskOrder) === tOrder? {...p, name: editData.name, price: parseFloat(editData.price) || 0} : p));
     setEditingPhoto(null);
   }
 
@@ -240,15 +261,15 @@ export default function AdminPage() {
                       {activeEditSet === setNum && (
                         <div style={{ marginTop: 14 }}>
                           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, maxHeight: 400, overflowY: 'auto' }}>
-                            {editSetData.map(item => {
-                              const isSel = selectedEditItems.includes(item.taskOrder);
+                            {editSetData.filter(Boolean).map(item => {
+                              const isSel = selectedEditItems.includes(Number(item.taskOrder));
                               return (
-                                <div key={`${activeEditSet}-${item.taskOrder}`} style={{ width: 140, background: '#111', padding: 6, borderRadius: 8, border: isSel? '2px solid red' : '1px solid #333', position:'relative' }}>
-                                  <div onClick={() => setSelectedEditItems(v => v.includes(item.taskOrder)? v.filter(x => x!== item.taskOrder) : [...v, item.taskOrder])} style={{ position: 'absolute', top:6, right:6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel? 'red' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex:2 }}>
+                                <div key={`${activeEditSet}-${item.taskOrder}-${item.id}`} style={{ width: 140, background: '#111', padding: 6, borderRadius: 8, border: isSel? '2px solid red' : '1px solid #333', position:'relative' }}>
+                                  <div onClick={(e) => { e.stopPropagation(); setSelectedEditItems(v => v.includes(Number(item.taskOrder))? v.filter(x => Number(x)!== Number(item.taskOrder)) : [...v, Number(item.taskOrder)])}} style={{ position: 'absolute', top:6, right:6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel? 'red' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex:2 }}>
                                     {isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}
                                   </div>
                                   <img src={item.image} alt={item.name} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8, display:'block', background:'#222' }} />
-                                  <p style={{ fontSize: 11, margin: '4px 0', fontWeight: '800', color: '#00C853' }}>${parseFloat(item.price).toFixed(2)}</p>
+                                  <p style={{ fontSize: 11, margin: '4px 0', fontWeight: '800', color: '#00C853' }}>${Number(item.price || 0).toFixed(2)}</p>
                                   <p style={{ fontSize: 9, margin: 0, color: '#CCC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
                                   <button onClick={() => editItem(item)} style={{ width: '100%', marginTop: 4, background: '#FF1493', border: 'none', padding: 6, borderRadius: 6, color: '#FFF', fontSize: 11 }}>Edit Data</button>
                                 </div>
