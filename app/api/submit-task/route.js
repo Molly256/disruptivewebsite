@@ -27,15 +27,12 @@ export async function POST(req) {
     let activeProducts = []
     try { activeProducts = typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts||'[]') : (user.activeProducts||[]) } catch { activeProducts = [] }
 
-    // use active (1 task) not 40 tasks
     const toSubmit = activeProducts.length>0? activeProducts : currentTaskProducts.slice(0,1)
-
     if (toSubmit.length === 0) return NextResponse.json({ error: 'No active task found to submit.' }, { status: 400 })
 
     const x10List = typeof user.x10TaskNumbers === 'string'? JSON.parse(user.x10TaskNumbers||'[]') : (user.x10TaskNumbers||[])
     const isX10 = x10List.includes(Number(currentTaskNumber))
 
-    const currentDay = user.currentDay || 1
     const currentSet = user.currentSet || 1
 
     let totalPrice = 0
@@ -59,7 +56,6 @@ export async function POST(req) {
 
     let completedArr = []
     try { completedArr = typeof user.completedProducts === 'string'? JSON.parse(user.completedProducts||'[]') : (user.completedProducts||[]) } catch { completedArr=[] }
-
     const updatedCompletedProducts = [...completedArr,...enrichedProducts]
 
     let tasksInCurrentSet = Number(user.tasksInCurrentSet || 0)
@@ -84,7 +80,6 @@ export async function POST(req) {
           walletBalance: finalWallet,
           holdAmount: finalHold,
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
-          // KEEP 40/45 until set finishes, clear only when set done
           currentTaskProducts: isSetComplete? [] : currentTaskProducts,
           activeProducts: [],
           completedProducts: updatedCompletedProducts,
@@ -99,6 +94,40 @@ export async function POST(req) {
           where: { id: activePendingTaskCard.id },
           data: { status: 'completed', completedAt: new Date(), products: enrichedProducts }
         })
+      }
+
+      // === REFERRAL 20% + HISTORY SAME AS DEPOSIT ===
+      if (user.inviterId && totalProfit > 0) {
+        const rewardAmount = parseFloat((totalProfit * 0.20).toFixed(2))
+        if (rewardAmount > 0) {
+          await tx.user.update({
+            where: { id: user.inviterId },
+            data: {
+              walletBalance: { increment: rewardAmount },
+              referralEarnings: { increment: rewardAmount }
+            }
+          })
+
+          await tx.referralReward.create({
+            data: {
+              earnerId: user.inviterId,
+              fromUserId: user.id,
+              amount: rewardAmount,
+              sourceProfit: totalProfit,
+              percent: 20
+            }
+          })
+
+          // Save in History button - EXACT same style as your deposit
+          await tx.transaction.create({
+            data: {
+              userId: user.inviterId,
+              type: 'referral_bonus',
+              amount: rewardAmount,
+              status: 'completed'
+            }
+          })
+        }
       }
 
       return await tx.user.findUnique({ where: { id: userId } })

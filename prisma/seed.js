@@ -13,6 +13,8 @@ async function main() {
       countryName: 'Uganda',
       inviteCode: '345678DI', 
       referredBy: null,
+      inviterId: null,
+      referralEarnings: 0,
       isAdmin: true,
 
       // VIP / TASK - ADMIN CONTROLLED
@@ -54,6 +56,8 @@ async function main() {
       countryName: 'Uganda',
       inviteCode: '345678DI',
       referredBy: null,
+      inviterId: null,
+      referralEarnings: 0,
       isAdmin: true,
 
       vipId: 1,

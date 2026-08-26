@@ -251,6 +251,7 @@ export default function StartingPage() {
   const [loading, setLoading] = useState(true)
   const [msg, setMsg] = useState('')
   const [showToast, setShowToast] = useState(false)
+  const [toastMsg, setToastMsg] = useState('')
   const [setSize, setSetSize] = useState(40)
   const [isStarting, setIsStarting] = useState(false)
 
@@ -266,6 +267,7 @@ export default function StartingPage() {
     : []
 
   const currentTaskNumber = currentSetTasksDone + 1
+  const displayTaskNumber = setFinished? targetTotalTasks : Math.min(currentTaskNumber, targetTotalTasks)
   const x10Tasks = user?.x10TaskNumbers || []
 
     useEffect(() => {
@@ -318,13 +320,20 @@ export default function StartingPage() {
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 
   const handleStart = async () => {
-    if (setFinished || isStarting) { return }
+    if (isStarting) return
+    if (setFinished) {
+      setToastMsg('Tasks are done - go to customer service')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+      return
+    }
     if (parsedTaskProducts.length > 0) {
       setShowDetail(true)
       return
     }
     const balance = round2(user.walletBalance || 0)
     if (tasksDone === 0 && balance < 50.00) {
+      setToastMsg('Balance below 50 unable to continue trading')
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2000)
       return
@@ -347,7 +356,14 @@ export default function StartingPage() {
         setMsg('')
         setShowDetail(true)
       } else {
-        setMsg(data.error || 'Failed to start task')
+        if (data.error && data.error.toLowerCase().includes('completed')) {
+          setToastMsg('Tasks are done - go to customer service')
+          setShowToast(true)
+          setTimeout(() => setShowToast(false), 3000)
+          setMsg('')
+        } else {
+          setMsg(data.error || 'Failed to start task')
+        }
       }
     } catch (err) {
       console.error(err)
@@ -390,7 +406,7 @@ export default function StartingPage() {
         walletBalance={user.walletBalance || 0}
         holdAmount={user.holdAmount || 0}
         x10Tasks={x10Tasks}
-        currentTaskNumber={currentTaskNumber}
+        currentTaskNumber={displayTaskNumber}
         currentDay={user.currentDay}
         currentSet={user.currentSet}
       />
@@ -401,7 +417,7 @@ export default function StartingPage() {
     <>
       <AppHeader />
       {showToast && (
-        <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.85)', color: '#FFF', padding: '10px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', zIndex: 99999, animation: 'fadeInOut 2s ease' }}>Balance below 50 unable to continue trading</div>
+        <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.85)', color: '#FFF', padding: '10px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', zIndex: 99999, animation: 'fadeInOut 2s ease' }}>{toastMsg}</div>
       )}
        <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', background: '#F2F2F2', width: '100%' }}>
         <div className="marquee-container" style={{ margin: 0, padding: 0, background: '#cc0000', overflow: 'hidden' }}>
@@ -431,8 +447,8 @@ export default function StartingPage() {
           <video src="/product-video.mp4" autoPlay loop muted playsInline preload="metadata" style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block' }} />
         </div>
         <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
-          <button onClick={handleStart} disabled={setFinished || isStarting} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'not-allowed' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
-            {setFinished? 'Contact Customer Service to Reset' : isStarting? 'Starting...' : `Starting (${currentTaskNumber} / ${targetTotalTasks})`}
+          <button onClick={handleStart} disabled={isStarting} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'pointer' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
+            {setFinished? 'Contact Customer Service to Reset' : isStarting? 'Starting...' : `Starting (${displayTaskNumber} / ${targetTotalTasks})`}
           </button>
           {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
         </div>

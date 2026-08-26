@@ -6,7 +6,7 @@ export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url)
     const userId = searchParams.get('userId')
-    const type = searchParams.get('type') // 'withdraw' | 'deposit' | 'special_bonus' | 'all'
+    const type = searchParams.get('type')
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
@@ -14,12 +14,11 @@ export async function GET(req) {
 
     const where = { userId: String(userId) }
 
-    // FIX 1: map 'withdraw' to 'withdrawal' so it matches DB
-    if (type && type !== 'all') {
-      where.type = type === 'withdraw' ? 'withdrawal' : type
+    if (type && type!== 'all') {
+      where.type = type === 'withdraw'? 'withdrawal' : type
     } else {
-      // FIX 2: include 'withdrawal' in default list
-      where.type = { in: ['deposit', 'withdrawal', 'special_bonus'] }
+      // INCLUDE referral_bonus now
+      where.type = { in: ['deposit', 'withdrawal', 'special_bonus', 'referral_bonus', 'referral_reward'] }
     }
 
     const transactions = await prisma.transaction.findMany({
@@ -27,19 +26,18 @@ export async function GET(req) {
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
-        type: true, // 'deposit', 'withdrawal', 'special_bonus', 'profit', 'reserve'
+        type: true,
         amount: true,
-        status: true, // 'pending', 'completed', 'rejected'
+        status: true,
         createdAt: true,
         updatedAt: true,
       }
     })
 
-    // FIX 3: convert 'withdrawal' back to 'withdraw' for front
     const txWithFixedType = transactions.map(tx => ({
-      ...tx,
-      type: tx.type === 'withdrawal' ? 'withdraw' : tx.type,
-      status: tx.status === 'success' ? 'completed' : tx.status // map if needed
+     ...tx,
+      type: tx.type === 'withdrawal'? 'withdraw' : tx.type,
+      status: tx.status === 'success'? 'completed' : tx.status
     }))
 
     return NextResponse.json({ transactions: txWithFixedType })
