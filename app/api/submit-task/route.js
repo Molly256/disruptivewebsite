@@ -32,8 +32,8 @@ export async function POST(req) {
 
     const x10List = typeof user.x10TaskNumbers === 'string'? JSON.parse(user.x10TaskNumbers||'[]') : (user.x10TaskNumbers||[])
     const isX10 = x10List.includes(Number(currentTaskNumber))
-
     const currentSet = user.currentSet || 1
+
     let totalPrice = 0
     let totalProfit = 0
     const enrichedProducts = []
@@ -60,13 +60,14 @@ export async function POST(req) {
     let nextTasksInCurrentSet = tasksInCurrentSet + 1
     let nextSet = currentSet
     let isSetComplete = false
+
+    // === FIXED: LOCK AT 40/40, NO AUTO RESET ===
     if (nextTasksInCurrentSet >= config.tasksPerSet) {
       isSetComplete = true
-      nextTasksInCurrentSet = 0
-      nextSet = currentSet < config.totalSets? currentSet + 1 : 1
+      nextTasksInCurrentSet = config.tasksPerSet // stay 40/40 not 0
+      nextSet = currentSet // stay same set, don't go to next
     }
 
-    // FIXED: return hold + profit
     const returnToWallet = parseFloat((totalPrice + totalProfit).toFixed(2))
 
     const updatedUser = await prisma.$transaction(async (tx) => {
@@ -127,7 +128,12 @@ export async function POST(req) {
       return await tx.user.findUnique({ where: { id: userId } })
     })
 
-    return NextResponse.json({ success: true, user: updatedUser })
+    return NextResponse.json({
+      success: true,
+      user: updatedUser,
+      isSetComplete: isSetComplete,
+      message: isSetComplete? "Set completed - Contact customer service" : null
+    })
   } catch (err) {
     console.error("Submission failure:", err)
     return NextResponse.json({ error: err.message }, { status: 500 })

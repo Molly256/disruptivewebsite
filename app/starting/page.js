@@ -123,15 +123,10 @@ const round2 = (n) => {
   const v = Math.round(Number(n) * 100) / 100
   return Math.abs(v) < 0.005? 0 : v
 }
-
 const formatMoney = (n) => {
   const num = round2(n)
-  return num.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
+  return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
-
 async function loadSetData(day, set, vipLevel = 1) {
   try {
     const mod = await import(`@/data/vip${vipLevel}/day${day}/vip${vipLevel}Set${set}.js`)
@@ -141,7 +136,6 @@ async function loadSetData(day, set, vipLevel = 1) {
     return []
   }
 }
-
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, holdAmount, x10Tasks, currentTaskNumber, currentDay, currentSet }) {
   const [showCombo, setShowCombo] = useState(false)
   if (!products || products.length === 0) return null
@@ -160,23 +154,11 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-
-  // FIXED: detects combo by ANY x10 marker, not just isCombo
-  const isComboTask = products.some(p =>
-    p.isCombo === true ||
-    Number(p.profitPercent) >= 5 ||
-    Number(p.bonusMultiplier) >= 10 ||
-    Number(p.comboMultiplier) >= 10
-  )
-
+  const isComboTask = products.some(p => p.isCombo === true || Number(p.profitPercent) >= 5 || Number(p.bonusMultiplier) >= 10 || Number(p.comboMultiplier) >= 10)
   const handleSubmitClick = () => {
-    if (isComboTask) {
-      setShowCombo(true)
-      return
-    }
+    if (isComboTask) { setShowCombo(true); return }
     onSubmit()
   }
-
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '1200px', margin: '0 auto' }}>
@@ -254,22 +236,16 @@ export default function StartingPage() {
   const [toastMsg, setToastMsg] = useState('')
   const [setSize, setSetSize] = useState(40)
   const [isStarting, setIsStarting] = useState(false)
-
   const VIP_TASKS_MAP = { 1: 40, 2: 45, 3: 50, 4: 55, 5: 60 }
   const currentVipLevel = Number(user?.vipLevel || 1)
   const targetTotalTasks = Number(user?.totalTasks) || VIP_TASKS_MAP[currentVipLevel] || 40
   const tasksDone = parseInt(user?.taskCompleted || 0)
   const currentSetTasksDone = parseInt(user?.tasksInCurrentSet || 0)
   const setFinished = user? currentSetTasksDone >= targetTotalTasks : false
-
-  const parsedTaskProducts = user && user.activeProducts
-? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts)
-    : []
-
+  const parsedTaskProducts = user && user.activeProducts? (typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts || '[]') : user.activeProducts) : []
   const currentTaskNumber = currentSetTasksDone + 1
   const displayTaskNumber = setFinished? targetTotalTasks : Math.min(currentTaskNumber, targetTotalTasks)
   const x10Tasks = user?.x10TaskNumbers || []
-
     useEffect(() => {
     const fetchUser = async () => {
       const saved = localStorage.getItem('user')
@@ -295,9 +271,7 @@ export default function StartingPage() {
           localStorage.setItem('user', JSON.stringify(u))
           setUser(u)
           const activeArray = typeof u.activeProducts === 'string'? JSON.parse(u.activeProducts || '[]') : (u.activeProducts || [])
-          if(activeArray.length > 0) {
-            setShowDetail(true)
-          }
+          if(activeArray.length > 0) { setShowDetail(true) }
           const day = u.currentDay || 1
           const set = u.currentSet || 1
           const arr = await loadSetData(day, set, u.vipLevel)
@@ -310,32 +284,25 @@ export default function StartingPage() {
       } catch(e) {
         console.error(e)
         setUser(localUser)
-      } finally {
-        setLoading(false)
-      }
+      } finally { setLoading(false) }
     }
     fetchUser()
   }, [router])
-
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
-
   const handleStart = async () => {
     if (isStarting) return
-    if (setFinished) {
-      setToastMsg('Tasks are done - go to customer service')
+    if (currentSetTasksDone >= targetTotalTasks) {
+      setToastMsg('Contact customer service')
       setShowToast(true)
-      setTimeout(() => setShowToast(false), 3000)
+      setTimeout(() => setShowToast(false), 4000)
       return
     }
-    if (parsedTaskProducts.length > 0) {
-      setShowDetail(true)
-      return
-    }
+    if (parsedTaskProducts.length > 0) { setShowDetail(true); return }
     const balance = round2(user.walletBalance || 0)
     if (tasksDone === 0 && balance < 50.00) {
       setToastMsg('Balance below 50 unable to continue trading')
       setShowToast(true)
-      setTimeout(() => setShowToast(false), 2000)
+      setTimeout(() => setShowToast(false), 2500)
       return
     }
     setIsStarting(true)
@@ -357,13 +324,11 @@ export default function StartingPage() {
         setShowDetail(true)
       } else {
         if (data.error && data.error.toLowerCase().includes('completed')) {
-          setToastMsg('Tasks are done - go to customer service')
+          setToastMsg('Contact customer service')
           setShowToast(true)
-          setTimeout(() => setShowToast(false), 3000)
+          setTimeout(() => setShowToast(false), 4000)
           setMsg('')
-        } else {
-          setMsg(data.error || 'Failed to start task')
-        }
+        } else { setMsg(data.error || 'Failed to start task') }
       }
     } catch (err) {
       console.error(err)
@@ -371,7 +336,6 @@ export default function StartingPage() {
       setMsg('Network failure during start sequence')
     }
   }
-
     const handleSubmit = async () => {
     if(!user ||!user.id) { setMsg('User not loaded. Refresh page.'); return }
     setMsg('Submitting...')
@@ -384,41 +348,26 @@ export default function StartingPage() {
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
         setShowDetail(false);
-        setMsg('Task Completed! Payout Received');
-      } else {
-        setMsg(data.error || `Error ${res.status}`)
-      }
+        if(data.isSetComplete){
+          setToastMsg('Contact customer service')
+          setShowToast(true)
+          setTimeout(()=>setShowToast(false), 4000)
+          setMsg('Set completed - Contact customer service')
+        } else { setMsg('Task Completed! Payout Received'); }
+      } else { setMsg(data.error || `Error ${res.status}`) }
     } catch(e) {
       console.error('submit fetch error', e)
       setMsg('Network error. Try again.')
     }
   }
-
   if (loading ||!user) return null
-
   if (showDetail && parsedTaskProducts.length > 0) {
-    return (
-      <StartingDetail
-        products={parsedTaskProducts}
-        onBack={() => setShowDetail(false)}
-        onSubmit={handleSubmit}
-        vipLevel={user.vipLevel}
-        walletBalance={user.walletBalance || 0}
-        holdAmount={user.holdAmount || 0}
-        x10Tasks={x10Tasks}
-        currentTaskNumber={displayTaskNumber}
-        currentDay={user.currentDay}
-        currentSet={user.currentSet}
-      />
-    )
+    return (<StartingDetail products={parsedTaskProducts} onBack={() => setShowDetail(false)} onSubmit={handleSubmit} vipLevel={user.vipLevel} walletBalance={user.walletBalance || 0} holdAmount={user.holdAmount || 0} x10Tasks={x10Tasks} currentTaskNumber={displayTaskNumber} currentDay={user.currentDay} currentSet={user.currentSet} />)
   }
-
    return (
     <>
       <AppHeader />
-      {showToast && (
-        <div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.85)', color: '#FFF', padding: '10px 16px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', zIndex: 99999, animation: 'fadeInOut 2s ease' }}>{toastMsg}</div>
-      )}
+      {showToast && (<div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', background: 'black', color: '#FFF', padding: '12px 18px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', zIndex: 99999, boxShadow: '0 4px 12px rgba(0,0,0,0.6)' }}>{toastMsg}</div>)}
        <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', background: '#F2F2F2', width: '100%' }}>
         <div className="marquee-container" style={{ margin: 0, padding: 0, background: '#cc0000', overflow: 'hidden' }}>
           <div className="marquee-content" style={{ display: 'flex', animation: 'scroll 600s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
@@ -435,19 +384,14 @@ export default function StartingPage() {
             const vipLevel = Number(user.vipLevel) || 1
             const COLORS = { 1: { bg: '#5BC0BE', star: '#A3E2E2' }, 2: { bg: '#4A90E2', star: '#F5A623' }, 3: { bg: '#1ABC9C', star: '#F39C12' }, 4: { bg: '#F39C12', star: '#F1C40F' }, 5: { bg: '#E74C3C', star: '#F39C12' } }
             const c = COLORS[vipLevel]
-            return (
-              <div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: c.bg, padding: '4px 10px', borderRadius: '8px' }}>
-                <span className="vip-text" style={{ fontSize: '15px', fontWeight: '700', color: '#FFF' }}>VIP{vipLevel}</span>
-                <svg style={{ width: '22px', height: '22px' }} fill={c.star} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-              </div>
-            )
+            return (<div className="vip-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', background: c.bg, padding: '4px 10px', borderRadius: '8px' }}><span className="vip-text" style={{ fontSize: '15px', fontWeight: '700', color: '#FFF' }}>VIP{vipLevel}</span><svg style={{ width: '22px', height: '22px' }} fill={c.star} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg></div>)
           })()}
         </div>
         <div style={{ width: '100%', background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <video src="/product-video.mp4" autoPlay loop muted playsInline preload="metadata" style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block' }} />
         </div>
         <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
-          <button onClick={handleStart} disabled={isStarting} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#555' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: setFinished? 'pointer' : 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
+          <button onClick={handleStart} disabled={isStarting} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#000' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>
             {setFinished? 'Contact Customer Service to Reset' : isStarting? 'Starting...' : `Starting (${displayTaskNumber} / ${targetTotalTasks})`}
           </button>
           {msg && <p style={{ textAlign: 'center', color: '#FF0000', marginTop: 8, fontSize: 13 }}>{msg}</p>}
