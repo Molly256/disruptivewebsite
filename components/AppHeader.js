@@ -1,9 +1,11 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useT } from '@/lib/i18n'
 
 export default function AppHeader() {
   const router = useRouter()
+  const t = useT()
 
   return (
     <div style={{ 
@@ -70,20 +72,20 @@ export default function AppHeader() {
               cursor: 'pointer'
             }}
           >
-            Contact
+            {t('contactUs')}
           </button>
           <div
             onClick={() => router.push('/profile')}
             style={{
-              width: '56px',              // Bigger click area
+              width: '56px',
               height: '48px',             
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              background: '#F5F5F5',      // light circle bg
-              borderRadius: '50%',        // make it round
-              fontSize: '28px',           // emoji size
+              background: '#F5F5F5',
+              borderRadius: '50%',
+              fontSize: '28px',
               lineHeight: 1
             }}
           >

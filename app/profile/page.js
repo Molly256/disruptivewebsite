@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { t } from '@/lib/i18n'
+import { useT } from '@/lib/i18n'
 
 const vipData = [
   { id: 1, title: 'VIP1', price: '100 USD', badgeColor: '#5BC0BE', innerBadgeColor: '#A3E2E2' },
@@ -15,6 +15,7 @@ const vipData = [
 
 export default function ProfilePage() {
   const router = useRouter()
+  const t = useT()
   const fileInputRef = useRef(null)
   const [user, setUser] = useState(null)
   const [avatar, setAvatar] = useState('')

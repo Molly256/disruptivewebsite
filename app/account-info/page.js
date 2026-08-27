@@ -3,9 +3,8 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { t } from '@/lib/i18n'
+import { useT } from '@/lib/i18n' // FIXED: was { t }
 
-// MOVED OUTSIDE + ADDED EYE TOGGLE
 const Input = ({label, value, onChange, type='text', placeholder=''}) => {
   const [show, setShow] = useState(false)
   const inputType = type === 'password' && show? 'text' : type
@@ -44,6 +43,7 @@ const ReadOnly = ({label, value}) => (
 
 export default function AccountInfoPage() {
   const router = useRouter()
+  const t = useT() // FIXED: added this line - makes whole page reactive
   const [user, setUser] = useState(null)
   const [msg, setMsg] = useState('')
   const [msgTx, setMsgTx] = useState('')
@@ -102,7 +102,7 @@ export default function AccountInfoPage() {
       <AppHeader />
 
       <style jsx>{`
-       .page-wrapper {
+      .page-wrapper {
           width: 100%;
           max-width: 100%;
           margin: 0 auto;
@@ -110,13 +110,13 @@ export default function AccountInfoPage() {
           box-sizing: border-box;
         }
         @media (min-width: 768px) {
-         .page-wrapper {
+        .page-wrapper {
             max-width: 700px;
             padding: 24px;
           }
         }
         @media (min-width: 1200px) {
-         .page-wrapper {
+        .page-wrapper {
             max-width: 800px;
           }
         }

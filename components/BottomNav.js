@@ -1,13 +1,14 @@
 'use client'
-import { useRouter, usePathname } from 'next/navigation' // added usePathname
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useT } from '@/lib/i18n'
 
 export default function BottomNav() {
   const router = useRouter()
-  const pathname = usePathname() // to check active tab
+  const pathname = usePathname()
   const [isDesktop, setIsDesktop] = useState(false)
+  const t = useT()
 
-  // check screen size on mount + resize
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 768)
     check()
@@ -40,7 +41,7 @@ export default function BottomNav() {
     flexDirection: 'column',
     alignItems: 'center',
     gap: '4px',
-    opacity: isActive? 1 : 0.6 // dim inactive
+    opacity: isActive? 1 : 0.6
   })
 
   const labelStyle = { 
@@ -56,7 +57,7 @@ export default function BottomNav() {
         <svg width={isDesktop ? "28" : "24"} height={isDesktop ? "28" : "24"} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
         </svg>
-        <div style={labelStyle}>Home</div>
+        <div style={labelStyle}>{t('home') === 'home' ? 'Home' : t('home')}</div>
       </div>
 
       {/* STARTING BUTTON */}
@@ -99,16 +100,16 @@ export default function BottomNav() {
             </span>
           </div>
         </div>
-        <div style={labelStyle}>Starting</div>
+        <div style={labelStyle}>{t('starting')}</div>
       </div>
 
-      {/* RECORDS - THIS IS CLICKABLE */}
+      {/* RECORDS */}
       <div onClick={() => router.push('/records')} style={iconStyle(pathname === '/records')}>
         <svg width={isDesktop ? "28" : "24"} height={isDesktop ? "28" : "24"} viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2"/>
           <line x1="9" y1="3" x2="9" y2="21"/>
         </svg>
-        <div style={labelStyle}>Records</div>
+        <div style={labelStyle}>{t('records')}</div>
       </div>
     </nav>
   )

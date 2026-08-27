@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { setLang, getCurrentLang } from '@/lib/i18n'
+import { setLang, getCurrentLang, useT } from '@/lib/i18n'
 
 const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
@@ -21,6 +21,7 @@ const LANGUAGES = [
 
 export default function ChangeLanguagePage() {
   const router = useRouter()
+  const t = useT()
   const [selectedLang, setSelectedLang] = useState('en')
 
   useEffect(() => {
@@ -30,10 +31,7 @@ export default function ChangeLanguagePage() {
   const handleSelect = (code) => {
     setLang(code)
     setSelectedLang(code)
-    // FORCE full reload so t() re-reads new language for entire app
-    setTimeout(() => {
-      window.location.href = '/profile'
-    }, 100)
+    router.push('/profile')
   }
 
   return (
@@ -42,7 +40,7 @@ export default function ChangeLanguagePage() {
       <div style={{ padding: 16, maxWidth: 500, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <button onClick={() => router.back()} style={{ background: '#000', color: '#fff', border: 'none', borderRadius: '50%', width: '32px', height: '32px', fontSize: 18, cursor: 'pointer' }}>←</button>
-          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#000' }}>Change Language</h1>
+          <h1 style={{ fontSize: 18, fontWeight: 700, color: '#000' }}>{t('changeLanguage')}</h1>
         </div>
         <div style={{ background: '#FFF', borderRadius: 12, padding: 12 }}>
           {LANGUAGES.map(lang => {

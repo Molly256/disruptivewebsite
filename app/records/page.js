@@ -3,10 +3,11 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { t } from '@/lib/i18n'
+import { useT } from '@/lib/i18n'
 
 export default function RecordsPage() {
   const router = useRouter()
+  const t = useT()
   const [user, setUser] = useState(null)
   const [activeTab, setActiveTab] = useState('All')
   const [tasks, setTasks] = useState([])
@@ -20,7 +21,7 @@ export default function RecordsPage() {
     fetch(`/api/tasks?userId=${u.id}`).then(r => r.json()).then(d => { setTasks(d.tasks || []); setLoading(false) })
   }, [router])
 
-  const filteredTasks = tasks.filter(t => activeTab === 'All' || t.status.toLowerCase() === activeTab.toLowerCase())
+  const filteredTasks = tasks.filter(task => activeTab === 'All' || task.status.toLowerCase() === activeTab.toLowerCase())
 
   if(loading || !user) return null 
 

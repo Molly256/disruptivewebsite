@@ -3,10 +3,11 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { t } from '@/lib/i18n'
+import { useT } from '@/lib/i18n'
 
 export default function LogoutPage() {
   const router = useRouter()
+  const t = useT()
   const [processing, setProcessing] = useState(null)
 
   const handleCancel = () => {

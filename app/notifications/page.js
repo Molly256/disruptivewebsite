@@ -3,10 +3,11 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { t } from '@/lib/i18n'
+import { useT } from '@/lib/i18n'
 
 export default function NotificationsPage() {
   const router = useRouter()
+  const t = useT()
   const [user, setUser] = useState(null)
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
@@ -55,7 +56,7 @@ export default function NotificationsPage() {
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
       <AppHeader />
       <style jsx>{`
-       .page-wrapper {
+      .page-wrapper {
           width: 100%;
           max-width: 100%;
           margin: 0 auto;
@@ -63,13 +64,13 @@ export default function NotificationsPage() {
           box-sizing: border-box;
         }
         @media (min-width: 768px) {
-         .page-wrapper {
+        .page-wrapper {
             max-width: 700px;
             padding: 24px;
           }
         }
         @media (min-width: 1200px) {
-         .page-wrapper {
+        .page-wrapper {
             max-width: 800px;
           }
         }

@@ -2,10 +2,11 @@
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { t } from '@/lib/i18n'
+import { useT } from '@/lib/i18n'
 
 export default function Contact() {
   const router = useRouter()
+  const t = useT()
 
   return (
     <div style={{

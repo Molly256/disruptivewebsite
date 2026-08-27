@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { t } from '@/lib/i18n'
+import { useT } from '@/lib/i18n'
 
 const VIP_PROFIT = { 1: 0.005, 2: 0.01, 3: 0.015, 4: 0.02, 5: 0.025 }
 
@@ -226,8 +226,44 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   </div>
   )
 }
+
+function TVVideo() {
+  const ref = useRef(null)
+  const [key] = useState(() => Date.now() + Math.random())
+  useEffect(() => {
+    const v = ref.current
+    if (!v) return
+    const randomJump = () => {
+      if (v.duration && isFinite(v.duration) && v.duration > 1) {
+        v.currentTime = Math.random() * (v.duration - 0.2)
+      }
+      v.play().catch(()=>{})
+    }
+    v.addEventListener('loadedmetadata', randomJump)
+    v.addEventListener('canplay', randomJump)
+    return () => {
+      v.removeEventListener('loadedmetadata', randomJump)
+      v.removeEventListener('canplay', randomJump)
+    }
+  }, [])
+  return (
+    <video
+      key={key}
+      ref={ref}
+      src="/product-video.mp4"
+      autoPlay
+      loop
+      muted
+      playsInline
+      preload="auto"
+      style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block' }}
+    />
+  )
+}
+
 export default function StartingPage() {
   const router = useRouter()
+  const t = useT()
   const [showDetail, setShowDetail] = useState(false)
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -388,7 +424,7 @@ export default function StartingPage() {
           })()}
         </div>
         <div style={{ width: '100%', background: '#000', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <video src="/product-video.mp4" autoPlay loop muted playsInline preload="metadata" style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block' }} />
+          <TVVideo />
         </div>
         <div className="starting-btn-container" style={{ padding: '24px 20px 40px 20px', position: 'relative', zIndex: 10, background: '#000', width: '100%', margin: '0 auto', textAlign: 'center' }}>
           <button onClick={handleStart} disabled={isStarting} className="starting-btn" style={{ width: 'min(320px, 85vw)', background: setFinished? '#000' : '#FF0000', color: '#FFF', border: 'none', borderRadius: '25px', padding: '16px', fontSize: '16px', fontWeight: '700', cursor: 'pointer', boxShadow: '0 4px 20px rgba(255,0,0,0.4)' }}>

@@ -3,11 +3,11 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react' // <-- ADDED
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
-import { t } from '@/lib/i18n'
-
+import { useT } from '@/lib/i18n'
 
 export default function EventPage() {
   const router = useRouter()
+  const t = useT()
   const [user, setUser] = useState(null) // <-- ADDED
   const [loading, setLoading] = useState(true) // <-- ADDED
 
