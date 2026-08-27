@@ -12,7 +12,7 @@ export default function BindWalletPage() {
   const [showForm, setShowForm] = useState(false)
   const [msg, setMsg] = useState('')
 
-  const [withdrawType, setWithdrawType] = useState('')
+  const [withdrawType, setWithdrawType] = useState('USDT')
   const [walletName, setWalletName] = useState('')
   const [walletAddress, setWalletAddress] = useState('')
 
@@ -22,7 +22,7 @@ export default function BindWalletPage() {
     const u = JSON.parse(savedUser)
     setUser(u)
     if(u.boundWallet){
-      setWithdrawType(u.boundWallet.type || '')
+      setWithdrawType(u.boundWallet.type || 'USDT')
       setWalletName(u.boundWallet.name || '')
       setWalletAddress(u.boundWallet.address || '')
     }
@@ -50,7 +50,7 @@ export default function BindWalletPage() {
 
   const handleBindWallet = async () => {
     setMsg('')
-    if(!walletName ||!walletAddress) { setMsg(t('fillAllFields')); return }
+    if(!withdrawType ||!walletName ||!walletAddress) { setMsg(t('fillAllFields')); return }
     await saveToDB()
   }
 
@@ -61,7 +61,7 @@ export default function BindWalletPage() {
       <AppHeader />
 
       <style jsx>{`
-     .page-wrapper {
+    .page-wrapper {
           width: 100%;
           max-width: 100%;
           margin: 0 auto;
@@ -69,13 +69,13 @@ export default function BindWalletPage() {
           box-sizing: border-box;
         }
         @media (min-width: 768px) {
-       .page-wrapper {
+      .page-wrapper {
             max-width: 700px;
             padding: 24px;
           }
         }
         @media (min-width: 1200px) {
-       .page-wrapper {
+      .page-wrapper {
             max-width: 800px;
           }
         }
@@ -116,14 +116,22 @@ export default function BindWalletPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div style={{ background: '#F5F5F5', borderRadius: 12, padding: 14 }}>
                 <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('withdrawType')}</div>
-                <input value={withdrawType} onChange={e => setWithdrawType(e.target.value)} placeholder="e.g.PayPal" style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box', fontWeight: 600 }} />
+                <select
+                  value={withdrawType}
+                  onChange={e => setWithdrawType(e.target.value)}
+                  style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box', fontWeight: 600, background: '#FFF' }}
+                >
+                  <option value="USDT">USDT</option>
+                  <option value="BTC">BTC</option>
+                  <option value="ETH">ETH</option>
+                </select>
               </div>
 
               <div style={{ background: '#F5F5F5', borderRadius: 12, padding: 14 }}>
                 <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('walletName')}</div>
-                <input value={walletName} onChange={e => setWalletName(e.target.value)} placeholder="e.g.PayPal" style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box', marginBottom: 16 }} />
-                <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('walletAddress')}</div>
-                <input value={walletAddress} onChange={e => setWalletAddress(e.target.value)} placeholder="Paste your wallet address here" style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box' }} />
+                <input value={walletName} onChange={e => setWalletName(e.target.value)} placeholder="e.g. My USDT Wallet" style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box', marginBottom: 16 }} />
+                <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('walletAddress')} ({withdrawType} address)</div>
+                <input value={walletAddress} onChange={e => setWalletAddress(e.target.value)} placeholder={`Paste your ${withdrawType} address here`} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box' }} />
               </div>
 
               {msg && <p style={{color:'#FF0000', fontSize:12, margin: 0}}>{msg}</p>}
