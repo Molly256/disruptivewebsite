@@ -129,7 +129,7 @@ export default function BindWalletPage() {
 
               <div style={{ background: '#F5F5F5', borderRadius: 12, padding: 14 }}>
                 <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('walletName')}</div>
-                <input value={walletName} onChange={e => setWalletName(e.target.value)} placeholder="e.g. My USDT Wallet" style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box', marginBottom: 16 }} />
+                <input value={walletName} onChange={e => setWalletName(e.target.value)} placeholder="e.g.paypal" style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box', marginBottom: 16 }} />
                 <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>{t('walletAddress')} ({withdrawType} address)</div>
                 <input value={walletAddress} onChange={e => setWalletAddress(e.target.value)} placeholder={`Paste your ${withdrawType} address here`} style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid #DDD', fontSize: 15, boxSizing: 'border-box' }} />
               </div>
