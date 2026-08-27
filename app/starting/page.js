@@ -229,26 +229,45 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
 
 function TVVideo() {
   const ref = useRef(null)
-  const [key] = useState(() => Date.now() + Math.random())
+
   useEffect(() => {
     const v = ref.current
     if (!v) return
-    const randomJump = () => {
-      if (v.duration && isFinite(v.duration) && v.duration > 1) {
-        v.currentTime = Math.random() * (v.duration - 0.2)
+
+    const TV_KEY = 'tv_channel_start'
+
+    const syncLive = () => {
+      if (!v.duration || !isFinite(v.duration) || v.duration === 0) return
+      let start = localStorage.getItem(TV_KEY)
+      if (!start) {
+        start = Date.now().toString()
+        localStorage.setItem(TV_KEY, start)
       }
+      const elapsed = (Date.now() - parseInt(start)) / 1000
+      v.currentTime = elapsed % v.duration
       v.play().catch(()=>{})
     }
-    v.addEventListener('loadedmetadata', randomJump)
-    v.addEventListener('canplay', randomJump)
+
+    v.addEventListener('loadedmetadata', syncLive)
+    v.addEventListener('canplay', syncLive)
+
+    // if already loaded (user comes back)
+    if (v.readyState >= 1) syncLive()
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') syncLive()
+    }
+    document.addEventListener('visibilitychange', onVisible)
+
     return () => {
-      v.removeEventListener('loadedmetadata', randomJump)
-      v.removeEventListener('canplay', randomJump)
+      v.removeEventListener('loadedmetadata', syncLive)
+      v.removeEventListener('canplay', syncLive)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [])
+
   return (
     <video
-      key={key}
       ref={ref}
       src="/product-video.mp4"
       autoPlay
@@ -260,7 +279,6 @@ function TVVideo() {
     />
   )
 }
-
 export default function StartingPage() {
   const router = useRouter()
   const t = useT()
