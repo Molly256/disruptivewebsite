@@ -28,11 +28,12 @@ export default function ChangeLanguagePage() {
   }, [])
 
   const handleSelect = (code) => {
-    setLang(code) // saves to all keys
+    setLang(code)
     setSelectedLang(code)
+    // FORCE full reload so t() re-reads new language for entire app
     setTimeout(() => {
-      router.push('/profile')
-    }, 150)
+      window.location.href = '/profile'
+    }, 100)
   }
 
   return (

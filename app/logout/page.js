@@ -12,17 +12,17 @@ export default function LogoutPage() {
   const handleCancel = () => {
     if (processing) return
     setProcessing('cancel')
-    router.push('/dashboard') // or router.back()
+    setTimeout(() => {
+      router.back()
+    }, 100)
   }
 
   const handleLogout = () => {
     if (processing) return
     setProcessing('logout')
-    // clear everything
     localStorage.removeItem('user')
     localStorage.removeItem('chatHistory')
     localStorage.removeItem('chatLastRead')
-    // keep guestId/guestName so guest chat keeps random name
     setTimeout(() => {
       router.replace('/login')
     }, 100)
@@ -42,12 +42,10 @@ export default function LogoutPage() {
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingTop: '64px', paddingBottom: '90px' }}>
       <AppHeader />
-
       <div style={{ padding: 16, maxWidth: 500, margin: '0 auto', display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 'calc(100vh - 154px)' }}>
         <div style={{ background: '#FFF', borderRadius: 16, padding: 24, textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: '#000', margin: '0 0 12px' }}>{t('logout')}</h1>
           <p style={{ fontSize: 15, color: '#666', margin: '0 0 24px', lineHeight: 1.5 }}>{t('logoutConfirm')}</p>
-
           <div style={{ display: 'flex', gap: 12 }}>
             <button
               disabled={!!processing}
@@ -61,7 +59,6 @@ export default function LogoutPage() {
             >
               {processing === 'cancel' ? '...' : t('cancel')}
             </button>
-
             <button
               disabled={!!processing}
               onClick={handleLogout}
@@ -77,7 +74,6 @@ export default function LogoutPage() {
           </div>
         </div>
       </div>
-
       <BottomNav />
     </div>
   )

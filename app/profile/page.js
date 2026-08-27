@@ -63,8 +63,7 @@ export default function ProfilePage() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('user')
-    router.push('/login')
+    router.push('/logout')
   }
 
   if (!user) return null
