@@ -1,5 +1,5 @@
 // data/vip2/day1/vip2Set1.js - VIP2 / 1st DAY / SET 1 - 45 tasks - FIX for 1/45 error
-export const vip2Set1 = [
+  const vip2Set1 = [
   { id: 1, name: "The Eloise Scallop Milk Glass Chandelier", rating: 4.1, price: 798.00, costMultiplier: 1, profitPercent: 1, image: "/vip2/day1/set1/photo1.jpg" },
   { id: 2, name: "Antique Nickel Floor Lamp Base", rating: 5.3, price: 998.00, costMultiplier: 1, profitPercent: 1, image: "/vip2/day1/set1/photo2.jpg" },
   { id: 3, name: "Anisa Tiered Petal Glass Chandelier", rating: 9.3, price: 1298.00, costMultiplier: 1, profitPercent: 1, image: "/vip2/day1/set1/photo3.jpg" },

@@ -12,7 +12,7 @@ export async function GET(req) {
     const set = Number(searchParams.get('set'))
 
     if (!vipLevel || !day || !set) {
-      return NextResponse.json({ error: 'Missing required parameters: vipLevel, day, or set' }, { status: 400 })
+      return NextResponse.json({ error: 'Missing params' }, { status: 400 })
     }
 
     const fileName = `vip${vipLevel}Set${set}.js`
@@ -22,22 +22,26 @@ export async function GET(req) {
     if (!fs.existsSync(filePath)) {
       filePath = path.join(process.cwd(), 'data-source', folderPath, fileName)
     }
-
     if (!fs.existsSync(filePath)) {
-      return NextResponse.json({ error: `Configuration file not found: ${folderPath}/${fileName}` }, { status: 404 })
+      return NextResponse.json({ error: `Not found: ${folderPath}/${fileName}` }, { status: 404 })
     }
 
     let items
     try {
-      const fileContent = fs.readFileSync(filePath, 'utf8')
-      const cleanJsonString = fileContent
-        .replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '')
-        .trim()
-        .replace(/;$/, '')
-      items = Function(`"use strict"; return (${cleanJsonString})`)()
+      let fileContent = fs.readFileSync(filePath, 'utf8')
+      // remove BOM
+      fileContent = fileContent.replace(/^\uFEFF/, '')
+      // remove export const vipXSetY =
+      let clean = fileContent.replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '').trim()
+      // remove last semicolon
+      clean = clean.replace(/;\s*$/, '')
+
+      // SAFE parse - if clean is [ ... ] , return it
+      items = Function(`"use strict"; return (${clean})`)()
     } catch (err) {
-      console.error('File compilation error:', err)
-      return NextResponse.json({ error: `File ${fileName} has syntax error` }, { status: 500 })
+      console.error('File compilation error at', filePath, err)
+      // RETURN REAL ERROR, not generic
+      return NextResponse.json({ error: `File ${fileName} parse failed: ${err.message}` }, { status: 500 })
     }
 
     if (!Array.isArray(items)) {
@@ -52,10 +56,7 @@ export async function GET(req) {
         taskOrder: taskNum,
         name: item.name || `Product Slot ${taskNum}`,
         price: parseFloat(item.price || 0),
-        profitPercent: item.profitPercent,
-        bonusMultiplier: item.bonusMultiplier,
         rating: item.rating || 5.0,
-        // IMPORTANT: This requires photos in /public/vipX/dayY/setZ/photoN.jpg
         image: `/vip${vipLevel}/day${day}/set${set}/photo${taskNum}.jpg`
       }
     })
