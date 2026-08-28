@@ -73,7 +73,7 @@ export default function AdminPage() {
     if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
   }
 
-  // FIXED - SINGLE DEFINITION ONLY
+  // FIXED - ACTIVE SET IMAGE BUG
   const loadEditSet = async (vipLevel, day, setNum) => {
     if(!editUser) return alert('No user selected')
     setSelectedEditItems([])
@@ -86,13 +86,17 @@ export default function AdminPage() {
     }
 
     if(currentProducts?.length > 0 && Number(editUser.currentSet) === Number(setNum)) {
-      const fixed = currentProducts.filter(Boolean).map((item, idx) => ({
-       ...item,
-        taskOrder: Number(item.taskOrder || item.id || idx+1),
-        id: Number(item.taskOrder || item.id || idx+1),
-        price: Number(item.price || 0),
-        image: item.image || `/vip${vipLevel}/day${day}/set${setNum}/photo${item.taskOrder || item.id || idx+1}.jpg`
-      }))
+      const fixed = currentProducts.filter(Boolean).map((item, idx) => {
+        const taskNum = Number(item.taskOrder || item.id || idx+1)
+        const isBroken =!item.image || item.image.startsWith('/photo') || item.image.startsWith('photo') || item.image === '/photo1.jpg'
+        return {
+        ...item,
+          taskOrder: taskNum,
+          id: taskNum,
+          price: Number(item.price || 0),
+          image: isBroken? `/vip${vipLevel}/day${day}/set${setNum}/photo${taskNum}.jpg` : item.image
+        }
+      })
       setEditSetData(fixed)
       return
     }
@@ -100,12 +104,16 @@ export default function AdminPage() {
       const res = await fetch(`/api/admin/get-set-data?vipLevel=${vipLevel}&day=${day}&set=${setNum}`)
       const data = await res.json()
       if(!res.ok) throw new Error(data.error)
-      const fixed = (data.items || []).filter(Boolean).map((item, idx) => ({
-       ...item,
-        taskOrder: Number(item.taskOrder || item.id || idx+1),
-        id: Number(item.taskOrder || item.id || idx+1),
-        price: Number(item.price || 0)
-      }))
+      const fixed = (data.items || []).filter(Boolean).map((item, idx) => {
+        const taskNum = Number(item.taskOrder || item.id || idx+1)
+        return {
+        ...item,
+          taskOrder: taskNum,
+          id: taskNum,
+          price: Number(item.price || 0),
+          image: `/vip${vipLevel}/day${day}/set${setNum}/photo${taskNum}.jpg`
+        }
+      })
       setEditSetData(fixed)
     } catch(e) {
       alert(`Failed to load set: ${e.message}`)
@@ -251,7 +259,7 @@ export default function AdminPage() {
                                   <div onClick={(e) => { e.stopPropagation(); setSelectedEditItems(v => v.includes(Number(item.taskOrder))? v.filter(x => Number(x)!== Number(item.taskOrder)) : [...v, Number(item.taskOrder)])}} style={{ position: 'absolute', top:6, right:6, width: 22, height: 22, borderRadius: '50%', border: '2px solid #FFF', background: isSel? 'red' : 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex:2 }}>
                                     {isSel && <span style={{ color: '#FFF', fontSize: 12, fontWeight: 900 }}>✓</span>}
                                   </div>
-                                  <img src={item.image} alt={item.name} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8, display:'block', background:'#222' }} />
+                                  <img src={item.image} onError={(e)=>{ e.currentTarget.src=`/vip${editUser.vipLevel}/day${editUser.currentDay||1}/set${activeEditSet}/photo${item.taskOrder}.jpg` }} alt={item.name} style={{ width: '100%', height: 90, objectFit: 'cover', borderRadius: 8, display:'block', background:'#222' }} />
                                   <p style={{ fontSize: 11, margin: '4px 0', fontWeight: '800', color: '#00C853' }}>${Number(item.price || 0).toFixed(2)}</p>
                                   <p style={{ fontSize: 9, margin: 0, color: '#CCC', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</p>
                                   <button onClick={() => editItem(item)} style={{ width: '100%', marginTop: 4, background: '#FF1493', border: 'none', padding: 6, borderRadius: 6, color: '#FFF', fontSize: 11 }}>Edit Data</button>
@@ -370,7 +378,7 @@ export default function AdminPage() {
         <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:999 }}>
           <div style={{ background:'#222', padding:20, borderRadius:16, width:'90%', maxWidth:400 }}>
             <h3 style={{color:'#FFF', marginBottom:12}}>Edit Task {editingPhoto.taskOrder}</h3>
-            <img src={editingPhoto.image} alt={editingPhoto.name} style={{ width:'100%', height:120, objectFit:'cover', borderRadius:8, marginBottom:10 }}/>
+            <img src={editingPhoto.image} onError={(e)=>{ e.currentTarget.src=`/vip${editUser.vipLevel}/day${editUser.currentDay||1}/set${activeEditSet}/photo${editingPhoto.taskOrder}.jpg` }} alt={editingPhoto.name} style={{ width:'100%', height:120, objectFit:'cover', borderRadius:8, marginBottom:10 }}/>
             <input value={editData.name} onChange={e=>setEditData({...editData, name:e.target.value})} placeholder="Name" style={{width:'100%', padding:12, marginBottom:10, borderRadius:8, border:'none', color:'#000'}}/>
             <input value={editData.price} onChange={e=>setEditData({...editData, price:e.target.value})} placeholder="Price" type="number" style={{width:'100%', padding:12, marginBottom:16, borderRadius:8, border:'none', color:'#000'}}/>
             <div style={{display:'flex', gap:8}}>
