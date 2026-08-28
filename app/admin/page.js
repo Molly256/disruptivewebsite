@@ -69,8 +69,24 @@ export default function AdminPage() {
 
   const handlePassReset = async () => {
     if(!newPass) return alert('Enter new password')
-    const res = await fetch('/api/admin/reset-password', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: passUser.id, newPassword: newPass, adminId: admin.id }) })
-    if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
+    try {
+      const res = await fetch('/api/admin/reset-password', { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ userId: passUser.id, newPassword: newPass }) 
+      })
+      const data = await res.json()
+      console.log('RESET RESULT:', data)
+      if(res.ok) { 
+        alert('Password Reset DONE for ' + passUser.username)
+        setShowPassInput(false)
+        setNewPass('') 
+      } else {
+        alert('FAILED: ' + (data.error || JSON.stringify(data)))
+      }
+    } catch (err) {
+      alert('Fetch error: ' + err.message)
+    }
   }
 
   // FIXED - ACTIVE SET IMAGE BUG
