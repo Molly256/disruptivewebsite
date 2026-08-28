@@ -21,7 +21,13 @@ export async function POST(req) {
       return p
     })
     if (!found) {
-      updated.push({ taskOrder: Number(taskOrder), id: Number(taskOrder), name: newName || `Product ${taskOrder}`, price: Number(newPrice) || 0, image: `/photo${taskOrder}.jpg` })
+      updated.push({ 
+        taskOrder: Number(taskOrder), 
+        id: Number(taskOrder), 
+        name: newName || `Product ${taskOrder}`, 
+        price: Number(newPrice) || 0, 
+        image: `/vip${user.vipLevel || 1}/day${user.currentDay || 1}/set${user.currentSet || 1}/photo${taskOrder}.jpg` 
+      })
     }
     await prisma.user.update({ where: { id: String(userId) }, data: { currentTaskProducts: updated } })
     return NextResponse.json({ success: true })
