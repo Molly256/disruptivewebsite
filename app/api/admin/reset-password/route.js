@@ -1,64 +1,30 @@
 import { NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
-
 export const dynamic = 'force-dynamic'
 
 export async function POST(req) {
   try {
     const { userId, newPassword } = await req.json()
+    if (!userId || !newPassword) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
-    console.log('RESET ATTEMPT:', userId, newPassword)
+    // Load prisma both ways
+    const mod = await import('@/lib/prisma')
+    const prisma = mod.prisma || mod.default
+    if (!prisma?.user) return NextResponse.json({ error: `prisma import wrong. Found keys: ${Object.keys(mod).join(',')}` }, { status: 500 })
 
-    if (!userId || !newPassword) {
-      return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
-    }
+    // Find correct id type
+    let user = await prisma.user.findFirst({ where: { id: Number(userId) } }).catch(()=>null)
+    if (!user) user = await prisma.user.findFirst({ where: { id: String(userId) } }).catch(()=>null)
+    if (!user) return NextResponse.json({ error: `User ${userId} not found` }, { status: 404 })
 
-    // Fix ID type - try both Int and String
-    let updated = null
-    let lastErr = null
-    
-    // Try as number
+    // Update - try both field names
     try {
-      updated = await prisma.user.update({
-        where: { id: Number(userId) },
-        data: { password: newPassword }
-      })
-    } catch (e1) {
-      lastErr = e1.message
-      console.log('Failed as Number:', e1.message)
-      // Try as string
-      try {
-        updated = await prisma.user.update({
-          where: { id: String(userId) },
-          data: { password: newPassword }
-        })
-      } catch (e2) {
-        lastErr = e2.message
-        console.log('Failed as String:', e2.message)
-        // Try passwordHash field name instead
-        try {
-          updated = await prisma.user.update({
-            where: { id: Number(userId) },
-            data: { passwordHash: newPassword }
-          })
-        } catch (e3) {
-          try {
-            updated = await prisma.user.update({
-              where: { id: String(userId) },
-              data: { passwordHash: newPassword }
-            })
-          } catch (e4) {
-            return NextResponse.json({ error: `All attempts failed: ${lastErr} | ${e2.message} | ${e4.message}` }, { status: 500 })
-          }
-        }
-      }
+      await prisma.user.update({ where: { id: user.id }, data: { password: newPassword } })
+    } catch {
+      await prisma.user.update({ where: { id: user.id }, data: { passwordHash: newPassword } })
     }
 
-    console.log('SUCCESS reset for', updated.username)
-    return NextResponse.json({ success: true, username: updated.username })
-
+    return NextResponse.json({ success: true, username: user.username })
   } catch (e) {
-    console.error('RESET FINAL CRASH:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
