@@ -73,44 +73,13 @@ export default function AdminPage() {
     if(res.ok) { alert('Password Reset'); setShowPassInput(false); setNewPass('') } else alert('Failed')
   }
 
+  // FIXED - SINGLE DEFINITION ONLY
   const loadEditSet = async (vipLevel, day, setNum) => {
     if(!editUser) return alert('No user selected')
     setSelectedEditItems([])
     setActiveEditSet(setNum)
-    if(editUser.currentTaskProducts?.length > 0 && editUser.currentSet === setNum) {
-      const fixed = editUser.currentTaskProducts.filter(Boolean).map((item, idx) => ({
-   ...item,
-        taskOrder: Number(item.taskOrder || item.id || idx+1),
-        id: Number(item.taskOrder || item.id || idx+1),
-        price: Number(item.price || 0),
-        image: item.image || `/vip${vipLevel}/day${day}/set${setNum}/photo${item.taskOrder || item.id || idx+1}.jpg`
-      }))
-      setEditSetData(fixed)
-      return
-    }
-    try {
-      const res = await fetch(`/api/admin/get-set-data?vipLevel=${vipLevel}&day=${day}&set=${setNum}`)
-      const data = await res.json()
-      if(!res.ok) throw new Error(data.error)
-      const fixed = (data.items || []).filter(Boolean).map((item, idx) => ({
-       ...item,
-        taskOrder: Number(item.taskOrder || item.id || idx+1),
-        id: Number(item.taskOrder || item.id || idx+1),
-        price: Number(item.price || 0)
-      }))
-      setEditSetData(fixed)
-    } catch(e) {
-      alert(`Failed to load set: ${e.message}`)
-    }
-  }
+    setEditSetData([])
 
-  const loadEditSet = async (vipLevel, day, setNum) => {
-    if(!editUser) return alert('No user selected')
-    setSelectedEditItems([])
-    setActiveEditSet(setNum)
-    setEditSetData([]) // <-- add this to clear old set
-
-    // FIX: it can be string from DB
     let currentProducts = editUser.currentTaskProducts || []
     if (typeof currentProducts === 'string') {
       try { currentProducts = JSON.parse(currentProducts) } catch { currentProducts = [] }
@@ -118,7 +87,7 @@ export default function AdminPage() {
 
     if(currentProducts?.length > 0 && Number(editUser.currentSet) === Number(setNum)) {
       const fixed = currentProducts.filter(Boolean).map((item, idx) => ({
-   ...item,
+       ...item,
         taskOrder: Number(item.taskOrder || item.id || idx+1),
         id: Number(item.taskOrder || item.id || idx+1),
         price: Number(item.price || 0),
@@ -150,6 +119,30 @@ export default function AdminPage() {
     const tOrder = Number(editingPhoto.taskOrder)
     setEditSetData(prev => prev.filter(Boolean).map(p => Number(p.taskOrder) === tOrder? {...p, name: editData.name, price: parseFloat(editData.price) || 0} : p));
     setEditingPhoto(null);
+  }
+
+  const handleSaveEditedData = async () => {
+    if(!editUser || selectedEditItems.length === 0) return alert('No items selected')
+    try {
+      for(const taskOrder of selectedEditItems) {
+        const item = editSetData.find(p => Number(p.taskOrder) === Number(taskOrder))
+        if(!item) continue
+        const res = await fetch('/api/admin/tasks/edit-user-task', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ userId: editUser.id, taskOrder: Number(taskOrder), newPrice: Number(item.price), newName: item.name })
+        })
+        const data = await res.json()
+        if(!res.ok) throw new Error(data.error)
+      }
+      alert(`Updated ${selectedEditItems.length} task(s) for ${editUser.username} only`)
+      setSelectedEditItems([])
+      const res = await fetch(`/api/user/search?q=${encodeURIComponent(editUser.username)}`)
+      const data = await res.json()
+      if(res.ok) setEditUser(data.user)
+    } catch(e) {
+      alert(`Save failed: ${e.message}`)
+    }
   }
 
   const handleResetToNextSet = async () => {
