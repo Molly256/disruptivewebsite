@@ -4,48 +4,53 @@ import { prisma } from '@/lib/prisma'
 export async function POST(req){
   try{
     const body = await req.json()
-    const userId = body.userId || body.chatId
-    const conversationId = body.conversationId || body.chatId
+    const { chatId, userId, conversationId, who } = body
+    const id = String(chatId || conversationId || userId || '').trim()
+    
+    if(!id) return Response.json({ success: true })
 
-    if(!userId && !conversationId){
-      return Response.json({ success: true })
-    }
-
-    // 1. mark contact as read
-    if(userId){
+    // 1. mark contactMessage as read (old table)
+    if(userId || chatId){
+      const uid = String(userId || chatId)
       await prisma.contactMessage.updateMany({ 
-        where: { userId: String(userId) }, 
+        where: { userId: uid }, 
         data: { isRead: true } 
       }).catch(()=>{})
       await prisma.contactMessage.updateMany({ 
-        where: { guestId: String(userId) }, 
+        where: { guestId: uid }, 
         data: { isRead: true } 
       }).catch(()=>{})
     }
 
-    // 2. mark chat as read - reset unread counters
-    try{
-      let chat = null
-      if(conversationId){
-        chat = await prisma.chat.findUnique({ where: { id: String(conversationId) } }).catch(()=>null)
-        if(!chat) chat = await prisma.chat.findFirst({ where: { userId: String(conversationId) } }).catch(()=>null)
-        if(!chat) chat = await prisma.chat.findUnique({ where: { guestId: String(conversationId) } }).catch(()=>null)
-      }
-      if(!chat && userId){
-        chat = await prisma.chat.findFirst({ where: { userId: String(userId) } }).catch(()=>null)
-        if(!chat) chat = await prisma.chat.findUnique({ where: { guestId: String(userId) } }).catch(()=>null)
-      }
+    // 2. find chat
+    let chat = await prisma.chat.findUnique({ where: { id } }).catch(()=>null)
+    if(!chat) chat = await prisma.chat.findFirst({ where: { userId: id } }).catch(()=>null)
+    if(!chat) chat = await prisma.chat.findUnique({ where: { guestId: id } }).catch(()=>null)
+    if(!chat) chat = await prisma.chat.findFirst({ where: { guestId: id } }).catch(()=>null)
 
-      if(chat){
-        await prisma.chat.update({
-          where: { id: chat.id },
-          data: { unreadAdmin: 0, unreadUser: 0 }
-        })
-      }
-    }catch(e){ console.error('read chat err', e.message) }
+    if(!chat) return Response.json({ success: true })
+
+    // 3. reset only the reader's counter - FIX
+    if(who === 'admin'){
+      await prisma.chat.update({ where: { id: chat.id }, data: { unreadAdmin: 0 } })
+      await prisma.message.updateMany({ 
+        where: { chatId: chat.id, sender: 'user' }, 
+        data: { status: 'read' } 
+      }).catch(()=>{})
+    } else if(who === 'user'){
+      await prisma.chat.update({ where: { id: chat.id }, data: { unreadUser: 0 } })
+      await prisma.message.updateMany({ 
+        where: { chatId: chat.id, sender: 'admin' }, 
+        data: { status: 'read' } 
+      }).catch(()=>{})
+    } else {
+      // backwards compat: if no who sent, reset both (for contact page)
+      await prisma.chat.update({ where: { id: chat.id }, data: { unreadAdmin: 0, unreadUser: 0 } })
+    }
 
     return Response.json({ success: true })
   }catch(e){
-    return Response.json({ error: e.message }, { status: 500 })
+    console.error('read error', e)
+    return Response.json({ success: true }) // don't break polling
   }
 }

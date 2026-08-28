@@ -8,21 +8,33 @@ export async function GET(){
       take: 200
     })
 
-    // Build list directly from Chat only (since /api/contact now creates Chat too)
+    // Return in format AdminChatModal understands
     const list = chats.map(c=>({
-      userId: c.userId || c.guestId,
-      chatId: c.id, // real ID only
+      // new format (what modal needs)
+      id: c.id,
+      guestId: c.guestId || null,
+      userId: c.userId || c.guestId || c.id,
+      displayName: c.displayName || c.guestName || 'User',
+      lastMessage: c.lastMessage || '',
+      unreadAdmin: c.unreadAdmin || 0,
+      unreadUser: c.unreadUser || 0,
+      isGuest: !!c.isGuest,
+      guestName: c.guestName || null,
+      updatedAt: c.updatedAt,
+      createdAt: c.createdAt,
+      
+      // old format (keep for backwards compat)
+      chatId: c.id,
       username: c.displayName || c.guestName || 'User',
       lastMsg: c.lastMessage || '',
       lastTime: c.updatedAt,
       unread: c.unreadAdmin || 0,
-      isGuest: !!c.isGuest,
-      guestName: c.guestName
     }))
 
-    return Response.json({ conversations: list })
+    // Return array directly, not {conversations}
+    return Response.json(list)
   }catch(e){
-    console.error(e)
-    return Response.json({ conversations: [], error: e.message })
+    console.error('list error', e)
+    return Response.json([], { status: 500 })
   }
 }

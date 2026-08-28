@@ -3,37 +3,25 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(req){
   try{
-    const body = await req.json()
-    const { userId, username, email, message, isGuest } = body
-
+    const { userId, username, email, message, isGuest } = await req.json()
     if(!userId || !message) return Response.json({error:'missing'},{status:400})
 
     const uid = String(userId)
-    const isGuestFlag = isGuest || uid.startsWith('guest_')
-    const uname = username || (isGuestFlag ? `Guest-${uid.slice(-4)}` : 'User')
+    const isGuestFlag = Boolean(isGuest) || uid.startsWith('guest_')
+    const uname = (username || (isGuestFlag ? `Guest-${uid.slice(-4)}` : 'User')).slice(0,50)
     const text = String(message).slice(0,2000)
+    if(!text.trim()) return Response.json({error:'empty message'},{status:400})
 
-    const contact = await prisma.contactMessage.create({
-      data: {
-        userId: uid,
-        guestId: isGuestFlag ? uid : null,
-        username: uname,
-        email: email || '',
-        message: text,
-        isGuest: isGuestFlag,
-        isRead: false,
-        status: 'pending'
-      }
-    })
-
-    // create chat
+    // 1. find chat - use unique where possible
     let chat = null
     if(isGuestFlag){
-      chat = await prisma.chat.findFirst({ where: { guestId: uid } })
+      chat = await prisma.chat.findUnique({ where: { guestId: uid } }).catch(()=>null)
+      if(!chat) chat = await prisma.chat.findFirst({ where: { guestId: uid } }).catch(()=>null)
     } else {
-      chat = await prisma.chat.findFirst({ where: { userId: uid } })
+      chat = await prisma.chat.findFirst({ where: { userId: uid } }).catch(()=>null)
     }
 
+    // 2. create or update chat -> this is what admin list reads
     if(!chat){
       chat = await prisma.chat.create({
         data: {
@@ -48,32 +36,48 @@ export async function POST(req){
         }
       })
     } else {
-      await prisma.chat.update({
+      chat = await prisma.chat.update({
         where: { id: chat.id },
         data: {
           lastMessage: text.slice(0,200),
           displayName: uname,
+          guestName: isGuestFlag ? uname : chat.guestName,
           updatedAt: new Date(),
           unreadAdmin: { increment: 1 }
         }
       })
     }
 
+    // 3. save as chat message - MUST have senderRole for frontend
     await prisma.message.create({
       data: {
         chatId: chat.id,
-        text: text,
+        text,
         sender: 'user',
-        senderRole: 'user', // <-- THIS WAS MISSING, frontend checks this
+        senderRole: 'user',
         senderName: uname,
         status: 'delivered',
         timeString: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     })
 
-    return Response.json({ success: true, contact, chatId: chat.id })
+    // 4. optional log in contactMessage (don't fail if table missing fields)
+    await prisma.contactMessage.create({
+      data: {
+        userId: uid,
+        guestId: isGuestFlag ? uid : null,
+        username: uname,
+        email: email || '',
+        message: text,
+        isGuest: isGuestFlag,
+        isRead: false,
+        status: 'pending'
+      }
+    }).catch(()=>{})
+
+    return Response.json({ success: true, chatId: chat.id })
   }catch(e){
-    console.error(e)
+    console.error('contact error', e)
     return Response.json({error:e.message},{status:500})
   }
 }

@@ -2,6 +2,10 @@ export const dynamic = 'force-dynamic'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+function getTodayUS() {
+  return new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York' })
+}
+
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url)
@@ -9,7 +13,7 @@ export async function GET(req) {
     if (!userId) {
       return NextResponse.json({ error: 'User ID query parameter required' }, { status: 400 })
     }
-    const user = await prisma.user.findUnique({
+    let user = await prisma.user.findUnique({
       where: { id: String(userId) },
       select: {
         id: true, username: true, phone: true, countryName: true,
@@ -27,6 +31,30 @@ export async function GET(req) {
     if (!user) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
+
+    // RESET TODAY PROFIT AT 00:00 USA TIME
+    const todayUS = getTodayUS()
+    const lastResetUS = user.lastProfitReset ? new Date(user.lastProfitReset).toLocaleDateString('en-US', { timeZone: 'America/New_York' }) : null
+    
+    if (lastResetUS !== todayUS) {
+      user = await prisma.user.update({
+        where: { id: String(userId) },
+        data: { todayProfit: 0, lastProfitReset: new Date() },
+        select: {
+          id: true, username: true, phone: true, countryName: true,
+          countryCode: true, gender: true, inviteCode: true, createdAt: true,
+          updatedAt: true, vipLevel: true, vipId: true,
+          currentDay: true, currentSet: true,
+          walletBalance: true, holdAmount: true, specialBonus: true,
+          taskCompleted: true, totalTasks: true, activeProducts: true,
+          completedProducts: true, currentTaskProducts: true, 
+          todayProfit: true, lastProfitReset: true, tasksInCurrentSet: true, 
+          x10TaskNumbers: true, boundWallet: true,
+          creditScore: true, isRiskControlled: true, avatar: true,
+        }
+      })
+    }
+
     return NextResponse.json({ 
       success: true,
       user: { 
