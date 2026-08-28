@@ -39,97 +39,102 @@ const round2 = (n) => {
 export async function POST(req) {
   try {
     const { userId } = await req.json()
-    const user = await prisma.user.findUnique({ where: { id: userId } })
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    if (!userId) return NextResponse.json({ error: 'userId missing' }, { status: 400 })
 
-    const vipLevel = Number(user.vipLevel) || 1
-    const config = VIP_CONFIG[vipLevel] || VIP_CONFIG[1]
-    const needed = config.tasksPerSet
+    // ALL LOGIC INSIDE TRANSACTION TO PREVENT DOUBLE TAP SKIP
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.findUnique({ where: { id: String(userId) } })
+      if (!user) throw new Error('User not found')
 
-    const currentDay = user.currentDay || 1
-    const currentSet = user.currentSet || 1
-    const tasksInCurrentSet = user.tasksInCurrentSet || 0
-    const userCurrentTaskNumber = tasksInCurrentSet + 1
+      const vipLevel = Number(user.vipLevel) || 1
+      const config = VIP_CONFIG[vipLevel] || VIP_CONFIG[1]
+      const needed = config.tasksPerSet
 
-    if (tasksInCurrentSet >= needed) {
-      return NextResponse.json({ error: `Set ${currentSet} completed - Contact customer service` }, { status: 400 })
-    }
+      const currentDay = user.currentDay || 1
+      const currentSet = user.currentSet || 1
+      const tasksInCurrentSet = user.tasksInCurrentSet || 0
+      const userCurrentTaskNumber = tasksInCurrentSet + 1
 
-    const completedCount = Number(user.taskCompleted || 0)
-    const walletVal = round2(user.walletBalance || 0)
-    if (completedCount === 0 && walletVal < 50) {
-      return NextResponse.json({ error: 'New user balance below 50 unable to continue trading' }, { status: 400 })
-    }
-
-    let activeCheck = user.activeProducts
-    if (typeof activeCheck === 'string') {
-      try { activeCheck = JSON.parse(activeCheck) } catch { activeCheck = [] }
-    }
-    if (Array.isArray(activeCheck) && activeCheck.length > 0) {
-      return NextResponse.json({ error: 'You have an active task. Submit it first.' }, { status: 400 })
-    }
-
-    let fileSet = null
-    let cached = []
-    try {
-      cached = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts || '[]') : (user.currentTaskProducts || [])
-    } catch { cached = [] }
-
-    const cacheValid = cached.length === needed && Number(user.totalTasks) === needed
-
-    if (cacheValid) {
-      fileSet = cached
-    } else {
-      fileSet = await loadSet(vipLevel, currentDay, currentSet)
-      if (!fileSet) return NextResponse.json({ error: `Admin hasn't configured VIP${vipLevel} Day${currentDay} Set${currentSet}` }, { status: 400 })
-      fileSet = [...fileSet].sort((a,b)=> Number(a.taskOrder||a.id) - Number(b.taskOrder||b.id))
-      if (fileSet.length!== needed) {
-        return NextResponse.json({ error: `Set has ${fileSet.length} tasks but VIP${vipLevel} needs ${needed}. Ask admin to save ${needed} tasks.` }, { status: 400 })
+      if (tasksInCurrentSet >= needed) {
+        throw new Error(`Set ${currentSet} completed - Contact customer service`)
       }
-    }
 
-    const normalProduct = fileSet.find(p => Number(p.taskOrder || p.id) === userCurrentTaskNumber)
-    if (!normalProduct) return NextResponse.json({ error: `No product ${userCurrentTaskNumber} in set (have ${fileSet.length})` }, { status: 400 })
+      const completedCount = Number(user.taskCompleted || 0)
+      const walletVal = round2(user.walletBalance || 0)
+      if (completedCount === 0 && walletVal < 50) {
+        throw new Error('New user balance below 50 unable to continue trading')
+      }
 
-    // === FIXED REAL PRICE WITH MULTIPLIER ===
-    const rawPrice = Number(normalProduct.price || 0)
-    const costMult = Number(normalProduct.costMultiplier || 1)
-    const realPrice = round2(rawPrice * costMult) // THIS is what user must pay
+      // CHECK INSIDE TX - THIS IS THE FIX FOR SKIP BUG
+      let activeCheck = user.activeProducts
+      if (typeof activeCheck === 'string') {
+        try { activeCheck = JSON.parse(activeCheck) } catch { activeCheck = [] }
+      }
+      if (Array.isArray(activeCheck) && activeCheck.length > 0) {
+        throw new Error('You have an active task. Submit it first.')
+      }
 
-    const baseRate = (Number(normalProduct.profitPercent) / 100) || config.profit
-    const bonus = Number(normalProduct.bonusMultiplier) || 1
-    const activeProfitRate = baseRate * bonus
+      // Also check pending Task row inside tx
+      const pending = await tx.task.findFirst({ where: { userId: String(userId), status: 'pending' } })
+      if (pending) throw new Error('You have an active task. Submit it first.')
 
-    const singleProduct = {
-      id: userCurrentTaskNumber,
-      taskOrder: userCurrentTaskNumber,
-      productId: normalProduct.productId || normalProduct.id,
-      name: normalProduct.name,
-      price: realPrice, // FIXED: use realPrice not raw
-      rawPrice: rawPrice,
-      image: normalProduct.image,
-      rating: normalProduct.rating,
-      profitPercent: normalProduct.profitPercent || (baseRate * 100),
-      bonusMultiplier: bonus,
-      isCombo: normalProduct.isCombo || false,
-      comboMultiplier: normalProduct.comboMultiplier || 1,
-      costMultiplier: costMult,
-      profit: round2(realPrice * activeProfitRate)
-    }
+      let fileSet = null
+      let cached = []
+      try {
+        cached = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts || '[]') : (user.currentTaskProducts || [])
+      } catch { cached = [] }
 
-    const reserveAmount = round2(singleProduct.price + singleProduct.profit)
-    const activeSnapshot = [{...singleProduct, reserveAmount }]
+      const cacheValid = cached.length === needed && Number(user.totalTasks) === needed
 
-    // === FIXED HOLD = ONLY CURRENT TASK, NOT CUMULATIVE ===
-    const newWallet = round2(Number(user.walletBalance) - realPrice)
-    const newHold = round2(realPrice) // not oldHold + price, just current task
+      if (cacheValid) {
+        fileSet = cached
+      } else {
+        fileSet = await loadSet(vipLevel, currentDay, currentSet)
+        if (!fileSet) throw new Error(`Admin hasn't configured VIP${vipLevel} Day${currentDay} Set${currentSet}`)
+        fileSet = [...fileSet].sort((a,b)=> Number(a.taskOrder||a.id) - Number(b.taskOrder||b.id))
+        if (fileSet.length!== needed) {
+          throw new Error(`Set has ${fileSet.length} tasks but VIP${vipLevel} needs ${needed}. Ask admin to save ${needed} tasks.`)
+        }
+      }
 
-    // If user already has leftover hold from bug, reset it to realPrice
-    const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${needed}`
+      const normalProduct = fileSet.find(p => Number(p.taskOrder || p.id) === userCurrentTaskNumber)
+      if (!normalProduct) throw new Error(`No product ${userCurrentTaskNumber} in set (have ${fileSet.length})`)
 
-    const updatedUser = await prisma.$transaction(async (tx) => {
+      const rawPrice = Number(normalProduct.price || 0)
+      const costMult = Number(normalProduct.costMultiplier || 1)
+      const realPrice = round2(rawPrice * costMult)
+
+      const baseRate = (Number(normalProduct.profitPercent) / 100) || config.profit
+      const bonus = Number(normalProduct.bonusMultiplier) || 1
+      const activeProfitRate = baseRate * bonus
+
+      const singleProduct = {
+        id: userCurrentTaskNumber,
+        taskOrder: userCurrentTaskNumber,
+        productId: normalProduct.productId || normalProduct.id,
+        name: normalProduct.name,
+        price: realPrice,
+        rawPrice: rawPrice,
+        image: normalProduct.image,
+        rating: normalProduct.rating,
+        profitPercent: normalProduct.profitPercent || (baseRate * 100),
+        bonusMultiplier: bonus,
+        isCombo: normalProduct.isCombo || false,
+        comboMultiplier: normalProduct.comboMultiplier || 1,
+        costMultiplier: costMult,
+        profit: round2(realPrice * activeProfitRate)
+      }
+
+      const reserveAmount = round2(singleProduct.price + singleProduct.profit)
+      const activeSnapshot = [{...singleProduct, reserveAmount }]
+
+      const newWallet = round2(Number(user.walletBalance) - realPrice)
+      const newHold = round2(realPrice)
+
+      const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${needed}`
+
       await tx.user.update({
-        where: { id: userId },
+        where: { id: String(userId) },
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
@@ -140,7 +145,7 @@ export async function POST(req) {
       })
       await tx.task.create({
         data: {
-          userId,
+          userId: String(userId),
           vipLevel: vipLevel,
           day: currentDay,
           setNumber: currentSet,
@@ -150,12 +155,14 @@ export async function POST(req) {
           taskCode: generateTaskCode()
         }
       })
-      return await tx.user.findUnique({ where: { id: userId } })
+      const updatedUser = await tx.user.findUnique({ where: { id: String(userId) } })
+      return updatedUser
     })
 
-    return NextResponse.json({ success: true, user: updatedUser })
+    return NextResponse.json({ success: true, user: result })
   } catch (err) {
     console.error('[START-TASK]', err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    const msg = err.message.includes('active task')? err.message : err.message
+    return NextResponse.json({ error: msg }, { status: 400 })
   }
 }
