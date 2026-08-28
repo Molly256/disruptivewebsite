@@ -13,8 +13,10 @@ export default function ChatSupport() {
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
-    const savedUser = JSON.parse(localStorage.getItem('user') || 'null')
-    if (savedUser) setUser(savedUser)
+    try{
+      const savedUser = JSON.parse(localStorage.getItem('user') || 'null')
+      if (savedUser) setUser(savedUser)
+    }catch{}
   }, [])
 
   const loadFromBackend = async () => {
@@ -22,18 +24,18 @@ export default function ChatSupport() {
     try {
       const res = await fetch(`/api/chat/messages?userId=${user.id}`, { cache: 'no-store' })
       const data = await res.json()
-      if (data.messages && data.messages.length > 0) {
-        const formatted = data.messages.map(m => {
-          const role = m.senderRole || m.sender
-          const isUser = role === 'user'
-          const isSystem = role === 'system'
+      const list = Array.isArray(data)? data : (data.messages || [])
+      if (list.length > 0) {
+        const formatted = list.map(m => {
+          const isUser = (m.senderRole || m.sender) === 'user'
+          const isSystem = (m.senderRole || m.sender) === 'system'
           return {
             id: m.id,
             type: isUser? 'user' : isSystem? 'system' : 'support',
             sender: isUser? 'user' : 'support',
             text: m.text,
             image: m.image || null,
-            time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            time: m.timeString || new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             timestamp: new Date(m.createdAt).getTime()
           }
         })
@@ -48,20 +50,21 @@ export default function ChatSupport() {
       try {
         const res = await fetch(`/api/chat/messages?userId=${user.id}`, { cache: 'no-store' })
         const data = await res.json()
-        if (!data.messages || data.messages.length === 0) {
+        const list = Array.isArray(data)? data : (data.messages || [])
+        if (list.length === 0) {
           setMessages([
             { id: 'sys1', type: 'system', text: 'Welcome to Customer Service. How can we assist you today?', timestamp: Date.now() },
-            { id: 'sys2', type: 'support', text: 'Welcome to our online support service.\n\nTo help us assist you more efficiently, please keep this chat window open during your inquiry. Thank you for your cooperation.', timestamp: Date.now() + 1 }
+            { id: 'sys2', type: 'support', text: 'Welcome to our online support service.\n\nTo help us assist you more efficiently, please keep this chat window open during your inquiry.', timestamp: Date.now() + 1 }
           ])
         } else {
           await loadFromBackend()
         }
-        await fetch('/api/chat/read', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: user.id }) }).catch(()=>{})
+        await fetch('/api/chat/read', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: user.id, who:'user' }) }).catch(()=>{})
         localStorage.setItem('chatLastRead', Date.now().toString())
       } catch (e) { console.error(e) }
     }
     init()
-    const interval = setInterval(loadFromBackend, 3000)
+    const interval = setInterval(loadFromBackend, 2000)
     return () => clearInterval(interval)
   }, [user])
 
@@ -75,22 +78,31 @@ export default function ChatSupport() {
     setInput('')
     setShowEmoji(false)
 
+    // OPTIMISTIC - show instantly
+    const tempId = 'tmp_'+Date.now()
+    setMessages(prev => [...prev, { id: tempId, type:'user', sender:'user', text: messageText, image: imageUrl, time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), timestamp: Date.now() }])
+
     try {
-      // SINGLE API ONLY - no local temp message
-      await fetch('/api/contact', {
+      // FIX: use /api/chat/send NOT /api/contact
+      await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.id,
+          chatId: user.id,
+          text: messageText,
           username: user.username,
-          email: user.email || '',
-          message: messageText,
-          isGuest: false
+          isGuest: false,
+          sender: 'user',
+          image: imageUrl || null
         })
       })
-      // load real message from DB (1 only)
-      setTimeout(loadFromBackend, 500)
-    } catch (e) { console.error('send failed', e) }
+      setTimeout(loadFromBackend, 300)
+    } catch (e) {
+      console.error('send failed', e)
+      // remove temp on fail
+      setMessages(prev => prev.filter(m=>m.id!==tempId))
+    }
   }
 
   const handleImageUpload = (e) => {
@@ -123,14 +135,18 @@ export default function ChatSupport() {
                 <div>
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Online Customer Support</div>
                   <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '12px', maxWidth: '280px', fontSize: '15px', lineHeight: '1.5', whiteSpace: 'pre-line', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>{msg.text}</div>
+                  <div style={{ fontSize:'10px', color:'#999', marginTop:'4px' }}>{msg.time}</div>
                 </div>
               </div>
             )}
             {msg.type === 'user' && (
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <div style={{ background: '#cc0000', color: '#fff', padding: '12px 16px', borderRadius: '12px', maxWidth: '280px', fontSize: '15px' }}>
-                  {msg.image && <img src={msg.image} alt="upload" style={{ maxWidth: '100%', borderRadius: '8px', marginBottom: msg.text? '8px' : 0 }} />}
-                  {msg.text}
+                <div>
+                  <div style={{ background: '#cc0000', color: '#fff', padding: '12px 16px', borderRadius: '12px', maxWidth: '280px', fontSize: '15px' }}>
+                    {msg.image && <img src={msg.image} alt="upload" style={{ maxWidth: '100%', borderRadius: '8px', marginBottom: msg.text? '8px' : 0 }} />}
+                    {msg.text}
+                  </div>
+                  <div style={{ fontSize:'10px', color:'#999', marginTop:'4px', textAlign:'right' }}>{msg.time}</div>
                 </div>
               </div>
             )}
@@ -150,7 +166,7 @@ export default function ChatSupport() {
           <button onClick={() => fileInputRef.current.click()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#cc0000' }}>+</button>
           <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && sendMessage(input)} placeholder="Type a message" style={{ flex: 1, border: 'none', background: '#f5f5f5', borderRadius: '20px', padding: '10px 16px', fontSize: '16px', outline: 'none' }} />
           <button onClick={() => setShowEmoji(!showEmoji)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>😊</button>
-          <button onClick={() => sendMessage(input)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#cc0000' }}>➤</button>
+          <button onClick={() => sendMessage(input)} style={{ background: '#cc0000', border: 'none', width:'36px', height:'36px', borderRadius:'50%', fontSize: '16px', cursor: 'pointer', color: '#fff' }}>➤</button>
         </div>
       </div>
     </div>

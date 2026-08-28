@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 
 const ADJECTIVES = ['Swift','Cool','Bright','Calm','Bold','Quick','Smart','Kind','Happy','Lucky']
 const NAMES = ['Fox','Tiger','Eagle','Wolf','Lion','Bear','Shark','Hawk','Panda','Koala']
-
 function generateGuestName(){
   const adj = ADJECTIVES[Math.floor(Math.random()*ADJECTIVES.length)]
   const name = NAMES[Math.floor(Math.random()*NAMES.length)]
@@ -41,25 +40,25 @@ export default function GuestSupportChat() {
     try{
       const res = await fetch(`/api/chat/messages?userId=${uid}`, { cache: 'no-store' })
       const data = await res.json()
-      if(data.messages){
-        const formatted = data.messages.map(m=>{
-          const role = m.senderRole || m.sender
-          return {
-            id: m.id,
-            text: m.text,
-            sender: role === 'user'? 'user' : 'support',
-            timestamp: new Date(m.createdAt).getTime()
-          }
-        })
-        setMessages(formatted)
-      }
+      const list = Array.isArray(data)? data : (data.messages || [])
+      const formatted = list.map(m=>{
+        const role = m.senderRole || m.sender
+        return {
+          id: m.id,
+          text: m.text,
+          sender: role === 'user'? 'user' : 'support',
+          timestamp: new Date(m.createdAt).getTime(),
+          timeString: m.timeString || new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+        }
+      })
+      setMessages(formatted)
     }catch(e){ console.error(e) }
   }
 
   useEffect(() => {
     if(!guestId) return
     loadMessages(guestId)
-    const interval = setInterval(()=> loadMessages(guestId), 3000)
+    const interval = setInterval(()=> loadMessages(guestId), 2000)
     return ()=> clearInterval(interval)
   }, [guestId])
 
@@ -70,23 +69,30 @@ export default function GuestSupportChat() {
   const sendMessage = async () => {
     if (!input.trim()) return
     const textToSend = input.trim()
-    setInput('') // clear immediately, NO local push
+    setInput('')
+
+    // OPTIMISTIC - show instantly
+    const tempId = 'tmp_'+Date.now()
+    setMessages(prev=>[...prev,{ id: tempId, text: textToSend, sender:'user', timestamp: Date.now(), timeString: new Date().toLocaleTimeString() }])
 
     try{
-      await fetch('/api/contact', {
+      // FIX: use /api/chat/send NOT /api/contact
+      await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: guestId,
+          chatId: guestId,
+          text: textToSend,
           username: guestName,
-          email: '',
-          message: textToSend,
+          sender: 'user',
           isGuest: true
         })
       })
-      setTimeout(()=> loadMessages(guestId), 500)
+      setTimeout(()=> loadMessages(guestId), 300)
     }catch(e){
       console.error('send failed', e)
+      setMessages(prev=>prev.filter(m=>m.id!==tempId))
     }
   }
 
@@ -98,7 +104,7 @@ export default function GuestSupportChat() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', color: '#fff', background: '#000' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', color: '#fff', background: '#000' }}>
       <div style={{ padding: '16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#cc0000', fontSize: '24px', cursor: 'pointer', padding: 0 }}>←</button>
         <div>
@@ -107,19 +113,22 @@ export default function GuestSupportChat() {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap:'6px' }}>
         {messages.length === 0 && <div style={{ color: '#666', textAlign: 'center', marginTop: '40px' }}>Welcome {guestName}! Ask us anything. For account support, please log in.</div>}
         {messages.map(msg => (
-          <div key={msg.id} style={{ alignSelf: msg.sender === 'user'? 'flex-end' : 'flex-start', background: msg.sender === 'user'? '#cc0000' : '#1a1a1a', color: msg.sender === 'user'? '#000' : '#fff', padding: '10px 14px', borderRadius: '16px', maxWidth: '70%', wordBreak: 'break-word' }}>
-            {msg.text}
+          <div key={msg.id} style={{ alignSelf: msg.sender === 'user'? 'flex-end' : 'flex-start', display:'flex', flexDirection:'column', maxWidth:'75%' }}>
+            <div style={{ background: msg.sender === 'user'? '#cc0000' : '#1a1a1a', color: msg.sender === 'user'? '#fff' : '#fff', padding: '10px 14px', borderRadius: msg.sender==='user'? '16px 16px 0 16px' : '16px 16px 16px 0', wordBreak: 'break-word', fontSize:'14px' }}>
+              {msg.text}
+            </div>
+            <div style={{ fontSize:'10px', color:'#666', marginTop:'3px', alignSelf: msg.sender==='user'?'flex-end':'flex-start' }}>{msg.timeString}</div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      <div style={{ padding: '16px', borderTop: '1px solid #333', display: 'flex', gap: '8px' }}>
-        <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyPress} placeholder={`Message as ${guestName || 'Guest'}...`} style={{ flex: 1, background: '#1a1a1a', border: '1px solid #333', borderRadius: '20px', padding: '10px 16px', color: '#fff', outline: 'none' }} />
-        <button onClick={sendMessage} style={{ background: '#cc0000', border: 'none', borderRadius: '50%', width: '44px', height: '44px', color: '#000', cursor: 'pointer', fontSize: '18px', flexShrink: 0 }}>→</button>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid #333', display: 'flex', gap: '8px', alignItems:'center', background:'#000' }}>
+        <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyPress} placeholder={`Message as ${guestName || 'Guest'}...`} style={{ flex: 1, background: '#1a1a1a', border: '1px solid #333', borderRadius: '20px', padding: '12px 16px', color: '#fff', outline: 'none', fontSize:'15px' }} />
+        <button onClick={sendMessage} style={{ background: '#cc0000', border: 'none', borderRadius: '50%', width: '44px', height: '44px', color: '#fff', cursor: 'pointer', fontSize: '18px', flexShrink: 0 }}>➤</button>
       </div>
     </div>
   )
