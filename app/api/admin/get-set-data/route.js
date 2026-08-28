@@ -29,18 +29,19 @@ export async function GET(req) {
     let items
     try {
       let fileContent = fs.readFileSync(filePath, 'utf8')
-      // remove BOM
       fileContent = fileContent.replace(/^\uFEFF/, '')
-      // remove export const vipXSetY =
-      let clean = fileContent.replace(/export\s+const\s+vip\d+Set\d+\s*=\s*/g, '').trim()
-      // remove last semicolon
-      clean = clean.replace(/;\s*$/, '')
+      
+      // FIX: extract only array [ ... ], ignore // comments and export lines
+      const start = fileContent.indexOf('[')
+      const end = fileContent.lastIndexOf(']')
+      if (start === -1 || end === -1) {
+        throw new Error('No array found in file')
+      }
+      const arrayStr = fileContent.substring(start, end + 1)
 
-      // SAFE parse - if clean is [ ... ] , return it
-      items = Function(`"use strict"; return (${clean})`)()
+      items = Function(`"use strict"; return (${arrayStr})`)()
     } catch (err) {
       console.error('File compilation error at', filePath, err)
-      // RETURN REAL ERROR, not generic
       return NextResponse.json({ error: `File ${fileName} parse failed: ${err.message}` }, { status: 500 })
     }
 
