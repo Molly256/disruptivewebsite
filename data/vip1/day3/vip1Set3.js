@@ -31,7 +31,7 @@ export const vip1Set3 = [
   { id: 29, name: "JAMES BOND - SPECTRE - Card #007 - Bond Examines A Ring - Rittenhouse 2016", rating: 3.8, price: 43.14, costMultiplier: 1, profitPercent: 0.5, image: "/photo29.jpg" },
   { id: 30, name: "Fiona Beaded Bag: Pearl-Strap Embellished Edition", rating: 5.6, price: 99.64, costMultiplier: 1, profitPercent: 0.5, image: "/photo30.jpg" },
   { id: 31, name: "SIMONMILLER Raffia Tiger Bag", rating: 7.9, price: 85.90, costMultiplier: 1, profitPercent: 0.5, image: "/photo31.jpg" },
-  { id: 32, name: "Benni Hand-Woven Floral Wavy Border Bath Mat", rating: 7.9, price: 44.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo32.jpg" },
+  { id: 32, name: "gaming computer and sound bar", rating: 7.9, price: 44.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo32.jpg" },
   { id: 33, name: "Converse Chuck Taylor High-Top Embroidered Sneakers", rating: 3.4, price: 70.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo33.jpg" },
   { id: 34, name: "computer gaming and sound bar", rating: 4.2, price: 97.36, costMultiplier: 1, profitPercent: 0.5, image: "/photo34.jpg" },
   { id: 35, name: "New 079121115BG For AUDI A8 D4 Engine Cooling Thermostat", rating: 9.6, price: 81.14, costMultiplier: 1, profitPercent: 0.5, image: "/photo35.jpg" },
