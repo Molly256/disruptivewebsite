@@ -520,7 +520,7 @@ export default function Login() {
                   if (chatBtn) chatBtn.click();
                   else window.dispatchEvent(new CustomEvent('openChatWidget'));
                 }
-              }} style={{ color: '#0066cc', fontWeight: '500', cursor: 'pointer', textDecoration: 'underline' }}>Contact our user support</span>
+              }} style={{ color: '#0066cc', fontWeight: '500', cursor: 'pointer', textDecoration: 'underline' }}>Open chatwidget to contact our user support</span>
             </div>
 
             <div style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '40px' }}>
