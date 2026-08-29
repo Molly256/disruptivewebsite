@@ -539,7 +539,7 @@ export default function Registration() {
 
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
               <input type="checkbox" checked={form.acceptTerms} onChange={(e) => setForm({...form, acceptTerms: e.target.checked})} style={{ width: '18px', height: '18px', accentColor: '#cc0000', cursor: 'pointer' }} />
-              <span style={{ color: '#000' }}>Accept ours <Link href="/terms" style={{ color: '#000', textDecoration: 'underline' }}>Terms and Conditions</Link></span>
+              <span style={{ color: '#000' }}>Accept ours <Link href="/registration-terms" style={{ color: '#000', textDecoration: 'underline' }}>Terms and Conditions</Link></span>
             </label>
             {errors.acceptTerms && <div style={errorStyle}>{errors.acceptTerms}</div>}
 
@@ -554,7 +554,7 @@ export default function Registration() {
             </div>
 
             <div style={{ textAlign: 'center', fontSize: '12px', color: '#666', marginTop: '8px' }}>
-              By signing up, you agree to our <Link href="/terms" style={{ color: '#0066cc' }}>Terms and Conditions</Link></div>
+              By signing up, you agree to our <Link href="/registration-terms" style={{ color: '#0066cc' }}>Terms and Conditions</Link></div>
 
             <div style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '40px' }}>
               Copyrights 2026 © Disruptive Advertisng Agency
