@@ -9,17 +9,22 @@ const VIP_CONFIG = {
   4: { tasksPerSet: 55, totalSets: 3, profit: 0.02 },
   5: { tasksPerSet: 60, totalSets: 3, profit: 0.025 }
 }
+
+// FIX 1: DB FIRST, file second
 const loadSet = async (vip, day, set) => {
+  try {
+    const dbConfig = await prisma.taskSetConfig.findUnique({
+      where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } }
+    })
+    if (dbConfig?.data?.length > 0) return dbConfig.data
+  } catch {}
   try {
     const mod = await import(`@/data/vip${vip}/day${day}/vip${vip}Set${set}.js`)
     const key = `vip${vip}Set${set}`
     return mod[key] || Object.values(mod)[0] || null
-  } catch {
-    const dbConfig = await prisma.taskSetConfig.findUnique({ where: { vipLevel_day_setNum: { vipLevel: vip, day, setNum: set } } })
-    if (dbConfig?.data?.length > 0) return dbConfig.data
-    return null
-  }
+  } catch { return null }
 }
+
 const generateTaskCode = () => `${new Date().toISOString().slice(0,10).replace(/-/g,'')}${Math.floor(Math.random()*10000000).toString().padStart(10,'0')}`
 const round2 = (n) => { const v = Math.round(Number(n)*100)/100; return Math.abs(v)<0.005?0:v }
 
@@ -49,28 +54,39 @@ export async function POST(req) {
       if (!fileSet){ if(cached.length>0) fileSet=cached; else throw new Error(`Admin hasn't configured VIP${vipLevel} Day${currentDay} Set${currentSet}`) }
       fileSet=[...fileSet].sort((a,b)=>Number(a.taskOrder||a.id)-Number(b.taskOrder||b.id))
 
-      // EXACT TASK BY ORDER - strict
-      let baseProduct = fileSet.find(p=>Number(p.taskOrder||p.id)===userCurrentTaskNumber)
-      if (!baseProduct) throw new Error(`No product ${userCurrentTaskNumber} in set`)
+      const cachedMap=new Map()
+      cached.forEach(p=>{ if(p) cachedMap.set(Number(p.taskOrder||p.id), p) })
 
-      // If admin edited THIS exact task number in cached, use edited price/name
-      const editedForThisTask = cached.find(p=>p&&Number(p.taskOrder||p.id)===userCurrentTaskNumber)
-      if (editedForThisTask){
-        baseProduct={...baseProduct, price: editedForThisTask.price!==undefined? editedForThisTask.price:baseProduct.price, name: editedForThisTask.name||baseProduct.name }
-      }
-
-      // Preserve ALL admin edits for all tasks, but keep order from fileSet
-      const cachedMap=new Map(); cached.forEach(p=>{ if(p) cachedMap.set(Number(p.taskOrder||p.id), p) })
       const toSaveProducts=fileSet.map(p=>{
         const order=Number(p.taskOrder||p.id)
         const ed=cachedMap.get(order)
-        if(ed) return {...p, price: ed.price!==undefined? ed.price:p.price, name: ed.name||p.name, taskOrder:order, id:order}
+        if(ed) return {...p, price: ed.price!==undefined? ed.price:p.price, name: ed.name||p.name, bonusMultiplier: ed.bonusMultiplier||p.bonusMultiplier, profitPercent: ed.profitPercent||p.profitPercent, taskOrder:order, id:order}
         return {...p, taskOrder:order, id:order}
       })
 
-      const rawPrice=Number(baseProduct.price||0)
-      const costMult=Number(baseProduct.costMultiplier||1)
-      const realPrice=round2(rawPrice*costMult)
+      let baseProduct = fileSet.find(p=>Number(p.taskOrder||p.id)===userCurrentTaskNumber)
+      if (!baseProduct) throw new Error(`No product ${userCurrentTaskNumber} in set`)
+
+      const editedForThisTask = cachedMap.get(userCurrentTaskNumber)
+      const isEdited =!!editedForThisTask
+
+      // FIX 2: If edited, use edited price as FINAL, don't multiply x10 again
+      let rawPrice, realPrice
+      if (isEdited) {
+        realPrice = round2(editedForThisTask.price)
+        rawPrice = realPrice
+        baseProduct = {
+         ...baseProduct,
+          price: realPrice,
+          name: editedForThisTask.name||baseProduct.name,
+          bonusMultiplier: editedForThisTask.bonusMultiplier!==undefined? editedForThisTask.bonusMultiplier:baseProduct.bonusMultiplier,
+          profitPercent: editedForThisTask.profitPercent!==undefined? editedForThisTask.profitPercent:baseProduct.profitPercent,
+        }
+      } else {
+        rawPrice=Number(baseProduct.price||0)
+        realPrice=round2(rawPrice*Number(baseProduct.costMultiplier||1))
+      }
+
       const baseRate=(Number(baseProduct.profitPercent)/100)||config.profit
       const bonus=Number(baseProduct.bonusMultiplier)||1
       const profit=round2(realPrice*baseRate*bonus)
