@@ -5,9 +5,19 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req) {
   try {
-    const { userId, taskOrder, newPrice, newName } = await req.json()
-    if (!userId || !taskOrder) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+    const body = await req.json()
     
+    // Extract parameters explicitly to prevent zero-value falsy drops
+    const userId = body.userId ? String(body.userId) : null
+    const taskOrder = body.taskOrder !== undefined && body.taskOrder !== null ? Number(body.taskOrder) : null
+    const newPrice = body.newPrice !== undefined ? Number(body.newPrice) : undefined
+    const newName = body.newName !== undefined ? String(body.newName) : undefined
+
+    // FIXED VALIDATION: Explicitly checks for null/NaN instead of using loose ! checking
+    if (!userId || taskOrder === null || isNaN(taskOrder)) {
+      return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+    }
+
     const orderNum = Number(taskOrder)
 
     // FIXED PARSER: Gracefully handles native JSON arrays, objects, and strings
@@ -72,7 +82,7 @@ export async function POST(req) {
         if (Number(p.taskOrder || p.id) === orderNum) {
           return { 
             ...p, 
-            price: newPrice !== undefined ? Number(newPrice) : p.price, 
+            price: newPrice !== undefined ? newPrice : p.price, 
             name: newName !== undefined ? newName : p.name,
             taskOrder: orderNum,
             id: orderNum
@@ -87,7 +97,7 @@ export async function POST(req) {
         if (Number(p.taskOrder || p.id) === orderNum) {
           return { 
             ...p, 
-            price: newPrice !== undefined ? Number(newPrice) : p.price, 
+            price: newPrice !== undefined ? newPrice : p.price, 
             name: newName !== undefined ? newName : p.name,
             taskOrder: orderNum,
             id: orderNum
@@ -109,7 +119,7 @@ export async function POST(req) {
           if (Number(p.taskOrder || p.id) === orderNum) {
             return { 
               ...p, 
-              price: newPrice !== undefined ? Number(newPrice) : p.price, 
+              price: newPrice !== undefined ? newPrice : p.price, 
               name: newName !== undefined ? newName : p.name 
             }
           }
