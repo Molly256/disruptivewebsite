@@ -511,11 +511,20 @@ export default function Login() {
             </div>
 
             <div style={{ textAlign: 'center', fontSize: '14px', color: '#666' }}>
-              Can't sign in? <Link href="/support" style={{ color: '#0066cc', fontWeight: '500' }}>Contact our user support</Link>
+              Can't sign in? <span onClick={() => {
+                if (window.Tawk_API?.maximize) window.Tawk_API.maximize();
+                else if (window.$crisp) window.$crisp.do('chat:open');
+                else if (window.Intercom) window.Intercom('show');
+                else {
+                  const chatBtn = document.querySelector('[data-chat-button], #chat-widget, .chat-widget-button, [class*="chat"]');
+                  if (chatBtn) chatBtn.click();
+                  else window.dispatchEvent(new CustomEvent('openChatWidget'));
+                }
+              }} style={{ color: '#0066cc', fontWeight: '500', cursor: 'pointer', textDecoration: 'underline' }}>Contact our user support</span>
             </div>
 
             <div style={{ textAlign: 'center', fontSize: '12px', color: '#999', marginTop: '40px' }}>
-              Copyrights 2026 © Disruptive
+              Copyrights 2026 © Disruptive Advertising Agency
             </div>
           </form>
         </div>
