@@ -39,7 +39,6 @@ export async function GET(req) {
         currentTaskProducts: true,
         activeProducts: true,
         completedProducts: true,
-        // 🚀 REMOVED: mergedTasks: true (this line was causing the 500 error)
         createdAt: true,
         lastProfitReset: true,
         todayProfit: true,
@@ -50,12 +49,22 @@ export async function GET(req) {
 
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
 
-    // Add aliases so your admin panel code using user.day / user.setNumber won't break
+    // Normalize currentTaskProducts into a guaranteed clean array structure 
+    let formattedProducts = user.currentTaskProducts;
+    if (typeof formattedProducts === 'string') {
+      try { formattedProducts = JSON.parse(formattedProducts) } catch { formattedProducts = [] }
+    }
+    if (!Array.isArray(formattedProducts)) formattedProducts = [];
+
+    // Provide absolute consistency for both schemas to prevent frontend state mapping drops
     const userWithAlias = {
       ...user,
-      day: user.currentDay,       // alias for photo path
-      setNumber: user.currentSet, // alias for setSize
-      setsCompleted: 0            // add default so frontend doesn't crash
+      currentTaskProducts: formattedProducts,
+      day: user.currentDay || 1,       
+      currentDay: user.currentDay || 1,
+      setNumber: user.currentSet || 1, 
+      currentSet: user.currentSet || 1,
+      setsCompleted: 0            
     }
 
     return NextResponse.json({ user: userWithAlias })

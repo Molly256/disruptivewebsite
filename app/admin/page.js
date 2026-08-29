@@ -89,87 +89,112 @@ export default function AdminPage() {
     }
   }
 
-  // FIXED - ACTIVE SET IMAGE BUG
-  const loadEditSet = async (vipLevel, day, setNum) => {
-    if(!editUser) return alert('No user selected')
-    setSelectedEditItems([])
-    setActiveEditSet(setNum)
-    setEditSetData([])
+  // FIXED - PREVENTS OVERWRITING AND RETENTION DISAPPEARANCE
+const loadEditSet = async (vipLevel, day, setNum) => {
+  if(!editUser) return alert('No user selected')
+  setSelectedEditItems([])
+  setActiveEditSet(setNum)
+  setEditSetData([])
 
-    let currentProducts = editUser.currentTaskProducts || []
-    if (typeof currentProducts === 'string') {
-      try { currentProducts = JSON.parse(currentProducts) } catch { currentProducts = [] }
-    }
-
-    if(currentProducts?.length > 0 && Number(editUser.currentSet) === Number(setNum)) {
-      const fixed = currentProducts.filter(Boolean).map((item, idx) => {
-        const taskNum = Number(item.taskOrder || item.id || idx+1)
-        const isBroken =!item.image || item.image.startsWith('/photo') || item.image.startsWith('photo') || item.image === '/photo1.jpg'
-        return {
-        ...item,
-          taskOrder: taskNum,
-          id: taskNum,
-          price: Number(item.price || 0),
-          image: isBroken? `/vip${vipLevel}/day${day}/set${setNum}/photo${taskNum}.jpg` : item.image
-        }
-      })
-      setEditSetData(fixed)
-      return
-    }
-    try {
-      const res = await fetch(`/api/admin/get-set-data?vipLevel=${vipLevel}&day=${day}&set=${setNum}`)
-      const data = await res.json()
-      if(!res.ok) throw new Error(data.error)
-      const fixed = (data.items || []).filter(Boolean).map((item, idx) => {
-        const taskNum = Number(item.taskOrder || item.id || idx+1)
-        return {
-        ...item,
-          taskOrder: taskNum,
-          id: taskNum,
-          price: Number(item.price || 0),
-          image: `/vip${vipLevel}/day${day}/set${setNum}/photo${taskNum}.jpg`
-        }
-      })
-      setEditSetData(fixed)
-    } catch(e) {
-      alert(`Failed to load set: ${e.message}`)
-    }
+  let currentProducts = editUser.currentTaskProducts || []
+  if (typeof currentProducts === 'string') {
+    try { currentProducts = JSON.parse(currentProducts) } catch { currentProducts = [] }
   }
 
-  const editItem = (item) => { if(!item) return; setEditingPhoto(item); setEditData({name: item.name || '', price: Number(item.price || 0)}) }
-
-  const saveEdit = () => {
-    if(!editingPhoto) return
-    const tOrder = Number(editingPhoto.taskOrder)
-    setEditSetData(prev => prev.filter(Boolean).map(p => Number(p.taskOrder) === tOrder? {...p, name: editData.name, price: parseFloat(editData.price) || 0} : p));
-    setEditingPhoto(null);
-  }
-
-  const handleSaveEditedData = async () => {
-    if(!editUser || selectedEditItems.length === 0) return alert('No items selected')
-    try {
-      for(const taskOrder of selectedEditItems) {
-        const item = editSetData.find(p => Number(p.taskOrder) === Number(taskOrder))
-        if(!item) continue
-        const res = await fetch('/api/admin/tasks/edit-user-task', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ userId: editUser.id, taskOrder: Number(taskOrder), newPrice: Number(item.price), newName: item.name })
-        })
-        const data = await res.json()
-        if(!res.ok) throw new Error(data.error)
+  // 1. FIXED LOGIC PRIORITY: If the user profile possesses a custom layout list, 
+  // utilize it as your primary source across sets to preserve admin modifications.
+  if(currentProducts?.length > 0 && Number(editUser.currentSet) === Number(setNum)) {
+    const fixed = currentProducts.filter(Boolean).map((item, idx) => {
+      const taskNum = Number(item.taskOrder || item.id || idx+1)
+      const isBroken = !item.image || item.image.startsWith('/photo') || item.image.startsWith('photo') || item.image === '/photo1.jpg'
+      return {
+        ...item,
+        taskOrder: taskNum,
+        id: taskNum,
+        price: Number(item.price || 0),
+        image: isBroken ? `/vip${vipLevel}/day${day}/set${setNum}/photo${taskNum}.jpg` : item.image
       }
-      alert(`Updated ${selectedEditItems.length} task(s) for ${editUser.username} only`)
-      setSelectedEditItems([])
-      const res = await fetch(`/api/user/search?q=${encodeURIComponent(editUser.username)}`)
-      const data = await res.json()
-      if(res.ok) setEditUser(data.user)
-    } catch(e) {
-      alert(`Save failed: ${e.message}`)
-    }
+    })
+    setEditSetData(fixed)
+    return
   }
 
-  const handleResetToNextSet = async () => {
+  // 2. Fallback to global dataset templates only if user tracking arrays are empty
+  try {
+    const res = await fetch(`/api/admin/get-set-data?vipLevel=${vipLevel}&day=${day}&set=${setNum}`)
+    const data = await res.json()
+    if(!res.ok) throw new Error(data.error)
+    const fixed = (data.items || []).filter(Boolean).map((item, idx) => {
+      const taskNum = Number(item.taskOrder || item.id || idx+1)
+      return {
+        ...item,
+        taskOrder: taskNum,
+        id: taskNum,
+        price: Number(item.price || 0),
+        image: `/vip${vipLevel}/day${day}/set${setNum}/photo${taskNum}.jpg`
+      }
+    })
+    setEditSetData(fixed)
+  } catch(e) {
+    alert(`Failed to load set: ${e.message}`)
+  }
+}
+
+const editItem = (item) => { 
+  if(!item) return; 
+  setEditingPhoto(item); 
+  setEditData({name: item.name || '', price: Number(item.price || 0)}) 
+}
+
+// 3. FIXED: Automatically tracks and queues modified elements for saving
+const saveEdit = () => {
+  if(!editingPhoto) return
+  const tOrder = Number(editingPhoto.taskOrder)
+  
+  setEditSetData(prev => prev.filter(Boolean).map(p => 
+    Number(p.taskOrder) === tOrder ? { ...p, name: editData.name, price: parseFloat(editData.price) || 0 } : p
+  ));
+
+  // Automatically check the item's custom checkbox so it is included in the batch save array
+  setSelectedEditItems(prev => prev.includes(tOrder) ? prev : [...prev, tOrder]);
+  setEditingPhoto(null);
+}
+
+// 4. FIXED: Packages changes into a single, comprehensive batch save payload
+const handleSaveEditedData = async () => {
+  if(!editUser) return alert('No user selected')
+  if(editSetData.length === 0) return alert('No task items loaded to update')
+  if(selectedEditItems.length === 0) return alert('No modified items detected to save')
+
+  try {
+    // Send the entire updated set array directly to your backend endpoint in one single network hit
+    const res = await fetch('/api/admin/tasks/edit-user-task', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ 
+        userId: editUser.id, 
+        targetSetNum: Number(activeEditSet),
+        fullProductsArray: editSetData 
+      })
+    })
+    
+    const data = await res.json()
+    if(!res.ok) throw new Error(data.error || 'Database save transaction failed')
+
+    alert(`Successfully saved all custom task data parameters for ${editUser.username} only!`)
+    setSelectedEditItems([])
+    
+    // Hard refresh of user state metrics directly from your database
+    const refreshRes = await fetch(`/api/user/search?q=${encodeURIComponent(editUser.username)}`)
+    const refreshData = await refreshRes.json()
+    if(refreshRes.ok) {
+      setEditUser(refreshData.user)
+    }
+  } catch(e) {
+    alert(`Save failed: ${e.message}`)
+  }
+}
+ const handleResetToNextSet = async () => {
     if(!manageUser) return alert('Search user first')
     if(manageUser.currentSet >= 3) return alert('Set 3 cannot be reset. Use Next Day')
     const res = await fetch('/api/admin/reset-set-progress', {

@@ -8,34 +8,66 @@ export async function POST(req) {
     const { userId, taskOrder, newPrice, newName } = await req.json()
     if (!userId || !taskOrder) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     
-    const user = await prisma.user.findUnique({ where: { id: String(userId) } })
-    if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    
-    const parse = (v) => {
-      if (!v) return []
-      if (typeof v === 'string') { try { return JSON.parse(v) } catch { return [] } }
-      return Array.isArray(v) ? v : []
-    }
-
-    let currentList = parse(user.currentTaskProducts)
-    // If user has no cache yet, load from DB config so edit doesn't disappear
-    if (currentList.length === 0) {
-      try {
-        const dbConfig = await prisma.taskSetConfig.findUnique({
-          where: { vipLevel_day_setNum: { vipLevel: Number(user.vipLevel), day: Number(user.currentDay), setNum: Number(user.currentSet) } }
-        })
-        if (dbConfig?.data?.length) currentList = dbConfig.data
-      } catch {}
-    }
-
     const orderNum = Number(taskOrder)
-    const editOnly = (products) => {
-      let list = parse(products)
-      // if list empty and we have currentList, use currentList as base
-      if (list.length === 0 && currentList.length > 0 && products === user.currentTaskProducts) {
-        list = currentList
+
+    // FIXED PARSER: Gracefully handles native JSON arrays, objects, and strings
+    const safeParseJsonArray = (v) => {
+      if (!v) return []
+      if (Array.isArray(v)) return v
+      if (typeof v === 'string') { 
+        try { 
+          const parsed = JSON.parse(v) 
+          return Array.isArray(parsed) ? parsed : []
+        } catch { 
+          return [] 
+        } 
       }
-      return list.map(p => {
+      return typeof v === 'object' ? [v] : []
+    }
+
+    // Run everything inside an isolated transaction
+    await prisma.$transaction(async (tx) => {
+      
+      // CRITICAL FIX: Use raw SQL to enforce a pessimistic row lock ('FOR UPDATE')
+      // This forces concurrent requests in your frontend loop to wait in line sequentially
+      await tx.$executeRawUnsafe(`SELECT id FROM "User" WHERE id = $1 FOR UPDATE`, String(userId))
+
+      // Now it is completely safe to fetch the locked user row data
+      const user = await tx.user.findUnique({ where: { id: String(userId) } })
+      if (!user) throw new Error('User not found')
+
+      let currentList = safeParseJsonArray(user.currentTaskProducts)
+      
+      // Fallback: If user has no cache yet, load from DB config template layout
+      if (currentList.length === 0) {
+        try {
+          const dbConfig = await tx.taskSetConfig.findUnique({
+            where: { 
+              vipLevel_day_setNum: { 
+                vipLevel: Number(user.vipLevel), 
+                day: Number(user.currentDay), 
+                setNum: Number(user.currentSet) 
+              } 
+            }
+          })
+          if (dbConfig?.data) {
+            currentList = safeParseJsonArray(dbConfig.data)
+          }
+        } catch {}
+      }
+
+      // Safeguard layout structure if fallback template is empty
+      if (currentList.length === 0) {
+        currentList = Array.from({ length: 40 }, (_, i) => ({
+          id: i + 1,
+          taskOrder: i + 1,
+          name: "Standard Product",
+          price: 0
+        }))
+      }
+
+      // Map over the list to inject your custom edits safely
+      const newCurrent = currentList.map(p => {
         if (!p) return p
         if (Number(p.taskOrder || p.id) === orderNum) {
           return { 
@@ -48,38 +80,57 @@ export async function POST(req) {
         }
         return p
       })
-    }
 
-    const newCurrent = editOnly(user.currentTaskProducts)
-    const newActive = editOnly(user.activeProducts)
-
-    // FIX: also update Task table pending products
-    const pending = await prisma.task.findFirst({ 
-      where: { userId: String(userId), status: 'pending' }, 
-      orderBy: { createdAt: 'desc' } 
-    })
-    if (pending) {
-      let tProds = parse(pending.products)
-      const newTProds = tProds.map(p => {
+      let activeList = safeParseJsonArray(user.activeProducts)
+      const newActive = activeList.map(p => {
         if (!p) return p
         if (Number(p.taskOrder || p.id) === orderNum) {
-          return { ...p, price: Number(newPrice), name: newName !== undefined ? newName : p.name }
+          return { 
+            ...p, 
+            price: newPrice !== undefined ? Number(newPrice) : p.price, 
+            name: newName !== undefined ? newName : p.name,
+            taskOrder: orderNum,
+            id: orderNum
+          }
         }
         return p
       })
-      await prisma.task.update({ where: { id: pending.id }, data: { products: newTProds } })
-    }
 
-    await prisma.user.update({ 
-      where: { id: String(userId) }, 
-      data: { 
-        currentTaskProducts: newCurrent.length > 0 ? newCurrent : currentList,
-        activeProducts: newActive
-      } 
+      // Update separate pending items inside the Task model table cleanly
+      const pending = await tx.task.findFirst({ 
+        where: { userId: String(userId), status: 'pending' }, 
+        orderBy: { createdAt: 'desc' } // Target freshest open entry
+      })
+      
+      if (pending) {
+        let tProds = safeParseJsonArray(pending.products)
+        const newTProds = tProds.map(p => {
+          if (!p) return p
+          if (Number(p.taskOrder || p.id) === orderNum) {
+            return { 
+              ...p, 
+              price: newPrice !== undefined ? Number(newPrice) : p.price, 
+              name: newName !== undefined ? newName : p.name 
+            }
+          }
+          return p
+        })
+        await tx.task.update({ where: { id: pending.id }, data: { products: newTProds } })
+      }
+
+      // Save changes back to the database row before releasing the row lock
+      return await tx.user.update({ 
+        where: { id: String(userId) }, 
+        data: { 
+          currentTaskProducts: newCurrent,
+          activeProducts: newActive
+        } 
+      })
     })
+
     return NextResponse.json({ success: true })
   } catch (e) {
-    console.error('edit-user-task error:', e)
+    console.error('edit-user-task isolated row lock transaction failure:', e)
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
