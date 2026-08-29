@@ -185,11 +185,11 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
       <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0 16px' }}>
         <div style={{ background: 'transparent', margin: '16px 0', borderRadius: 16, padding: '0' }}>
           {products.map((product, idx) => {
-            const itemId = product.productId || product.id || product.photoId || product.taskOrder || 0
             const d = currentDay || 1
             const s = currentSet || 1
-            const calculatedImgPath = `/vip${vipLevel || 1}/day${d}/set${s}/photo${itemId}.jpg`
-            const imgSrc = product.image &&!product.image.includes('photo') && product.image!== '/photo1.jpg'? product.image : calculatedImgPath
+            const t = Number(currentTaskNumber || product.taskOrder || 1)
+            // FIX: Force image to exact progress order - never mix 32 into 2
+            const imgSrc = `/vip${vipLevel || 1}/day${d}/set${s}/photo${t}.jpg`
             const baseRate = (Number(product.profitPercent) / 100) || 0.005
             const bonus = Number(product.bonusMultiplier) || 1
             const activeProfitRate = baseRate * bonus
@@ -249,31 +249,80 @@ function TVVideo() {
   useEffect(() => {
     const v = ref.current
     if (!v) return
-    const TV_KEY = 'tv_channel_start'
-    const syncLive = () => {
-      if (!v.duration ||!isFinite(v.duration) || v.duration === 0) return
+    const TV_KEY = 'tv_channel_start_v2'
+    let isSeeking = false
+
+    const getElapsed = () => {
       let start = localStorage.getItem(TV_KEY)
       if (!start) {
         start = Date.now().toString()
         localStorage.setItem(TV_KEY, start)
       }
-      const elapsed = (Date.now() - parseInt(start)) / 1000
-      v.currentTime = elapsed % v.duration
-      v.play().catch(()=>{})
+      return (Date.now() - parseInt(start)) / 1000
     }
-    const keepPlaying = () => { if (v.paused) v.play().catch(()=>{}) }
-    v.addEventListener('loadedmetadata', syncLive)
-    v.addEventListener('canplay', syncLive)
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncLive() })
-    window.addEventListener('touchstart', keepPlaying, { passive: true })
-    const t = setInterval(keepPlaying, 800)
-    if (v.readyState >= 1) syncLive()
+
+    const syncLive = () => {
+      if (!v.duration ||!isFinite(v.duration) || v.duration === 0) return
+      if (isSeeking) return
+      try {
+        isSeeking = true
+        const elapsed = getElapsed()
+        const target = elapsed % v.duration
+        // Only jump if drift > 1.5s to avoid blinking
+        if (Math.abs(v.currentTime - target) > 1.5) {
+          v.currentTime = target
+        }
+        v.play().catch(()=>{})
+      } catch {}
+      setTimeout(()=>{ isSeeking = false }, 200)
+    }
+
+    const forcePlay = () => {
+      if (v.paused) v.play().catch(()=>{})
+    }
+
+    const handleLoaded = () => {
+      syncLive()
+      forcePlay()
+    }
+
+    v.addEventListener('loadedmetadata', handleLoaded)
+    v.addEventListener('canplay', forcePlay)
+    v.addEventListener('pause', forcePlay)
+    v.addEventListener('ended', () => { syncLive() })
+
+    const visHandler = () => {
+      if (document.visibilityState === 'visible') {
+        syncLive()
+        forcePlay()
+      }
+    }
+    document.addEventListener('visibilitychange', visHandler)
+    window.addEventListener('pageshow', syncLive)
+    window.addEventListener('focus', syncLive)
+    window.addEventListener('touchstart', forcePlay, { passive: true })
+    window.addEventListener('click', forcePlay, { passive: true })
+
+    // Keep video alive on mobile - check every 500ms
+    const playInterval = setInterval(forcePlay, 500)
+    // Resync channel every 3 seconds - so leaving and coming back shows different frame
+    const syncInterval = setInterval(syncLive, 3000)
+
+    if (v.readyState >= 1) handleLoaded()
+
     return () => {
-      clearInterval(t)
-      v.removeEventListener('loadedmetadata', syncLive)
-      v.removeEventListener('canplay', syncLive)
+      clearInterval(playInterval)
+      clearInterval(syncInterval)
+      v.removeEventListener('loadedmetadata', handleLoaded)
+      v.removeEventListener('canplay', forcePlay)
+      v.removeEventListener('pause', forcePlay)
+      v.removeEventListener('ended', syncLive)
+      document.removeEventListener('visibilitychange', visHandler)
+      window.removeEventListener('pageshow', syncLive)
+      window.removeEventListener('focus', syncLive)
     }
   }, [])
+
   return (
     <video
       ref={ref}
@@ -283,10 +332,22 @@ function TVVideo() {
       muted
       playsInline
       preload="auto"
-      style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block', background: '#000' }}
+      disablePictureInPicture
+      controls={false}
+      style={{
+        width: '100%',
+        maxWidth: '800px',
+        height: 'auto',
+        display: 'block',
+        background: '#000',
+        transform: 'translateZ(0)',
+        willChange: 'transform',
+        backfaceVisibility: 'hidden',
+      }}
     />
   )
 }
+
 export default function StartingPage() {
   const router = useRouter()
   const t = useT()
@@ -310,7 +371,6 @@ export default function StartingPage() {
   const displayTaskNumber = setFinished? targetTotalTasks : Math.min(currentTaskNumber, targetTotalTasks)
   const x10Tasks = user?.x10TaskNumbers || []
 
-  // === EST MIDNIGHT RESET HELPERS ===
   const getNYDateString = (date) => {
     return date.toLocaleDateString('en-US', { timeZone: 'America/New_York' })
   }
@@ -328,8 +388,6 @@ export default function StartingPage() {
           u.walletBalance = round2(u.walletBalance)
           u.holdAmount = round2(u.holdAmount)
           u.todayProfit = round2(u.todayProfit || 0)
-
-          // --- FIXED: Check EST date ---
           const now = new Date()
           const todayNY = getNYDateString(now)
           if (u.lastProfitReset) {
@@ -347,11 +405,8 @@ export default function StartingPage() {
               }
             }
           } else {
-            // no reset date, force 0 if it's new day logic - keep existing profit but set reset date via api
-            // still call reset to set lastProfitReset
             await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) }).catch(()=>{})
           }
-
           localStorage.setItem('user', JSON.stringify(u))
           setUser(u)
           const activeArray = typeof u.activeProducts === 'string'? JSON.parse(u.activeProducts || '[]') : (u.activeProducts || [])
@@ -371,7 +426,6 @@ export default function StartingPage() {
     fetchUser()
   }, [router])
 
-  // === NEW: Auto reset at exact 00:00 EST midnight ===
   useEffect(() => {
     if (!user?.id) return
     const checkMidnight = async () => {
@@ -399,7 +453,6 @@ export default function StartingPage() {
             localStorage.setItem('user', JSON.stringify(u))
             setUser(u)
           } else {
-            // force 0.00 locally even if api fails
             const updated = {...localUser, todayProfit: 0.00, lastProfitReset: new Date().toISOString() }
             localStorage.setItem('user', JSON.stringify(updated))
             setUser(updated)
@@ -407,10 +460,7 @@ export default function StartingPage() {
         } catch {}
       }
     }
-
-    // check every 30 seconds for EST midnight
     const interval = setInterval(checkMidnight, 30000)
-    // also check immediately on mount
     checkMidnight()
     return () => clearInterval(interval)
   }, [user?.id])
