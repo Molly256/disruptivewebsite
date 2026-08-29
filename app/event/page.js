@@ -1,6 +1,6 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react' // <-- ADDED
+import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
 import { useT } from '@/lib/i18n'
@@ -8,40 +8,35 @@ import { useT } from '@/lib/i18n'
 export default function EventPage() {
   const router = useRouter()
   const t = useT()
-  const [user, setUser] = useState(null) // <-- ADDED
-  const [loading, setLoading] = useState(true) // <-- ADDED
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => { // <-- ADDED WHOLE BLOCK
+  useEffect(() => {
     const fetchUser = async () => {
       const savedUser = localStorage.getItem('user')
       if (!savedUser) {
         router.push('/login')
         return
       }
-
       const localUser = JSON.parse(savedUser)
-      setUser(localUser) // SHOW IMMEDIATELY SO NO BOUNCE
-
+      setUser(localUser)
       try {
         const res = await fetch(`/api/user?id=${localUser.id}`)
         const data = await res.json()
-
         if (res.ok && data.user) {
           setUser(data.user)
           localStorage.setItem('user', JSON.stringify(data.user))
         }
-        // IMPORTANT: if API fails, we still keep localUser. No logout.
       } catch (e) {
         console.error(e)
       } finally {
         setLoading(false)
       }
     }
-
     fetchUser()
   }, [router])
 
-  if (loading ||!user) return null // <-- ADDED
+  if (loading ||!user) return null
 
   const rewards = [
     { tier: 'Basic', amount: 'USD 100', extra: 'USD 10' },
@@ -60,11 +55,11 @@ export default function EventPage() {
     { level: 'VIP 5', icon: '💠', profit: '2.5%', work: '60 products/ set', deposit: 'usd 10,000-above', bg: 'linear-gradient(90deg, #8B5CF6 0%, #EC4899 100%)' },
   ]
 
+  // UPDATED - START FROM 5 DAYS
   const workdays = [
-    { days: 2, salary: 'USD 120' },
     { days: 5, salary: 'USD 1,000' },
     { days: 10, salary: 'USD 1,400' },
-    { days: 20, salary: 'USD 1,600' },
+    { days: 15, salary: 'USD 1,600' },
     { days: 30, salary: 'USD 2,000' },
   ]
 
@@ -73,7 +68,6 @@ export default function EventPage() {
 
       <AppHeader />
 
-      {/* TITLE */}
       <div style={{ padding: '20px 20px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer' }}>←</button>
         <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#000', margin: 0, flex: 1, textAlign: 'center' }}>
@@ -81,7 +75,6 @@ export default function EventPage() {
         </h1>
       </div>
 
-      {/* LOGO + TITLE SECTION */}
       <div style={{ padding: '0 20px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
         <img src="/logo.png" alt="Disruptive" style={{ width: '90px', height: 'auto' }} />
         <div style={{ textAlign: 'right' }}>
@@ -94,7 +87,6 @@ export default function EventPage() {
         </div>
       </div>
 
-      {/* 1ST BLOCK: RESET ADVANCE REWARDS */}
       <div style={{ margin: '0 20px 24px', background: '#000', borderRadius: '12px', padding: '16px' }}>
         <h2 style={{ color: '#FFF', fontSize: '14px', fontWeight: '700', margin: '0 0 12px' }}>
           Reset Advance Rewards <span style={{ color: '#FF0000' }}>.</span>
@@ -116,7 +108,6 @@ export default function EventPage() {
         </div>
       </div>
 
-      {/* 2ND BLOCK: ACCUMULATED DEPOSIT REWARDS */}
       <div style={{ padding: '0 20px 20px' }}>
         <h2 style={{ color: '#000', fontSize: '16px', fontWeight: '700', margin: '0 0 16px', textAlign: 'center' }}>
           Accumulated Deposit Rewards For The Day <span style={{ color: '#FF0000' }}>.</span>
@@ -141,13 +132,11 @@ export default function EventPage() {
         </div>
       </div>
 
-      {/* FOOTER FOR FIRST 2 BLOCKS */}
       <div style={{ margin: '0 20px 24px', background: '#000', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '4px' }}>
         <p style={{ color: '#AAA', fontSize: '9px', margin: 0 }}>Copyrights 2026 © Disruptive</p>
         <p style={{ color: '#AAA', fontSize: '9px', margin: 0, textAlign: 'right' }}>*The final interpretation right belongs to Disruptive platform</p>
       </div>
 
-      {/* 3RD BLOCK: VIP LEVEL CHART */}
       <div style={{ padding: '0 20px 20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
           <img src="/logo.png" alt="Disruptive" style={{ width: '100px', height: 'auto' }} />
@@ -180,9 +169,7 @@ export default function EventPage() {
         </div>
       </div>
 
-      {/* 4TH BLOCK: WORKDAY REWARDS SCHEME - LAST BLOCK */}
       <div style={{ padding: '0 20px 20px' }}>
-        {/* LOGO LEFT + TITLE RIGHT */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
           <img src="/logo.png" alt="Disruptive" style={{ width: '100px', height: 'auto' }} />
           <div style={{ textAlign: 'right' }}>
@@ -191,7 +178,6 @@ export default function EventPage() {
           </div>
         </div>
 
-        {/* BLACK TABLE */}
         <div style={{ background: '#000', borderRadius: '12px', padding: '16px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <h3 style={{ color: '#FFF', fontSize: '12px', fontWeight: '700', margin: 0 }}>Days Worked</h3>
@@ -200,14 +186,11 @@ export default function EventPage() {
 
           {workdays.map((item) => (
             <div key={item.days} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'center', marginBottom: '10px' }}>
-              {/* LEFT BLUE → HOT RED */}
               <div style={{ background: '#FF0000', borderRadius: '6px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ color: '#FFF', fontSize: '10px', fontWeight: '600' }}>Sign in</span>
                 <span style={{ color: '#FFF', fontSize: '16px', fontWeight: '800' }}>{item.days}</span>
                 <span style={{ color: '#FFF', fontSize: '10px', fontWeight: '600' }}>working days</span>
               </div>
-
-              {/* LIGHTNING + SALARY */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '20px' }}>⚡</span>
                 <div style={{ background: '#FFF', border: '2px solid #FF0000', borderRadius: '6px', padding: '8px 12px', flex: 1, textAlign: 'center' }}>
@@ -219,7 +202,6 @@ export default function EventPage() {
           ))}
         </div>
 
-        {/* HOW IT WORKS */}
         <div style={{ marginTop: '16px' }}>
           <h3 style={{ color: '#000', fontSize: '12px', fontWeight: '700', margin: '0 0 6px' }}>How It Works:</h3>
           <p style={{ color: '#444', fontSize: '10px', lineHeight: '1.5', margin: '0 0 8px' }}>
@@ -227,12 +209,11 @@ export default function EventPage() {
             The more you show up, the more you earn. Simple as that!
           </p>
           <p style={{ color: '#FF0000', fontSize: '10px', fontWeight: '700', margin: 0 }}>
-            Perfect attendance will earn up to USD 6,120 per month.
+            Perfect attendance will earn up to USD 6,000 per month.
           </p>
         </div>
       </div>
 
-      {/* FINAL FOOTER */}
       <div style={{ margin: '0 20px 20px', background: '#000', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: '4px' }}>
         <p style={{ color: '#AAA', fontSize: '9px', margin: 0 }}>Copyrights 2026 © Disruptive</p>
         <p style={{ color: '#AAA', fontSize: '9px', margin: 0, textAlign: 'right' }}>*The final interpretation right belongs to Disruptive platform</p>

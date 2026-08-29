@@ -7,6 +7,7 @@ export default function AdminChatModal({ isOpen, onClose }) {
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
   const endRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   const fetchChats = async () => {
     try{
@@ -27,11 +28,20 @@ export default function AdminChatModal({ isOpen, onClose }) {
   useEffect(()=>{ if(isOpen) fetchChats(); const i=setInterval(()=>{if(isOpen&&!selectedChat) fetchChats()},3000); return()=>clearInterval(i)},[isOpen,selectedChat])
   useEffect(()=>{ if(!selectedChat) return; fetchMessages(selectedChat.id); fetch('/api/chat/read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatId:selectedChat.id,who:'admin'})}); const i=setInterval(()=>fetchMessages(selectedChat.id),2000); return()=>clearInterval(i)},[selectedChat])
 
-  const send = async () => {
-    if(!text.trim()||!selectedChat) return
+  const send = async (imageUrl = null) => {
+    if((!text.trim() &&!imageUrl)||!selectedChat) return
     const t=text; setText('')
-    await fetch('/api/chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatId:selectedChat.id,text:t,sender:'admin',senderName:'Admin256'})})
+    await fetch('/api/chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatId:selectedChat.id,text:t || '📷 Image',sender:'admin',senderName:'Admin256', image: imageUrl || null})})
     fetchMessages(selectedChat.id); fetchChats()
+  }
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if(!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => send(ev.target.result)
+    reader.readAsDataURL(file)
+    e.target.value = ''
   }
 
   if(!isOpen) return null
@@ -39,27 +49,26 @@ export default function AdminChatModal({ isOpen, onClose }) {
   return (
     <div style={{ position:'fixed', inset:0, background:'#111b21', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <style>{`
-      .wa-wrap{ width:95vw; max-width:1000px; height:85vh; background:#fff; border-radius:12px; display:flex; overflow:hidden; }
-      .wa-side{ width:360px; border-right:1px solid #e9edef; display:flex; flex-direction:column; background:#fff; }
-      .wa-main{ flex:1; display:flex; flex-direction:column; background:#efeae2; position:relative; }
-      .wa-bg{ position:absolute; inset:0; background:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); opacity:.06; }
-      .wa-bub{ max-width:65%; padding:8px 10px; border-radius:8px; font-size:14.5px; line-height:19px; box-shadow:0 1px.5px rgba(0,0,0,.13); word-break:break-word; white-space:pre-wrap; position:relative; }
-      .wa-in{ background:#fff; align-self:flex-start; border-top-left-radius:0; }
-      .wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
-      .only-mobile{ display:none; }
+     .wa-wrap{ width:95vw; max-width:1000px; height:85vh; background:#fff; border-radius:12px; display:flex; overflow:hidden; }
+     .wa-side{ width:360px; border-right:1px solid #e9edef; display:flex; flex-direction:column; background:#fff; }
+     .wa-main{ flex:1; display:flex; flex-direction:column; background:#efeae2; position:relative; }
+     .wa-bg{ position:absolute; inset:0; background:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); opacity:.06; }
+     .wa-bub{ max-width:65%; padding:8px 10px; border-radius:8px; font-size:14.5px; line-height:19px; box-shadow:0 1px.5px rgba(0,0,0,.13); word-break:break-word; white-space:pre-wrap; position:relative; }
+     .wa-in{ background:#fff; align-self:flex-start; border-top-left-radius:0; }
+     .wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
+     .only-mobile{ display:none; }
         @media(max-width:768px){
-        .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
-        .wa-side{ width:100%; }
-        .wa-side.hide{ display:none; }
-        .wa-main{ display:none; width:100%; height:100dvh; }
-        .wa-main.show{ display:flex; }
-        .only-mobile{ display:flex!important; }
-        .hide-mobile{ display:none!important; }
+       .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
+       .wa-side{ width:100%; }
+       .wa-side.hide{ display:none; }
+       .wa-main{ display:none; width:100%; height:100dvh; }
+       .wa-main.show{ display:flex; }
+       .only-mobile{ display:flex!important; }
+       .hide-mobile{ display:none!important; }
         }
       `}</style>
 
       <div className="wa-wrap">
-        {/* INBOX LIST */}
         <div className={`wa-side ${selectedChat?'hide':''}`}>
           <div style={{ height:'60px', background:'#f0f2f5', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 12px' }}>
             <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
@@ -81,7 +90,6 @@ export default function AdminChatModal({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* FULL PAGE CHAT */}
         <div className={`wa-main ${selectedChat?'show':''}`}>
           <div className="wa-bg" />
           {!selectedChat? (
@@ -100,6 +108,7 @@ export default function AdminChatModal({ isOpen, onClose }) {
                   const me = m.sender==='admin'||m.senderRole==='admin'
                   return (
                     <div key={m.id} className={`wa-bub ${me?'wa-out':'wa-in'}`}>
+                      {m.image && <img src={m.image} alt="img" style={{ maxWidth:'200px', borderRadius:'8px', display:'block', marginBottom: m.text? '6px' : 0 }} />}
                       {m.text}
                       <div style={{ fontSize:'10px', color:'#667781', textAlign:'right', marginTop:'4px' }}>{m.timeString||new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} {me?'✓✓':''}</div>
                     </div>
@@ -109,8 +118,10 @@ export default function AdminChatModal({ isOpen, onClose }) {
               </div>
 
               <div style={{ zIndex:2, background:'#f0f2f5', padding:'8px 12px', display:'flex', gap:'8px', alignItems:'center' }}>
+                <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" style={{ display:'none' }} />
+                <button onClick={()=> fileInputRef.current?.click()} style={{ width:'44px', height:'44px', borderRadius:'50%', border:'none', background:'#fff', color:'#00a884', fontSize:'24px', cursor:'pointer' }}>+</button>
                 <input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==='Enter'&&send()} placeholder="Type a message" style={{ flex:1, border:'none', borderRadius:'22px', padding:'12px 16px', outline:'none', fontSize:'15px' }}/>
-                <button onClick={send} style={{ width:'44px', height:'44px', borderRadius:'50%', border:'none', background:'#00a884', color:'#fff', fontSize:'20px', cursor:'pointer' }}>➤</button>
+                <button onClick={()=>send()} style={{ width:'44px', height:'44px', borderRadius:'50%', border:'none', background:'#00a884', color:'#fff', fontSize:'20px', cursor:'pointer' }}>➤</button>
               </div>
             </>
           )}

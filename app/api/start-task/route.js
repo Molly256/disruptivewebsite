@@ -41,7 +41,6 @@ export async function POST(req) {
     const { userId } = await req.json()
     if (!userId) return NextResponse.json({ error: 'userId missing' }, { status: 400 })
 
-    // ALL LOGIC INSIDE TRANSACTION TO PREVENT DOUBLE TAP SKIP
     const result = await prisma.$transaction(async (tx) => {
       const user = await tx.user.findUnique({ where: { id: String(userId) } })
       if (!user) throw new Error('User not found')
@@ -65,7 +64,6 @@ export async function POST(req) {
         throw new Error('New user balance below 50 unable to continue trading')
       }
 
-      // CHECK INSIDE TX - THIS IS THE FIX FOR SKIP BUG
       let activeCheck = user.activeProducts
       if (typeof activeCheck === 'string') {
         try { activeCheck = JSON.parse(activeCheck) } catch { activeCheck = [] }
@@ -74,31 +72,37 @@ export async function POST(req) {
         throw new Error('You have an active task. Submit it first.')
       }
 
-      // Also check pending Task row inside tx
       const pending = await tx.task.findFirst({ where: { userId: String(userId), status: 'pending' } })
       if (pending) throw new Error('You have an active task. Submit it first.')
 
-      let fileSet = null
       let cached = []
       try {
         cached = typeof user.currentTaskProducts === 'string'? JSON.parse(user.currentTaskProducts || '[]') : (user.currentTaskProducts || [])
       } catch { cached = [] }
 
-      const cacheValid = cached.length === needed && Number(user.totalTasks) === needed
+      // ALWAYS load file set
+      let fileSet = await loadSet(vipLevel, currentDay, currentSet)
+      if (!fileSet) {
+        if (cached.length > 0) fileSet = cached
+        else throw new Error(`Admin hasn't configured VIP${vipLevel} Day${currentDay} Set${currentSet}`)
+      }
+      fileSet = [...fileSet].sort((a,b)=> Number(a.taskOrder||a.id) - Number(b.taskOrder||b.id))
 
-      if (cacheValid) {
-        fileSet = cached
-      } else {
-        fileSet = await loadSet(vipLevel, currentDay, currentSet)
-        if (!fileSet) throw new Error(`Admin hasn't configured VIP${vipLevel} Day${currentDay} Set${currentSet}`)
-        fileSet = [...fileSet].sort((a,b)=> Number(a.taskOrder||a.id) - Number(b.taskOrder||b.id))
-        if (fileSet.length!== needed) {
-          throw new Error(`Set has ${fileSet.length} tasks but VIP${vipLevel} needs ${needed}. Ask admin to save ${needed} tasks.`)
+      // IF ADMIN EDITED THIS USER'S TASK, USE ADMIN EDITED PRICE
+      const adminEdited = cached.find(p => p && Number(p.taskOrder || p.id) === userCurrentTaskNumber)
+      let normalProduct = fileSet.find(p => Number(p.taskOrder || p.id) === userCurrentTaskNumber)
+      if (!normalProduct) throw new Error(`No product ${userCurrentTaskNumber} in set (have ${fileSet.length})`)
+
+      if (adminEdited) {
+        normalProduct = {
+         ...normalProduct,
+          price: adminEdited.price!== undefined? adminEdited.price : normalProduct.price,
+          name: adminEdited.name || normalProduct.name,
+          image: adminEdited.image || normalProduct.image,
+          bonusMultiplier: adminEdited.bonusMultiplier!== undefined? adminEdited.bonusMultiplier : normalProduct.bonusMultiplier,
+          profitPercent: adminEdited.profitPercent!== undefined? adminEdited.profitPercent : normalProduct.profitPercent,
         }
       }
-
-      const normalProduct = fileSet.find(p => Number(p.taskOrder || p.id) === userCurrentTaskNumber)
-      if (!normalProduct) throw new Error(`No product ${userCurrentTaskNumber} in set (have ${fileSet.length})`)
 
       const rawPrice = Number(normalProduct.price || 0)
       const costMult = Number(normalProduct.costMultiplier || 1)
@@ -133,12 +137,30 @@ export async function POST(req) {
 
       const progressLabel = `D${currentDay} S${currentSet} T${userCurrentTaskNumber}/${needed}`
 
+      // KEEP ADMIN EDITS - don't overwrite cached if it already has 40 tasks
+      let toSaveProducts = fileSet
+      if (cached.length >= needed) {
+        // update only current task price inside cached to preserve all other admin edits
+        toSaveProducts = cached.map(p => {
+          if (Number(p.taskOrder || p.id) === userCurrentTaskNumber) {
+            return {...p, price: normalProduct.price, name: normalProduct.name }
+          }
+          return p
+        })
+      } else if (adminEdited) {
+        // inject admin edit into fileSet
+        toSaveProducts = fileSet.map(p => {
+          if (Number(p.taskOrder || p.id) === userCurrentTaskNumber) return {...p, price: adminEdited.price, name: adminEdited.name || p.name }
+          return p
+        })
+      }
+
       await tx.user.update({
         where: { id: String(userId) },
         data: {
           walletBalance: newWallet,
           holdAmount: newHold,
-          currentTaskProducts: fileSet,
+          currentTaskProducts: toSaveProducts,
           activeProducts: activeSnapshot,
           totalTasks: needed
         }

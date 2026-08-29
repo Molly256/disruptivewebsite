@@ -1,4 +1,4 @@
-// data/vip1/day5/vip1Set3.js - VIP1 DAY5 SET3 - TASK 29 & 34 COMBO x10
+// data/vip1/day5/vip1Set3.js - VIP1 DAY5 SET3 - TASK 29, 34 & 39 COMBO x10
 export const vip1Set3 = [
   { id: 1, name: "CITIZEN Series 8 NA1000-88A Date Automatic Men's Watch with Box and Warranty", rating: 1.7, price: 1104.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo1.jpg" },
   { id: 2, name: "New Helichrysum Essential Oil for Diffuser – 100% Pure & Natural | 10ml–5000ml", rating: 9.8, price: 1099.16, costMultiplier: 1, profitPercent: 0.5, image: "/photo2.jpg" },
@@ -40,7 +40,8 @@ export const vip1Set3 = [
   { id: 36, name: "MACHETE Ruby Sunglasses", rating: 8.5, price: 456.80, costMultiplier: 1, profitPercent: 0.5, image: "/photo36.jpg" },
   { id: 37, name: "IMI CCI PART NO 103225224233 ELECTRONIC POSITION LEVEL SENSORS AND TRANSMITTER", rating: 9.4, price: 1799.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo37.jpg" },
   { id: 38, name: "Electronic Power Steering Rack and Pinion for Land Rover Evoque BJ32-3200-HB", rating: 3.6, price: 1600.78, costMultiplier: 1, profitPercent: 0.5, image: "/photo38.jpg" },
-  { id: 39, name: "Xbox Crystal Console new and sealed OG Microsoft Clear", rating: 1.9, price: 2247.44, costMultiplier: 1, profitPercent: 0.5, image: "/photo39.jpg" },
+  // TASK 39 - NEW COMBO x10 - with popup /combo.jpg
+  { id: 39, name: "Rolex golden watch and louis vitton bag", rating: 1.9, price: 2247.44, costMultiplier: 1, profitPercent: 5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo39.jpg" },
   { id: 40, name: "Christina Magdolna Lumen Necklace", rating: 7.3, price: 3750.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo40.jpg" },
 ]
 

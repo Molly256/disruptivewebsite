@@ -138,6 +138,7 @@ async function loadSetData(day, set, vipLevel = 1) {
 }
 function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, holdAmount, x10Tasks, currentTaskNumber, currentDay, currentSet, isSubmitting }) {
   const [showCombo, setShowCombo] = useState(false)
+  const [popupImg, setPopupImg] = useState('')
   if (!products || products.length === 0) return null
   const safeWallet = round2(walletBalance)
   const safeHold = round2(holdAmount)
@@ -154,12 +155,27 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   const productSignature = products.map(p => p.productId || p.id).join('-')
   const taskCode = `${new Date().toISOString().slice(0,10).replace(/-/g,'')}-ID-${productSignature}`
   const createdAt = new Date().toLocaleString('en-US', { month: 'long', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-  const isComboTask = products.some(p => p.isCombo === true || Number(p.profitPercent) >= 5 || Number(p.bonusMultiplier) >= 10 || Number(p.comboMultiplier) >= 10)
+
   const handleSubmitClick = () => {
     if (isSubmitting) return
-    if (isComboTask) { setShowCombo(true); return }
+    const isVip1 = Number(vipLevel) === 1
+    const day = Number(currentDay)
+    const set = Number(currentSet)
+    const taskNo = Number(currentTaskNumber)
+
+    if (isVip1 && day === 5 && set === 3 && taskNo === 39) {
+      setPopupImg('/combo.jpg')
+      setShowCombo(true)
+      return
+    }
+    if (isVip1 && day === 3 && set === 3 && taskNo === 32) {
+      setPopupImg('/image50.jpg')
+      setShowCombo(true)
+      return
+    }
     onSubmit()
   }
+
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '1200px', margin: '0 auto' }}>
@@ -217,7 +233,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
     {showCombo && (
       <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
         <div style={{ background: '#FFF', borderRadius: 16, overflow: 'hidden', maxWidth: 400, width: '100%' }}>
-          <img src="/combo.jpg" alt="combo" style={{ width: '100%', display: 'block' }} />
+          <img src={popupImg} alt="popup" style={{ width: '100%', display: 'block' }} />
           <div style={{ padding: 12, display: 'flex', justifyContent: 'center' }}>
             <button onClick={() => { setShowCombo(false); onSubmit(); }} style={{ background: '#FF0000', color: '#FFF', border: 'none', padding: '8px 28px', borderRadius: 999, fontWeight: 800, cursor: 'pointer' }}>Close</button>
           </div>
@@ -245,17 +261,17 @@ function TVVideo() {
       v.currentTime = elapsed % v.duration
       v.play().catch(()=>{})
     }
+    const keepPlaying = () => { if (v.paused) v.play().catch(()=>{}) }
     v.addEventListener('loadedmetadata', syncLive)
     v.addEventListener('canplay', syncLive)
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncLive() })
+    window.addEventListener('touchstart', keepPlaying, { passive: true })
+    const t = setInterval(keepPlaying, 800)
     if (v.readyState >= 1) syncLive()
-    const onVisible = () => {
-      if (document.visibilityState === 'visible') syncLive()
-    }
-    document.addEventListener('visibilitychange', onVisible)
     return () => {
+      clearInterval(t)
       v.removeEventListener('loadedmetadata', syncLive)
       v.removeEventListener('canplay', syncLive)
-      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [])
   return (
@@ -267,7 +283,7 @@ function TVVideo() {
       muted
       playsInline
       preload="auto"
-      style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block' }}
+      style={{ width: '100%', maxWidth: '800px', height: 'auto', display: 'block', background: '#000' }}
     />
   )
 }
@@ -294,6 +310,11 @@ export default function StartingPage() {
   const displayTaskNumber = setFinished? targetTotalTasks : Math.min(currentTaskNumber, targetTotalTasks)
   const x10Tasks = user?.x10TaskNumbers || []
 
+  // === EST MIDNIGHT RESET HELPERS ===
+  const getNYDateString = (date) => {
+    return date.toLocaleDateString('en-US', { timeZone: 'America/New_York' })
+  }
+
   useEffect(() => {
     const fetchUser = async () => {
       const saved = localStorage.getItem('user')
@@ -308,27 +329,27 @@ export default function StartingPage() {
           u.holdAmount = round2(u.holdAmount)
           u.todayProfit = round2(u.todayProfit || 0)
 
-          // === FIXED COMMISSION RESET - ONLY AT MIDNIGHT USA (NY) ===
+          // --- FIXED: Check EST date ---
+          const now = new Date()
+          const todayNY = getNYDateString(now)
           if (u.lastProfitReset) {
-            const nowNYStr = new Date().toLocaleString("en-US", { timeZone: "America/New_York" })
-            const nowNY = new Date(nowNYStr)
-            const lastReset = new Date(u.lastProfitReset)
-            const lastResetNYStr = lastReset.toLocaleString("en-US", { timeZone: "America/New_York" })
-            const lastResetNY = new Date(lastResetNYStr)
-            const isDifferentDay = nowNY.toDateString()!== lastResetNY.toDateString()
-            if (isDifferentDay) {
-              // Call backend to reset, then use returned user
+            const lastNY = getNYDateString(new Date(u.lastProfitReset))
+            if (todayNY!== lastNY) {
               const resetRes = await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
               const resetData = await resetRes.json()
               if (resetRes.ok && resetData.user) {
                 u = resetData.user
                 u.walletBalance = round2(u.walletBalance)
                 u.holdAmount = round2(u.holdAmount)
-                u.todayProfit = round2(u.todayProfit || 0)
+                u.todayProfit = 0.00
               } else {
-                u.todayProfit = 0
+                u.todayProfit = 0.00
               }
             }
+          } else {
+            // no reset date, force 0 if it's new day logic - keep existing profit but set reset date via api
+            // still call reset to set lastProfitReset
+            await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) }).catch(()=>{})
           }
 
           localStorage.setItem('user', JSON.stringify(u))
@@ -349,6 +370,50 @@ export default function StartingPage() {
     }
     fetchUser()
   }, [router])
+
+  // === NEW: Auto reset at exact 00:00 EST midnight ===
+  useEffect(() => {
+    if (!user?.id) return
+    const checkMidnight = async () => {
+      const saved = localStorage.getItem('user')
+      if (!saved) return
+      const localUser = JSON.parse(saved)
+      const now = new Date()
+      const todayNY = getNYDateString(now)
+      const lastResetStr = localUser.lastProfitReset || user.lastProfitReset
+      if (!lastResetStr) return
+      const lastNY = getNYDateString(new Date(lastResetStr))
+      if (todayNY!== lastNY) {
+        try {
+          const resetRes = await fetch('/api/user/reset-today', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({userId: localUser.id})
+          })
+          const resetData = await resetRes.json()
+          if (resetRes.ok && resetData.user) {
+            let u = resetData.user
+            u.walletBalance = round2(u.walletBalance)
+            u.holdAmount = round2(u.holdAmount)
+            u.todayProfit = 0.00
+            localStorage.setItem('user', JSON.stringify(u))
+            setUser(u)
+          } else {
+            // force 0.00 locally even if api fails
+            const updated = {...localUser, todayProfit: 0.00, lastProfitReset: new Date().toISOString() }
+            localStorage.setItem('user', JSON.stringify(updated))
+            setUser(updated)
+          }
+        } catch {}
+      }
+    }
+
+    // check every 30 seconds for EST midnight
+    const interval = setInterval(checkMidnight, 30000)
+    // also check immediately on mount
+    checkMidnight()
+    return () => clearInterval(interval)
+  }, [user?.id])
 
   const allMessages = [...winnerMessages,...winnerMessages,...winnerMessages]
 

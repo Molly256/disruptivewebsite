@@ -20,27 +20,89 @@ export default function ProfilePage() {
   const [user, setUser] = useState(null)
   const [avatar, setAvatar] = useState('')
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user')
-    if (!savedUser) { router.push('/login'); return }
-    let u = JSON.parse(savedUser)
-    if (!u.vipLevel) u.vipLevel = 'VIP1'
-    if (!u.creditScore && u.creditScore!==0) u.creditScore = 100
-    if (!u.vipId) u.vipId = 1
-    setUser(u)
-    setAvatar(u.avatar || '')
-    const refresh = async () => {
+  const getNYDateString = (date) => {
+    return date.toLocaleDateString('en-US', { timeZone: 'America/New_York' })
+  }
+
+  const checkAndResetProfit = async (u) => {
+    const now = new Date()
+    const todayNY = getNYDateString(now)
+    if (!u?.id) return u
+    const lastResetStr = u.lastProfitReset
+    if (!lastResetStr) {
       try {
-        const res = await fetch(`/api/user?id=${u.id}`)
+        await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) }).catch(()=>{})
+      } catch {}
+      return u
+    }
+    const lastNY = getNYDateString(new Date(lastResetStr))
+    if (todayNY !== lastNY) {
+      try {
+        const res = await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
         const data = await res.json()
         if (res.ok && data.user) {
-          setUser(data.user)
-          localStorage.setItem('user', JSON.stringify(data.user))
+          const updated = {...data.user, todayProfit: 0.00}
+          localStorage.setItem('user', JSON.stringify(updated))
+          return updated
+        } else {
+          const updated = {...u, todayProfit: 0.00, lastProfitReset: new Date().toISOString()}
+          localStorage.setItem('user', JSON.stringify(updated))
+          return updated
         }
-      } catch(e) {}
+      } catch {
+        const updated = {...u, todayProfit: 0.00, lastProfitReset: new Date().toISOString()}
+        localStorage.setItem('user', JSON.stringify(updated))
+        return updated
+      }
     }
-    refresh()
+    return u
+  }
+
+  useEffect(() => {
+    const init = async () => {
+      const savedUser = localStorage.getItem('user')
+      if (!savedUser) { router.push('/login'); return }
+      let u = JSON.parse(savedUser)
+      if (!u.vipLevel) u.vipLevel = 'VIP1'
+      if (!u.creditScore && u.creditScore!==0) u.creditScore = 100
+      if (!u.vipId) u.vipId = 1
+      
+      u = await checkAndResetProfit(u)
+      setUser(u)
+      setAvatar(u.avatar || '')
+
+      const refresh = async () => {
+        try {
+          const res = await fetch(`/api/user?id=${u.id}`)
+          const data = await res.json()
+          if (res.ok && data.user) {
+            let refreshed = data.user
+            refreshed = await checkAndResetProfit(refreshed)
+            setUser(refreshed)
+            localStorage.setItem('user', JSON.stringify(refreshed))
+          }
+        } catch(e) {}
+      }
+      refresh()
+    }
+    init()
   }, [router])
+
+  useEffect(() => {
+    if (!user?.id) return
+    const interval = setInterval(async () => {
+      const saved = localStorage.getItem('user')
+      if (!saved) return
+      let u = JSON.parse(saved)
+      const todayNY = getNYDateString(new Date())
+      const lastNY = getNYDateString(new Date(u.lastProfitReset || user.lastProfitReset || new Date()))
+      if (todayNY !== lastNY) {
+        const reseted = await checkAndResetProfit(u)
+        setUser(reseted)
+      }
+    }, 30000)
+    return () => clearInterval(interval)
+  }, [user?.id])
 
   const handleAvatarClick = () => fileInputRef.current.click()
   const handleFileChange = (e) => {
