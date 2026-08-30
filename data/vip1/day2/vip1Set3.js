@@ -16,7 +16,7 @@ export const vip1Set3 = [
   { id: 14, name: "By Anthropologie Faux Suede Buckle Shoulder Bag", rating: 4.9, price: 108.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo14.jpg" },
   { id: 15, name: "Breda Virgil Tethered Watch", rating: 8.5, price: 78.98, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo15.jpg" },
   { id: 16, name: "Dolce Vita Briza Perf4rated Tote", rating: 9.5, price: 117.60, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo16.jpg" },
-  { id: 17, name: "Elle Jewelry Storage Cabinet", rating: 2.6, price: 203.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo17.jpg" },
+  { id: 17, name: "Elle Jewelry Storage Cabinet", rating: 2.6, price: 161.90, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo17.jpg" },
   { id: 18, name: "Goldbug Collection Birthday Daisy Charm", rating: 8.1, price: 125.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo18.jpg" },
   { id: 19, name: "Melinda Maria Maven 18\" Tennis Necklace", rating: 8.9, price: 88.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo19.jpg" },
   { id: 20, name: "Wolf 1834 Bella Vegan Textured Leather Jewelry Box", rating: 6.0, price: 120.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo20.jpg" },

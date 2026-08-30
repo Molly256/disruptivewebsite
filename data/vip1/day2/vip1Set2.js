@@ -23,7 +23,7 @@ export const vip1Set2 = [
   { id: 21, name: "STRONG 100% RECYCLABLE CLEAR MAILING BAGS MAILERS POSTAL BAGS *ALL SIZES/QTY'S*", rating: 6.9, price: 33.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo21.jpg" },
   { id: 22, name: "Mixed Year/Product Basketball Bundle Lot - Rookies and Vets - 4202 Cards", rating: 1.0, price: 74.24, costMultiplier: 1, profitPercent: 0.5, image: "/photo22.jpg" },
   { id: 23, name: "Minifigs 25mm Napoleonic French Line Fusiliers (Mixed Battalions) x 25", rating: 1.1, price: 56.02, costMultiplier: 1, profitPercent: 0.5, image: "/photo23.jpg" },
-  { id: 24, name: "JointGel FORMULA 3 Cans- MIXED BERRY POWDER Purity Products Fortigel/OptiMSM", rating: 4.4, price: 207.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo24.jpg" },
+  { id: 24, name: "JointGel FORMULA 3 Cans- MIXED BERRY POWDER Purity Products Fortigel/OptiMSM", rating: 4.4, price: 156.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo24.jpg" },
   { id: 25, name: "AVEMAR Granulate Drink Powder - 60 Sachets - FRESH MODEL - FREE EXPRESS SHIPPING", rating: 6.1, price: 168.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo25.jpg" },
   { id: 26, name: "Mixed Pearl Slider Bracelet", rating: 3.2, price: 48.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo26.jpg" },
   { id: 27, name: "Mixed Crystal Necklace", rating: 3.9, price: 54.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo27.jpg" },

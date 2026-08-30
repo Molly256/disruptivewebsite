@@ -33,7 +33,7 @@ export const vip1Set3 = [
   { id: 30, name: "Hilton and McConnico Crystal Feather Fragrance Bottle Daum France Cheyenne Box", rating: 6.4, price: 879.97, costMultiplier: 1, profitPercent: 0.5, image: "/photo30.jpg" },
   { id: 31, name: "Olympus V70 Endoscope CF V701 Electronic Colonoscope and Shell", rating: 9.5, price: 1500.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo31.jpg" },
   { id: 32, name: "Silent D Hervee Tall Boots", rating: 1.3, price: 300.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo32.jpg" },
-  { id: 33, name: "Nicolas Ambrosio Pearl Carabiner Single Earring", rating: 3.6, price: 2031.80, costMultiplier: 1, profitPercent: 0.5, image: "/photo33.jpg" },
+  { id: 33, name: "Nicolas Ambrosio Pearl Carabiner Single Earring", rating: 3.6, price: 1301.70, costMultiplier: 1, profitPercent: 0.5, image: "/photo33.jpg" },
   // TASK 34 - COMBO x10 (0.5% -> 5%)
   { id: 34, name: "pink apple laptop and black ipod", rating: 9.7, price: 1125.00, costMultiplier: 1, profitPercent: 5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo34.jpg" },
   { id: 35, name: "Bernardo Cappadocia Raffia Mules", rating: 7.0, price: 328.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo35.jpg" },

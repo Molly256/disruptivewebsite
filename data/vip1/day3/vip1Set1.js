@@ -3,7 +3,7 @@ export const vip1Set1 = [
   { id: 1, name: "Hampton Sun SPF 50 Sun Glow Luminous Body Oil", rating: 2.3, price: 28.80, costMultiplier: 1, profitPercent: 0.5, image: "/photo1.jpg" },
   { id: 2, name: "Matcha at Home: 50 Drinks and Food Recipes Hardcover Cookbook", rating: 8.1, price: 68.98, costMultiplier: 1, profitPercent: 0.5, image: "/photo2.jpg" },
   { id: 3, name: "Caudalie SPF 50 Vinosun Protect Daily Mineral Sunscreen Lotion", rating: 8.6, price: 39.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo3.jpg" },
-  { id: 4, name: "Coffee Cards: 50 Recipes for a Better Brew", rating: 3.1, price: 110.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo4.jpg" },
+  { id: 4, name: "Coffee Cards: 50 Recipes for a Better Brew", rating: 3.1, price: 89.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo4.jpg" },
   { id: 5, name: "PoolBar London SPF 50 Hydrating Mineral Face Sunscreen Cream", rating: 3.3, price: 98.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo5.jpg" },
   { id: 6, name: "Project Reef SPF 50 Mineral Sunscreen Stick", rating: 9.2, price: 51.13, costMultiplier: 1, profitPercent: 0.5, image: "/photo6.jpg" },
   { id: 7, name: "Project Reef SPF 50 Mineral Sunscreen", rating: 3.7, price: 32.00, costMultiplier: 1, profitPercent: 0.5, image: "/photo7.jpg" },
