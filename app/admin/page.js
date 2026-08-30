@@ -31,7 +31,6 @@ export default function AdminPage() {
   const [editData, setEditData] = useState({name:'', price:0})
 
   const [manageSearch, setManageSearch] = useState(''); const [manageUser, setManageUser] = useState(null);
-
   const [depositSearch, setDepositSearch] = useState(''); const [depositUser, setDepositUser] = useState(null); const [depositAmount, setDepositAmount] = useState(''); const [showDepositInput, setShowDepositInput] = useState(false);
   const [withdrawList, setWithdrawList] = useState([]);
   const [notifSearch, setNotifSearch] = useState(''); const [notifUser, setNotifUser] = useState(null); const [showNotifInput, setShowNotifInput] = useState(false); const [notifMessage, setNotifMessage] = useState('');
@@ -53,6 +52,43 @@ export default function AdminPage() {
     setter(data.user)
   }
 
+  // === FIXED: THE 3 MISSING FUNCTIONS ===
+  const loadEditSet = async (vipLevel, day, setNum) => {
+    try {
+      setActiveEditSet(setNum)
+      setEditSetData([])
+      setSelectedEditItems([])
+      const res = await fetch(`/api/admin/tasks/get-set?userId=${editUser.id}&vipLevel=${vipLevel}&day=${day}&set=${setNum}`)
+      const data = await res.json()
+      if (res.ok) {
+        setEditSetData(data.tasks || [])
+      } else {
+        alert(data.error || 'Failed to load set')
+      }
+    } catch (e) {
+      alert('Load failed: ' + e.message)
+    }
+  }
+
+  const editItem = (item) => {
+    setEditingPhoto(item)
+    setEditData({ name: item.name || '', price: item.price || 0 })
+  }
+
+  const saveEdit = () => {
+    if (!editingPhoto) return
+    setEditSetData(prev => prev.map(p =>
+      Number(p.taskOrder) === Number(editingPhoto.taskOrder)
+       ? {...p, name: editData.name, price: parseFloat(editData.price) || 0 }
+        : p
+    ))
+    if (!selectedEditItems.includes(Number(editingPhoto.taskOrder))) {
+      setSelectedEditItems(prev => [...prev, Number(editingPhoto.taskOrder)])
+    }
+    setEditingPhoto(null)
+  }
+  // === END FIX ===
+
   const handleUpgrade = async () => {
     if(!selectedVip ||!foundUser) return alert('Select VIP')
     const totalTasks = vipList.find(v => v.id === selectedVip.id).tasks
@@ -70,97 +106,58 @@ export default function AdminPage() {
   const handlePassReset = async () => {
     if(!newPass) return alert('Enter new password')
     try {
-      const res = await fetch('/api/admin/reset-password', { 
-        method: 'POST', 
-        headers: {'Content-Type':'application/json'}, 
-        body: JSON.stringify({ userId: passUser.id, newPassword: newPass }) 
-      })
+      const res = await fetch('/api/admin/reset-password', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: passUser.id, newPassword: newPass }) })
       const data = await res.json()
-      console.log('RESET RESULT:', data)
-      if(res.ok) { 
-        alert('Password Reset DONE for ' + passUser.username)
-        setShowPassInput(false)
-        setNewPass('') 
-      } else {
-        alert('FAILED: ' + (data.error || JSON.stringify(data)))
-      }
-    } catch (err) {
-      alert('Fetch error: ' + err.message)
-    }
+      if(res.ok) { alert('Password Reset DONE for ' + passUser.username); setShowPassInput(false); setNewPass('') } else alert('FAILED: ' + (data.error || JSON.stringify(data)))
+    } catch (err) { alert('Fetch error: ' + err.message) }
   }
 
   const handleSaveEditedData = async () => {
-  if(!editUser) return alert('No user selected')
-  if(editSetData.length === 0) return alert('No task items loaded to update')
-  if(selectedEditItems.length === 0) return alert('No modified items detected to save')
-
-  try {
-    // Loop through each checked item and send them sequentially to the backend
-    for(const taskOrder of selectedEditItems) {
-      const item = editSetData.find(p => Number(p.taskOrder) === Number(taskOrder))
-      if(!item) continue
-
-      const res = await fetch('/api/admin/tasks/edit-user-task', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ 
-          userId: editUser.id, 
-          taskOrder: Number(taskOrder), 
-          newPrice: Number(item.price || 0), 
-          newName: item.name || ''
+    if(!editUser) return alert('No user selected')
+    if(editSetData.length === 0) return alert('No task items loaded')
+    if(selectedEditItems.length === 0) return alert('No items selected')
+    try {
+      for(const taskOrder of selectedEditItems) {
+        const item = editSetData.find(p => Number(p.taskOrder) === Number(taskOrder))
+        if(!item) continue
+        const res = await fetch('/api/admin/tasks/edit-user-task', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({
+            userId: editUser.id,
+            taskOrder: Number(taskOrder),
+            newPrice: Number(item.price || 0),
+            newName: item.name || '',
+            vipLevel: editUser.vipLevel,
+            day: editUser.currentDay || 1,
+            setNumber: activeEditSet
+          })
         })
-      })
-      
-      const data = await res.json()
-      if(!res.ok) throw new Error(data.error || 'Database save failed')
-    }
-    
-    alert(`Successfully saved all custom task data parameters for ${editUser.username} only!`)
-    setSelectedEditItems([])
-    
-    // Hard refresh of user state metrics directly from your database
-    const refreshRes = await fetch(`/api/user/search?q=${encodeURIComponent(editUser.username)}`)
-    const refreshData = await refreshRes.json()
-    if(refreshRes.ok) {
-      setEditUser(refreshData.user)
-    }
-  } catch(e) {
-    alert(`Save failed: ${e.message}`)
+        const data = await res.json()
+        if(!res.ok) throw new Error(data.error || 'Save failed')
+      }
+      alert(`Saved for ${editUser.username} only!`)
+      setSelectedEditItems([])
+      const refreshRes = await fetch(`/api/user/search?q=${encodeURIComponent(editUser.username)}`)
+      const refreshData = await refreshRes.json()
+      if(refreshRes.ok) setEditUser(refreshData.user)
+    } catch(e) { alert(`Save failed: ${e.message}`) }
   }
-}
 
- const handleResetToNextSet = async () => {
+  const handleResetToNextSet = async () => {
     if(!manageUser) return alert('Search user first')
     if(manageUser.currentSet >= 3) return alert('Set 3 cannot be reset. Use Next Day')
-    const res = await fetch('/api/admin/reset-set-progress', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
-    })
+    const res = await fetch('/api/admin/reset-set-progress', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: manageUser.id, adminId: admin.id }) })
     const data = await res.json()
-    if(res.ok && data.user) {
-      setManageUser(data.user);
-      alert(`Moved to Set ${data.user.currentSet}`)
-    } else {
-      alert(data.error || 'Failed')
-    }
+    if(res.ok && data.user) { setManageUser(data.user); alert(`Moved to Set ${data.user.currentSet}`) } else alert(data.error || 'Failed')
   }
 
   const handleNextDay = async () => {
     if(!manageUser) return alert('Search user first')
     if(manageUser.currentDay >= 5) return alert('Max Day 5 reached')
-    const res = await fetch('/api/admin/next-day/progress', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: manageUser.id, adminId: admin.id })
-    })
+    const res = await fetch('/api/admin/next-day/progress', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: manageUser.id, adminId: admin.id }) })
     const data = await res.json()
-    if(res.ok && data.user) {
-      setManageUser(data.user);
-      alert(`Moved to Day ${data.user.currentDay} Set 1`)
-    } else {
-      alert(data.error || 'Failed')
-    }
+    if(res.ok && data.user) { setManageUser(data.user); alert(`Moved to Day ${data.user.currentDay} Set 1`) } else alert(data.error || 'Failed')
   }
 
   const handleDeposit = async () => { if(!depositAmount) return alert('Enter amount'); const res = await fetch('/api/admin/deposit', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: depositUser.id, amount: parseFloat(depositAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setDepositUser({...depositUser, walletBalance: data.newBalance}); alert('Deposited'); setShowDepositInput(false); setDepositAmount('') } else alert('Failed') }
@@ -168,11 +165,8 @@ export default function AdminPage() {
     try {
       const res = await fetch(`/api/admin/withdraw/${action}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ txId, adminId: admin.id }) });
       const data = await res.json();
-      if(res.ok) { alert(`${action} success`); fetchWithdraws() }
-      else alert(`Failed: ${data.error || JSON.stringify(data)}`)
-    } catch(e) {
-      alert(`Failed: ${e.message}`)
-    }
+      if(res.ok) { alert(`${action} success`); fetchWithdraws() } else alert(`Failed: ${data.error || JSON.stringify(data)}`)
+    } catch(e) { alert(`Failed: ${e.message}`) }
   }
   const handleSendNotif = async () => { if(!notifMessage) return alert('Enter message'); const res = await fetch('/api/admin/notifications', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: notifUser.id, message: notifMessage, adminId: admin.id }) }); if(res.ok) { alert('Notification Sent'); setNotifMessage(''); setShowNotifInput(false) } else alert('Failed') }
   const handleGiveBonus = async () => { if(!bonusAmount) return alert('Enter amount'); const res = await fetch('/api/admin/give-bonus', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ userId: bonusUser.id, amount: parseFloat(bonusAmount), adminId: admin.id }) }); if(res.ok) { const data = await res.json(); setBonusUser({...bonusUser, specialBonus: data.newBonus}); alert('Bonus Given'); setShowBonusInput(false); setBonusAmount('') } else alert('Failed') }
