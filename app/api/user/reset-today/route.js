@@ -10,6 +10,7 @@ export async function POST(req) {
       where: { id: String(userId) },
       data: {
         todayProfit: 0,
+        specialBonus: 0,
         lastProfitReset: new Date()
       }
     })

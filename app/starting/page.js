@@ -388,6 +388,7 @@ export default function StartingPage() {
           u.walletBalance = round2(u.walletBalance)
           u.holdAmount = round2(u.holdAmount)
           u.todayProfit = round2(u.todayProfit || 0)
+          u.specialBonus = round2(u.specialBonus || 0)
           const now = new Date()
           const todayNY = getNYDateString(now)
           if (u.lastProfitReset) {
@@ -400,12 +401,26 @@ export default function StartingPage() {
                 u.walletBalance = round2(u.walletBalance)
                 u.holdAmount = round2(u.holdAmount)
                 u.todayProfit = 0.00
+                u.specialBonus = 0.00
               } else {
                 u.todayProfit = 0.00
+                u.specialBonus = 0.00
               }
             }
           } else {
-            await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) }).catch(()=>{})
+            const resetRes = await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) }).catch(()=>{})
+            if(resetRes){
+              try{
+                const rd = await resetRes.json()
+                if(rd.user){
+                  u = rd.user
+                  u.walletBalance = round2(u.walletBalance)
+                  u.holdAmount = round2(u.holdAmount)
+                  u.todayProfit = 0.00
+                  u.specialBonus = 0.00
+                }
+              }catch{}
+            }
           }
           localStorage.setItem('user', JSON.stringify(u))
           setUser(u)
@@ -450,10 +465,11 @@ export default function StartingPage() {
             u.walletBalance = round2(u.walletBalance)
             u.holdAmount = round2(u.holdAmount)
             u.todayProfit = 0.00
+            u.specialBonus = 0.00
             localStorage.setItem('user', JSON.stringify(u))
             setUser(u)
           } else {
-            const updated = {...localUser, todayProfit: 0.00, lastProfitReset: new Date().toISOString() }
+            const updated = {...localUser, todayProfit: 0.00, specialBonus: 0.00, lastProfitReset: new Date().toISOString() }
             localStorage.setItem('user', JSON.stringify(updated))
             setUser(updated)
           }
@@ -492,6 +508,7 @@ export default function StartingPage() {
         data.user.walletBalance = round2(data.user.walletBalance)
         data.user.holdAmount = round2(data.user.holdAmount)
         data.user.todayProfit = round2(data.user.todayProfit || 0)
+        data.user.specialBonus = round2(data.user.specialBonus || 0)
         localStorage.setItem('user', JSON.stringify(data.user))
         setUser(data.user)
         const day = data.user.currentDay || 1
@@ -528,6 +545,7 @@ export default function StartingPage() {
         data.user.walletBalance = round2(data.user.walletBalance)
         data.user.holdAmount = round2(data.user.holdAmount)
         data.user.todayProfit = round2(data.user.todayProfit || 0)
+        data.user.specialBonus = round2(data.user.specialBonus || 0)
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
         setShowDetail(false);
