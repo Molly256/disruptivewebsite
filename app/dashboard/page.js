@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n'
 import AdminChatModal from '@/components/AdminChatModal'
 import AdminCreditScoreModal from '@/components/AdminCreditScoreModal'
 import AdminRiskControlModal from '@/components/AdminRiskControlModal'
+import AdminTransactPasswordModal from '@/components/AdminTransactPasswordModal'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function Dashboard() {
   const [showAdminChat, setShowAdminChat] = useState(false)
   const [showCreditScore, setShowCreditScore] = useState(false)
   const [showRiskControl, setShowRiskControl] = useState(false)
+  const [showTransactPassword, setShowTransactPassword] = useState(false)
 
   useEffect(() => {
     const checkScreen = () => setIsDesktop(window.innerWidth >= 768)
@@ -92,13 +94,15 @@ export default function Dashboard() {
   const chatAdminButton = { name: 'Chat', emoji: '💬', action: 'adminChat' }
   const creditScoreButton = { name: 'Credit Score', emoji: '📊', action: 'creditScore' }
   const riskControlButton = { name: 'Risk Control', emoji: '🛡️', action: 'riskControl' }
-  const clicks = isSuperAdmin? [adminButton, chatAdminButton, creditScoreButton, riskControlButton,...baseClicks] : baseClicks
+  const transactPasswordButton = { name: 'Transact Password', emoji: '🔑', action: 'transactPassword' }
+  const clicks = isSuperAdmin? [adminButton, chatAdminButton, creditScoreButton, riskControlButton, transactPasswordButton,...baseClicks] : baseClicks
 
   const handleClick = (item) => {
     if (item.action === 'deposit') setShowDepositPopup(true)
     else if (item.action === 'adminChat') setShowAdminChat(true)
     else if (item.action === 'creditScore') setShowCreditScore(true)
     else if (item.action === 'riskControl') setShowRiskControl(true)
+    else if (item.action === 'transactPassword') setShowTransactPassword(true)
     else router.push(item.url)
   }
 
@@ -142,7 +146,7 @@ export default function Dashboard() {
         <h2 style={{ fontSize: '12px', fontWeight: '400', color: '#666', letterSpacing: '1px', marginBottom: '16px' }}>{t('quickClicks')}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
           {clicks.map((item) => (
-            <button key={item.name} onClick={() => handleClick(item)} style={{ background: (item.name === t('adminPanel') || item.name === 'Chat' || item.name === 'Credit Score' || item.name === 'Risk Control')? '#FF1493' : '#cc0000', border: 'none', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', position: 'relative' }}>
+            <button key={item.name} onClick={() => handleClick(item)} style={{ background: (item.name === t('adminPanel') || item.name === 'Chat' || item.name === 'Credit Score' || item.name === 'Risk Control' || item.name === 'Transact Password')? '#FF1493' : '#cc0000', border: 'none', borderRadius: '12px', padding: '16px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer', position: 'relative' }}>
               <span style={{ fontSize: '24px' }}>{item.emoji}</span>
               <span style={{ fontSize: '12px', fontWeight: '500', color: '#000', textAlign: 'center' }}>{item.name}</span>
               {item.name === 'Chat' && unreadCount > 0 && <span style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#FF0000', color: '#FFF', minWidth: '20px', height: '20px', borderRadius: '50%', fontSize: '11px', fontWeight: '900', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', border: '2px solid #FFF' }}>{unreadCount > 99? '99+' : unreadCount}</span>}
@@ -183,6 +187,7 @@ export default function Dashboard() {
       {showAdminChat && <AdminChatModal isOpen={showAdminChat} onClose={() => setShowAdminChat(false)} />}
       {showCreditScore && <AdminCreditScoreModal isOpen={showCreditScore} onClose={() => setShowCreditScore(false)} adminId={user?.id} />}
       {showRiskControl && <AdminRiskControlModal isOpen={showRiskControl} onClose={() => setShowRiskControl(false)} adminId={user?.id} />}
+      {showTransactPassword && <AdminTransactPasswordModal isOpen={showTransactPassword} onClose={() => setShowTransactPassword(false)} adminId={user?.id} />}
       <BottomNav />
     </div>
   )

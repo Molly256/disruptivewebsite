@@ -188,7 +188,6 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             const d = currentDay || 1
             const s = currentSet || 1
             const t = Number(currentTaskNumber || product.taskOrder || 1)
-            // FIX: Force image to exact progress order - never mix 32 into 2
             const imgSrc = `/vip${vipLevel || 1}/day${d}/set${s}/photo${t}.jpg`
             const baseRate = (Number(product.profitPercent) / 100) || 0.005
             const bonus = Number(product.bonusMultiplier) || 1
@@ -251,7 +250,6 @@ function TVVideo() {
     if (!v) return
     const TV_KEY = 'tv_channel_start_v2'
     let isSeeking = false
-
     const getElapsed = () => {
       let start = localStorage.getItem(TV_KEY)
       if (!start) {
@@ -260,7 +258,6 @@ function TVVideo() {
       }
       return (Date.now() - parseInt(start)) / 1000
     }
-
     const syncLive = () => {
       if (!v.duration ||!isFinite(v.duration) || v.duration === 0) return
       if (isSeeking) return
@@ -268,7 +265,6 @@ function TVVideo() {
         isSeeking = true
         const elapsed = getElapsed()
         const target = elapsed % v.duration
-        // Only jump if drift > 1.5s to avoid blinking
         if (Math.abs(v.currentTime - target) > 1.5) {
           v.currentTime = target
         }
@@ -276,21 +272,17 @@ function TVVideo() {
       } catch {}
       setTimeout(()=>{ isSeeking = false }, 200)
     }
-
     const forcePlay = () => {
       if (v.paused) v.play().catch(()=>{})
     }
-
     const handleLoaded = () => {
       syncLive()
       forcePlay()
     }
-
     v.addEventListener('loadedmetadata', handleLoaded)
     v.addEventListener('canplay', forcePlay)
     v.addEventListener('pause', forcePlay)
     v.addEventListener('ended', () => { syncLive() })
-
     const visHandler = () => {
       if (document.visibilityState === 'visible') {
         syncLive()
@@ -302,14 +294,9 @@ function TVVideo() {
     window.addEventListener('focus', syncLive)
     window.addEventListener('touchstart', forcePlay, { passive: true })
     window.addEventListener('click', forcePlay, { passive: true })
-
-    // Keep video alive on mobile - check every 500ms
     const playInterval = setInterval(forcePlay, 500)
-    // Resync channel every 3 seconds - so leaving and coming back shows different frame
     const syncInterval = setInterval(syncLive, 3000)
-
     if (v.readyState >= 1) handleLoaded()
-
     return () => {
       clearInterval(playInterval)
       clearInterval(syncInterval)
@@ -322,7 +309,6 @@ function TVVideo() {
       window.removeEventListener('focus', syncLive)
     }
   }, [])
-
   return (
     <video
       ref={ref}
@@ -345,6 +331,32 @@ function TVVideo() {
         backfaceVisibility: 'hidden',
       }}
     />
+  )
+}
+
+function WinnerTicker({ messages }){
+  const innerRef = useRef(null)
+  useEffect(()=>{
+    const KEY='winner_ticker_start_v3'
+    let start = localStorage.getItem(KEY)
+    if(!start){
+      start = Date.now().toString()
+      localStorage.setItem(KEY, start)
+    }
+    const elapsed = (Date.now() - parseInt(start)) / 1000
+    const DURATION = 600
+    const offset = elapsed % DURATION
+    if(innerRef.current){
+      innerRef.current.style.animation = `scroll ${DURATION}s linear infinite`
+      innerRef.current.style.animationDelay = `-${offset}s`
+    }
+  },[])
+  return (
+    <div style={{ margin: 0, padding: 0, background: '#cc0000', overflow: 'hidden' }}>
+      <div ref={innerRef} style={{ display: 'flex', whiteSpace: 'nowrap', width: 'max-content' }}>
+        {messages.map((msg, i) => (<span key={i} style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#FFF', flexShrink: 0 }}>{msg}</span>))}
+      </div>
+    </div>
   )
 }
 
@@ -573,11 +585,7 @@ export default function StartingPage() {
       <AppHeader />
       {showToast && (<div style={{ position: 'fixed', top: '80px', left: '50%', transform: 'translateX(-50%)', background: 'black', color: '#FFF', padding: '12px 18px', borderRadius: '10px', fontSize: '14px', fontWeight: '700', zIndex: 99999, boxShadow: '0 4px 12px rgba(0,0,0,0.6)' }}>{toastMsg}</div>)}
        <div className="starting-wrapper" style={{ paddingTop: '64px', paddingBottom: '90px', background: '#F2F2F2', width: '100%' }}>
-        <div className="marquee-container" style={{ margin: 0, padding: 0, background: '#cc0000', overflow: 'hidden' }}>
-          <div className="marquee-content" style={{ display: 'flex', animation: 'scroll 600s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
-            {allMessages.map((msg, i) => (<span key={i} className="marquee-item" style={{ padding: '8px 40px 8px 0', fontSize: '13px', fontWeight: '500', color: '#FFF', flexShrink: 0 }}>{msg}</span>))}
-          </div>
-        </div>
+        <WinnerTicker messages={allMessages} />
         <style jsx>{`@keyframes scroll { 0% { transform: translateX(0%); } 100% { transform: translateX(-100%); }} @keyframes fadeInOut { 0% {opacity: 0; transform: translateX(-50%) translateY(-10px)} 10% {opacity: 1; transform: translateX(-50%) translateY(0)} 90% {opacity: 1} 100% {opacity: 0; transform: translateX(-50%) translateY(-10px)} }`}</style>
        <div className="user-bar" style={{ width: '100%', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFF', borderBottom: '1px solid #F0F0F0', boxSizing: 'border-box' }}>
           <div>

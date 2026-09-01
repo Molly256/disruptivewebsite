@@ -6,6 +6,7 @@ export default function AdminChatModal({ isOpen, onClose }) {
   const [selectedChat, setSelectedChat] = useState(null)
   const [messages, setMessages] = useState([])
   const [text, setText] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const endRef = useRef(null)
   const fileInputRef = useRef(null)
 
@@ -42,6 +43,31 @@ export default function AdminChatModal({ isOpen, onClose }) {
     reader.onload = (ev) => send(ev.target.result)
     reader.readAsDataURL(file)
     e.target.value = ''
+  }
+
+  const handleDeleteChat = async () => {
+    if(!selectedChat) return
+    if(!confirm(`Delete chat with ${selectedChat.displayName}? This will clear for user too.`)) return
+    setDeleting(true)
+    try{
+      const res = await fetch('/api/chat/delete',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({chatId: selectedChat.id})
+      })
+      const data = await res.json()
+      if(res.ok){
+        setSelectedChat(null)
+        setMessages([])
+        fetchChats()
+      }else{
+        alert(data.error || 'Failed to delete')
+      }
+    }catch(e){
+      alert('Delete failed')
+    }finally{
+      setDeleting(false)
+    }
   }
 
   if(!isOpen) return null
@@ -100,6 +126,10 @@ export default function AdminChatModal({ isOpen, onClose }) {
                 <button onClick={()=>setSelectedChat(null)} style={{ border:'none', background:'none', fontSize:'24px', cursor:'pointer' }}>←</button>
                 <div style={{ width:'40px', height:'40px', borderRadius:'50%', background:'#ddd', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700' }}>{selectedChat.displayName?.[0]||'?'}</div>
                 <div style={{ flex:1, minWidth:0 }}><div style={{ fontWeight:'600', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{selectedChat.displayName}</div><div style={{ fontSize:'12px', color:'#667781' }}>{selectedChat.isGuest?'Guest':'User'}</div></div>
+                {/* BIN ICON - ADMIN DELETE */}
+                <button onClick={handleDeleteChat} disabled={deleting} title="Delete chat for both sides" style={{ border:'none', background:'#fff', width:'38px', height:'38px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'#f15c6d', fontSize:'18px' }}>
+                  {deleting? '...' : '🗑️'}
+                </button>
                 <button onClick={onClose} style={{ border:'none', background:'none', fontSize:'20px', cursor:'pointer' }} className="hide-mobile">✕</button>
               </div>
 
