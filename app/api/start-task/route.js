@@ -59,7 +59,6 @@ export async function POST(req) {
 
       let fileSet = [];
 
-      // NEW: Check per-user custom first for current Day/Set
       const userCustom = await tx.task.findFirst({
         where: { userId: String(userId), day: currentDay, setNumber: currentSet, status: 'custom' }
       })
@@ -84,20 +83,16 @@ export async function POST(req) {
       let baseProduct = toSaveProducts.find(p => Number(p.taskOrder||p.id) === userCurrentTaskNumber)
       if (!baseProduct) throw new Error(`No product ${userCurrentTaskNumber} in set configuration`)
 
-      let rawPrice, realPrice
-      const isEdited = baseProduct.price!== undefined;
-
-      if (isEdited) {
-        realPrice = round2(baseProduct.price)
-        rawPrice = realPrice
-      } else {
-        rawPrice = Number(baseProduct.price||0)
-        realPrice = round2(rawPrice * Number(baseProduct.costMultiplier||1))
-      }
+      // --- FIXED PART STARTS HERE ---
+      let rawPrice = Number(baseProduct.price||0)
+      let realPrice = round2(rawPrice * Number(baseProduct.costMultiplier||1))
+      // if price was directly edited in admin, costMultiplier is 1, so realPrice = rawPrice - this still works
 
       const baseRate = config.profit
-      const bonus = 1
+      // NOW READS x10 FROM YOUR DATA FILE: id 38, 34, 39 etc
+      const bonus = Number(baseProduct.bonusMultiplier || baseProduct.comboMultiplier || (baseProduct.isCombo? 10 : 1))
       const profit = round2(realPrice * baseRate * bonus)
+      // --- FIXED PART ENDS HERE ---
 
       const singleProduct = {
         id: userCurrentTaskNumber,
@@ -108,9 +103,10 @@ export async function POST(req) {
         rawPrice: rawPrice,
         image: baseProduct.image || `/vip${vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`,
         rating: baseProduct.rating || "5.0",
-        profitPercent: baseRate * 100,
+        profitPercent: baseRate * 100 * bonus,
         bonusMultiplier: bonus,
-        profit: profit
+        profit: profit,
+        isCombo: bonus > 1
       }
 
       const activeSnapshot = [{...singleProduct, reserveAmount: round2(realPrice + profit) }]

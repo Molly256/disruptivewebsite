@@ -10,6 +10,8 @@ CREATE TABLE "User" (
     "gender" TEXT NOT NULL,
     "inviteCode" TEXT NOT NULL,
     "referredBy" TEXT,
+    "inviterId" TEXT,
+    "referralEarnings" DOUBLE PRECISION NOT NULL DEFAULT 0.00,
     "avatar" TEXT,
     "vipLevel" INTEGER NOT NULL DEFAULT 1,
     "vipId" INTEGER NOT NULL DEFAULT 1,
@@ -27,6 +29,7 @@ CREATE TABLE "User" (
     "lastProfitReset" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "creditScore" INTEGER NOT NULL DEFAULT 100,
     "isAdmin" BOOLEAN NOT NULL DEFAULT false,
+    "isRiskControlled" BOOLEAN NOT NULL DEFAULT false,
     "boundWallet" JSONB,
     "currentTaskProducts" JSONB NOT NULL DEFAULT '[]',
     "activeProducts" JSONB NOT NULL DEFAULT '[]',
@@ -105,6 +108,86 @@ CREATE TABLE "TaskSetConfig" (
     CONSTRAINT "TaskSetConfig_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Chat" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "guestId" TEXT,
+    "guestName" TEXT,
+    "displayName" TEXT NOT NULL,
+    "isGuest" BOOLEAN NOT NULL DEFAULT false,
+    "lastMessage" TEXT,
+    "unreadAdmin" INTEGER NOT NULL DEFAULT 0,
+    "unreadUser" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Chat_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Message" (
+    "id" TEXT NOT NULL,
+    "chatId" TEXT NOT NULL,
+    "text" TEXT NOT NULL,
+    "sender" TEXT NOT NULL,
+    "senderRole" TEXT NOT NULL,
+    "senderName" TEXT NOT NULL,
+    "image" TEXT,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "status" TEXT NOT NULL DEFAULT 'delivered',
+    "timeString" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ContactMessage" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT,
+    "guestId" TEXT,
+    "username" TEXT NOT NULL,
+    "email" TEXT,
+    "message" TEXT NOT NULL,
+    "reply" TEXT,
+    "isGuest" BOOLEAN NOT NULL DEFAULT false,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ContactMessage_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ReferralReward" (
+    "id" TEXT NOT NULL,
+    "inviterId" TEXT NOT NULL,
+    "inviteeId" TEXT NOT NULL,
+    "inviteeUsername" TEXT,
+    "taskProfit" DOUBLE PRECISION NOT NULL,
+    "rewardAmount" DOUBLE PRECISION NOT NULL,
+    "rate" DOUBLE PRECISION NOT NULL DEFAULT 0.20,
+    "vipLevel" INTEGER,
+    "taskNumber" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "ReferralReward_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "AdminPushSubscription" (
+    "id" TEXT NOT NULL,
+    "adminId" TEXT NOT NULL,
+    "endpoint" TEXT NOT NULL,
+    "p256dh" TEXT NOT NULL,
+    "auth" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "AdminPushSubscription_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
@@ -122,6 +205,12 @@ CREATE INDEX "User_phone_idx" ON "User"("phone");
 
 -- CreateIndex
 CREATE INDEX "User_inviteCode_idx" ON "User"("inviteCode");
+
+-- CreateIndex
+CREATE INDEX "User_referredBy_idx" ON "User"("referredBy");
+
+-- CreateIndex
+CREATE INDEX "User_inviterId_idx" ON "User"("inviterId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Task_taskCode_key" ON "Task"("taskCode");
@@ -153,6 +242,39 @@ CREATE INDEX "TaskSetConfig_vipLevel_day_idx" ON "TaskSetConfig"("vipLevel", "da
 -- CreateIndex
 CREATE UNIQUE INDEX "TaskSetConfig_vipLevel_day_setNum_key" ON "TaskSetConfig"("vipLevel", "day", "setNum");
 
+-- CreateIndex
+CREATE INDEX "Chat_userId_idx" ON "Chat"("userId");
+
+-- CreateIndex
+CREATE INDEX "Chat_guestId_idx" ON "Chat"("guestId");
+
+-- CreateIndex
+CREATE INDEX "Chat_updatedAt_idx" ON "Chat"("updatedAt");
+
+-- CreateIndex
+CREATE INDEX "Message_chatId_createdAt_idx" ON "Message"("chatId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "ContactMessage_userId_idx" ON "ContactMessage"("userId");
+
+-- CreateIndex
+CREATE INDEX "ContactMessage_guestId_idx" ON "ContactMessage"("guestId");
+
+-- CreateIndex
+CREATE INDEX "ContactMessage_createdAt_idx" ON "ContactMessage"("createdAt");
+
+-- CreateIndex
+CREATE INDEX "ReferralReward_inviterId_idx" ON "ReferralReward"("inviterId");
+
+-- CreateIndex
+CREATE INDEX "ReferralReward_inviteeId_idx" ON "ReferralReward"("inviteeId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "AdminPushSubscription_endpoint_key" ON "AdminPushSubscription"("endpoint");
+
+-- CreateIndex
+CREATE INDEX "AdminPushSubscription_adminId_idx" ON "AdminPushSubscription"("adminId");
+
 -- AddForeignKey
 ALTER TABLE "Task" ADD CONSTRAINT "Task_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -164,3 +286,9 @@ ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "AdminLog" ADD CONSTRAINT "AdminLog_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Chat" ADD CONSTRAINT "Chat_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Message" ADD CONSTRAINT "Message_chatId_fkey" FOREIGN KEY ("chatId") REFERENCES "Chat"("id") ON DELETE CASCADE ON UPDATE CASCADE;
