@@ -28,24 +28,19 @@ export async function POST(req) {
       let activeProducts = []
       try { activeProducts = typeof user.activeProducts === 'string'? JSON.parse(user.activeProducts||'[]') : (user.activeProducts||[]) } catch { activeProducts = [] }
 
-      // FIX 1: CHECK INSIDE TX - PREVENTS DOUBLE SUBMIT SKIP
       if (activeProducts.length === 0) throw new Error('No active task found to submit.')
 
       const currentTaskNumber = Number(activeProducts[0]?.taskOrder || user.tasksInCurrentSet + 1)
-
-      const x10List = typeof user.x10TaskNumbers === 'string'? JSON.parse(user.x10TaskNumbers||'[]') : (user.x10TaskNumbers||[])
-      const isX10 = x10List.includes(Number(currentTaskNumber))
       const currentSet = user.currentSet || 1
 
+      // --- FIXED: use stored profit from start-task, don't recalculate ---
       let totalPrice = 0
       let totalProfit = 0
       const enrichedProducts = []
 
       activeProducts.forEach(ut => {
         const pPrice = parseFloat(ut.price || 0)
-        const baseRate =!isNaN(parseFloat(ut.profitPercent))? (parseFloat(ut.profitPercent)/100) : config.profit
-        const bonus = isX10? 10 : (Number(ut.bonusMultiplier)||1)
-        const pProfit = parseFloat((pPrice * baseRate * bonus).toFixed(2))
+        const pProfit = parseFloat(ut.profit || 0) // already 2500 for x10
         totalPrice += pPrice
         totalProfit += pProfit
         enrichedProducts.push({...ut, price: pPrice, profit: pProfit })
@@ -60,9 +55,8 @@ export async function POST(req) {
       let completedArr = []
       try { completedArr = typeof user.completedProducts === 'string'? JSON.parse(user.completedProducts||'[]') : (user.completedProducts||[]) } catch { completedArr=[] }
 
-      const returnToWallet = parseFloat((totalPrice + totalProfit).toFixed(2))
+      const returnToWallet = parseFloat((totalPrice + totalProfit).toFixed(2)) // 50000+2500=52500
 
-      // FIX 2: ATOMIC INCREMENT INSIDE TX - NO MORE tasksInCurrentSet +1 OUTSIDE
       const isLastTask = (Number(user.tasksInCurrentSet) + 1) >= config.tasksPerSet
       const isSetComplete = isLastTask
 
@@ -70,7 +64,7 @@ export async function POST(req) {
         where: { id: String(userId) },
         data: {
           walletBalance: { increment: returnToWallet },
-          holdAmount: 0, // FIX: reset to 0, not decrement (prevents negative bug)
+          holdAmount: 0,
           todayProfit: { increment: parseFloat(totalProfit.toFixed(2)) },
           currentTaskProducts: isSetComplete? [] : currentTaskProducts,
           activeProducts: [],

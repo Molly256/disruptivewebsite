@@ -83,16 +83,15 @@ export async function POST(req) {
       let baseProduct = toSaveProducts.find(p => Number(p.taskOrder||p.id) === userCurrentTaskNumber)
       if (!baseProduct) throw new Error(`No product ${userCurrentTaskNumber} in set configuration`)
 
-      // --- FIXED PART STARTS HERE ---
+      // --- FIXED: x10 ONLY on profit, not on price ---
       let rawPrice = Number(baseProduct.price||0)
       let realPrice = round2(rawPrice * Number(baseProduct.costMultiplier||1))
-      // if price was directly edited in admin, costMultiplier is 1, so realPrice = rawPrice - this still works
 
-      const baseRate = config.profit
-      // NOW READS x10 FROM YOUR DATA FILE: id 38, 34, 39 etc
+      const baseRate = config.profit // 0.005 = 0.5%
       const bonus = Number(baseProduct.bonusMultiplier || baseProduct.comboMultiplier || (baseProduct.isCombo? 10 : 1))
-      const profit = round2(realPrice * baseRate * bonus)
-      // --- FIXED PART ENDS HERE ---
+
+      const normalProfit = round2(realPrice * baseRate) // 50000*0.005=250
+      const finalProfit = round2(normalProfit * bonus) // 250*10=2500 for x10
 
       const singleProduct = {
         id: userCurrentTaskNumber,
@@ -103,13 +102,13 @@ export async function POST(req) {
         rawPrice: rawPrice,
         image: baseProduct.image || `/vip${vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`,
         rating: baseProduct.rating || "5.0",
-        profitPercent: baseRate * 100 * bonus,
-        bonusMultiplier: bonus,
-        profit: profit,
+        profitPercent: baseRate * 100, // 0.5 - NOT multiplied by bonus
+        bonusMultiplier: bonus, // 10
+        profit: finalProfit, // 2500
         isCombo: bonus > 1
       }
 
-      const activeSnapshot = [{...singleProduct, reserveAmount: round2(realPrice + profit) }]
+      const activeSnapshot = [{...singleProduct, reserveAmount: round2(realPrice + finalProfit) }]
 
       await tx.user.update({
         where: { id: String(userId) },
