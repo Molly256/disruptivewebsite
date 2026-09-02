@@ -3,65 +3,65 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url = env("DATABASE_URL")
   directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model User {
-  id                  String @id @default(cuid())
-  username            String @unique
-  phone               String @unique
-  countryCode         String
-  countryName         String
-  loginPassword       String
+  id String @id @default(cuid())
+  username String @unique
+  phone String @unique
+  countryCode String
+  countryName String
+  loginPassword String
   transactionPassword String
-  gender              String
+  gender String
 
-  inviteCode String  @unique
+  inviteCode String @unique
   referredBy String?
 
   // === ADDED FOR 20% REWARDS ===
-  inviterId        String?
-  referralEarnings Float   @default(0.00)
+  inviterId String?
+  referralEarnings Float @default(0.00)
 
   avatar String?
 
   vipLevel Int @default(1)
-  vipId    Int @default(1)
+  vipId Int @default(1)
 
-  currentDay        Int @default(1)
-  currentSet        Int @default(1)
+  currentDay Int @default(1)
+  currentSet Int @default(1)
   tasksInCurrentSet Int @default(0)
-  taskCompleted     Int @default(0)
-  totalTasks        Int @default(40)
+  taskCompleted Int @default(0)
+  totalTasks Int @default(40)
 
-  walletBalance   Float    @default(0.00)
-  holdAmount      Float    @default(0.00)
-  freezeAmount    Float    @default(0.00)
-  bonus           Float    @default(0.00)
-  specialBonus    Float    @default(0.00)
-  todayProfit     Float    @default(0.00)
+  walletBalance Float @default(0.00)
+  holdAmount Float @default(0.00)
+  freezeAmount Float @default(0.00)
+  bonus Float @default(0.00)
+  specialBonus Float @default(0.00)
+  todayProfit Float @default(0.00)
   lastProfitReset DateTime @default(now())
-  creditScore     Int      @default(100)
-  isAdmin         Boolean  @default(false)
+  creditScore Int @default(100)
+  isAdmin Boolean @default(false)
 
   isRiskControlled Boolean @default(false)
-  boundWallet      Json?
+  boundWallet Json?
 
   currentTaskProducts Json @default("[]")
-  activeProducts      Json @default("[]")
-  completedProducts   Json @default("[]")
-  x10TaskNumbers      Json @default("[]")
+  activeProducts Json @default("[]")
+  completedProducts Json @default("[]")
+  x10TaskNumbers Json @default("[]")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transactions  Transaction[]
-  tasks         Task[]
+  transactions Transaction[]
+  tasks Task[]
   notifications Notification[]
-  adminLogs     AdminLog[]
-  chats         Chat[]
+  adminLogs AdminLog[]
+  chats Chat[]
 
   @@index([username])
   @@index([phone])
@@ -71,17 +71,17 @@ model User {
 }
 
 model Task {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vipLevel    Int
-  day         Int
-  setNumber   Int
-  progress    String    @default("0/40")
-  status      String    @default("pending")
-  products    Json      @default("[]")
-  taskCode    String?   @unique
-  createdAt   DateTime  @default(now())
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vipLevel Int
+  day Int
+  setNumber Int
+  progress String @default("0/40")
+  status String @default("pending")
+  products Json @default("[]")
+  taskCode String? @unique
+  createdAt DateTime @default(now())
   completedAt DateTime?
 
   @@index([userId, status])
@@ -90,13 +90,13 @@ model Task {
 }
 
 model Transaction {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String
-  amount    Float
-  status    String   @default("pending")
-  account   String?
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type String
+  amount Float
+  status String @default("pending")
+  account String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -106,32 +106,32 @@ model Transaction {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  message   String
-  isRead    Boolean  @default(false)
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message String
+  isRead Boolean @default(false)
   createdAt DateTime @default(now())
 
   @@index([userId, isRead])
 }
 
 model AdminLog {
-  id           String   @id @default(cuid())
-  adminId      String
-  admin        User?    @relation(fields: [adminId], references: [id], onDelete: SetNull)
-  action       String
+  id String @id @default(cuid())
+  adminId String
+  admin User? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action String
   targetUserId String?
-  details      Json?
-  createdAt    DateTime @default(now())
+  details Json?
+  createdAt DateTime @default(now())
 }
 
 model TaskSetConfig {
-  id        String   @id @default(cuid())
-  vipLevel  Int
-  day       Int
-  setNum    Int
-  data      Json
+  id String @id @default(cuid())
+  vipLevel Int
+  day Int
+  setNum Int
+  data Json
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -140,21 +140,21 @@ model TaskSetConfig {
 }
 
 model Chat {
-  id     String  @id @default(cuid())
+  id String @id @default(cuid())
   userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  guestId     String?
-  guestName   String?
+  guestId String?
+  guestName String?
   displayName String
 
-  isGuest     Boolean   @default(false)
+  isGuest Boolean @default(false)
   lastMessage String?
-  unreadAdmin Int       @default(0)
-  unreadUser  Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  messages    Message[]
+  unreadAdmin Int @default(0)
+  unreadUser Int @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  messages Message[]
 
   @@index([userId])
   @@index([guestId])
@@ -162,34 +162,34 @@ model Chat {
 }
 
 model Message {
-  id     String @id @default(cuid())
+  id String @id @default(cuid())
   chatId String
-  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
-  text       String   @db.Text
-  sender     String
+  text String @db.Text
+  sender String
   senderRole String
   senderName String
-  image      String?  @db.Text
-  isRead     Boolean  @default(false)
-  status     String   @default("delivered")
+  image String? @db.Text
+  isRead Boolean @default(false)
+  status String @default("delivered")
   timeString String?
-  createdAt  DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([chatId, createdAt])
 }
 
 model ContactMessage {
-  id        String   @id @default(cuid())
-  userId    String?
-  guestId   String?
-  username  String
-  email     String?
-  message   String   @db.Text
-  reply     String?  @db.Text
-  isGuest   Boolean  @default(false)
-  isRead    Boolean  @default(false)
-  status    String   @default("pending")
+  id String @id @default(cuid())
+  userId String?
+  guestId String?
+  username String
+  email String?
+  message String @db.Text
+  reply String? @db.Text
+  isGuest Boolean @default(false)
+  isRead Boolean @default(false)
+  status String @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -199,17 +199,28 @@ model ContactMessage {
 }
 
 model ReferralReward {
-  id              String   @id @default(cuid())
-  inviterId       String
-  inviteeId       String
+  id String @id @default(cuid())
+  inviterId String
+  inviteeId String
   inviteeUsername String?
-  taskProfit      Float
-  rewardAmount    Float
-  rate            Float    @default(0.20)
-  vipLevel        Int?
-  taskNumber      Int?
-  createdAt       DateTime @default(now())
+  taskProfit Float
+  rewardAmount Float
+  rate Float @default(0.20)
+  vipLevel Int?
+  taskNumber Int?
+  createdAt DateTime @default(now())
 
   @@index([inviterId])
   @@index([inviteeId])
+}
+
+model AdminPushSubscription {
+  id String @id @default(cuid())
+  adminId String
+  endpoint String @unique
+  p256dh String
+  auth String
+  createdAt DateTime @default(now())
+
+  @@index([adminId])
 }

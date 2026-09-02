@@ -1,14 +1,42 @@
 export const dynamic = 'force-dynamic'
 import { prisma } from '@/lib/prisma'
+import webpush from 'web-push'
+
+if(process.env.VAPID_PUBLIC_KEY){
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT,
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  )
+}
+
+async function sendPushToAdmin(title, body){
+  try{
+    const subs = await prisma.adminPushSubscription.findMany()
+    const payload = JSON.stringify({ title, body })
+    for(const s of subs){
+      try{
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys:{ p256dh: s.p256dh, auth: s.auth } },
+          payload
+        )
+      }catch(err){
+        if(err.statusCode === 410) {
+          await prisma.adminPushSubscription.delete({where:{endpoint:s.endpoint}}).catch(()=>{})
+        }
+      }
+    }
+  }catch(e){ console.log('push error', e) }
+}
 
 export async function POST(req){
   try{
     const body = await req.json()
     // FIX: accept all params from both widget and admin modal
-    const { chatId, userId, text, sender, senderName, username, isGuest } = body
+    const { chatId, userId, text, sender, senderName, username, isGuest, image } = body
     
     const msgText = String(text || '').slice(0,2000).trim()
-    if(!msgText) return Response.json({error:'missing text'},{status:400})
+    if(!msgText && !image) return Response.json({error:'missing text'},{status:400})
     
     const id = String(chatId || userId || '').trim()
     if(!id) return Response.json({error:'missing id'},{status:400})
@@ -55,14 +83,21 @@ export async function POST(req){
     const msg = await prisma.message.create({
       data: { 
         chatId: chat.id, 
-        text: msgText, 
+        text: msgText || '📷 Image', 
         sender: isAdmin ? 'admin' : 'user', 
         senderRole: isAdmin ? 'admin' : 'user',
         senderName: uname,
+        image: image || null,
         status: 'delivered',
         timeString: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }
     })
+
+    // === LOUD NOTIFICATION FROM YOUR APP ONLY - when user sends ===
+    if(!isAdmin){
+      // don't await - fire and forget so message sends fast
+      sendPushToAdmin(`New message from ${uname} 🔔`, msgText.slice(0,80))
+    }
 
     return Response.json({ success: true, chat, message: msg })
   }catch(e){

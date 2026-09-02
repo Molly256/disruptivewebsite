@@ -37,8 +37,8 @@ export const vip1Set3 = [
   { id: 35, name: "Mystic Halloween Icon Juice Glass", rating: 7.9, price: 16.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo35.jpg" },
   { id: 36, name: "Somerset 100% Linen Pull-On Pants", rating: 3.0, price: 68.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo36.jpg" },
   { id: 37, name: "Pilcro Quinn Drapey V-Neck Tee", rating: 6.6, price: 48.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo37.jpg" },
-  // TASK 38 - COMBO x10
-  { id: 38, name: "Hp laptop and rolex ladies watch", rating: 5.0, price: 105.00, costMultiplier: 1, profitPercent: 5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo38.jpg" },
+  // TASK 38 - COMBO x10 - FIXED to 0.5%
+  { id: 38, name: "Hp laptop and rolex ladies watch", rating: 5.0, price: 105.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo38.jpg" },
   { id: 39, name: "Calla Woven Shoulder Bag", rating: 5.5, price: 98.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo39.jpg" },
   { id: 40, name: "Bistro Tile Stoneware 24k Gold Accent Halloween Mug", rating: 1.7, price: 16.00, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 1, image: "/photo40.jpg" },
 ]
