@@ -95,8 +95,8 @@ export async function POST(req) {
         realPrice = round2(rawPrice * Number(baseProduct.costMultiplier||1))
       }
 
-      const baseRate = (Number(baseProduct.profitPercent)/100) || config.profit
-      const bonus = Number(baseProduct.bonusMultiplier) || 1
+      const baseRate = config.profit
+      const bonus = 1
       const profit = round2(realPrice * baseRate * bonus)
 
       const singleProduct = {
@@ -108,7 +108,7 @@ export async function POST(req) {
         rawPrice: rawPrice,
         image: baseProduct.image || `/vip${vipLevel}/day${currentDay}/set${currentSet}/photo${userCurrentTaskNumber}.jpg`,
         rating: baseProduct.rating || "5.0",
-        profitPercent: baseProduct.profitPercent || (baseRate * 100),
+        profitPercent: baseRate * 100,
         bonusMultiplier: bonus,
         profit: profit
       }

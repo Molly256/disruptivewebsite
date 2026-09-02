@@ -144,8 +144,8 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   const safeHold = round2(holdAmount)
   const totalPrice = round2(products.reduce((s, p) => s + Number(p.price || 0), 0))
   const totalProfit = round2(products.reduce((s, p) => {
-    const baseRate = (Number(p.profitPercent) / 100) || 0.005
-    const bonus = Number(p.bonusMultiplier) || 1
+    const baseRate = VIP_PROFIT[Number(vipLevel)||1] || 0.005
+    const bonus = 1
     const rate = baseRate * bonus
     return s + Number(p.price * rate || 0)
   }, 0))
@@ -189,8 +189,8 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             const s = currentSet || 1
             const t = Number(currentTaskNumber || product.taskOrder || 1)
             const imgSrc = `/vip${vipLevel || 1}/day${d}/set${s}/photo${t}.jpg`
-            const baseRate = (Number(product.profitPercent) / 100) || 0.005
-            const bonus = Number(product.bonusMultiplier) || 1
+            const baseRate = VIP_PROFIT[Number(vipLevel)||1] || 0.005
+            const bonus = 1
             const activeProfitRate = baseRate * bonus
             return (
               <div key={product.id || idx} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
@@ -403,35 +403,20 @@ export default function StartingPage() {
           u.specialBonus = round2(u.specialBonus || 0)
           const now = new Date()
           const todayNY = getNYDateString(now)
-          if (u.lastProfitReset) {
-            const lastNY = getNYDateString(new Date(u.lastProfitReset))
-            if (todayNY!== lastNY) {
-              const resetRes = await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
-              const resetData = await resetRes.json()
-              if (resetRes.ok && resetData.user) {
-                u = resetData.user
-                u.walletBalance = round2(u.walletBalance)
-                u.holdAmount = round2(u.holdAmount)
-                u.todayProfit = 0.00
-                u.specialBonus = 0.00
-              } else {
-                u.todayProfit = 0.00
-                u.specialBonus = 0.00
-              }
-            }
-          } else {
-            const resetRes = await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) }).catch(()=>{})
-            if(resetRes){
-              try{
-                const rd = await resetRes.json()
-                if(rd.user){
-                  u = rd.user
-                  u.walletBalance = round2(u.walletBalance)
-                  u.holdAmount = round2(u.holdAmount)
-                  u.todayProfit = 0.00
-                  u.specialBonus = 0.00
-                }
-              }catch{}
+          const lastNY = u.lastProfitReset? getNYDateString(new Date(u.lastProfitReset)) : null
+          if (!lastNY || todayNY!== lastNY) {
+            const resetRes = await fetch('/api/user/reset-today', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({userId: u.id}) })
+            const resetData = await resetRes.json()
+            if (resetRes.ok && resetData.user) {
+              u = resetData.user
+              u.walletBalance = round2(u.walletBalance)
+              u.holdAmount = round2(u.holdAmount)
+              u.todayProfit = 0.00
+              u.specialBonus = 0.00
+            } else {
+              u.todayProfit = 0.00
+              u.specialBonus = 0.00
+              u.lastProfitReset = new Date().toISOString()
             }
           }
           localStorage.setItem('user', JSON.stringify(u))
@@ -462,9 +447,8 @@ export default function StartingPage() {
       const now = new Date()
       const todayNY = getNYDateString(now)
       const lastResetStr = localUser.lastProfitReset || user.lastProfitReset
-      if (!lastResetStr) return
-      const lastNY = getNYDateString(new Date(lastResetStr))
-      if (todayNY!== lastNY) {
+      const lastNY = lastResetStr? getNYDateString(new Date(lastResetStr)) : null
+      if (!lastNY || todayNY!== lastNY) {
         try {
           const resetRes = await fetch('/api/user/reset-today', {
             method: 'POST',

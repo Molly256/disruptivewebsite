@@ -9,7 +9,7 @@ self.addEventListener('push', e=>{
       requireInteraction: true,
       tag: 'chat-new',
       renotify: true,
-      data: { url: '/' }
+      data: { url: '/admin' }
     })
   )
 })
@@ -19,7 +19,7 @@ self.addEventListener('notificationclick', e=>{
   e.waitUntil(
     clients.matchAll({type:'window'}).then(list=>{
       for(let c of list){ if(c.url.includes(self.location.origin) && 'focus' in c) return c.focus() }
-      if(clients.openWindow) return clients.openWindow('/')
+      if(clients.openWindow) return clients.openWindow('/admin')
     })
   )
 })
