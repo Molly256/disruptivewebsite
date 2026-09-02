@@ -14,10 +14,30 @@ const vipList = [
 export default function AdminPage() {
   const [tab, setTab] = useState('upgrade')
   const [admin, setAdmin] = useState({})
+  const [notifPermission, setNotifPermission] = useState('default')
 
   useEffect(() => {
     setAdmin(JSON.parse(localStorage.getItem('user') || '{}'))
+    // CHECK PWA NOTIFICATION PERMISSION
+    if (typeof window!== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(()=>{})
+      }
+    }
   }, [])
+
+  const enableNotifications = async () => {
+    if (!('Notification' in window)) return alert('Notifications not supported')
+    const perm = await Notification.requestPermission()
+    setNotifPermission(perm)
+    if (perm === 'granted') {
+      new Notification('Admin256 Chat', { body: 'Notifications enabled! You will get alerts.', icon: '/logo.png' })
+      alert('✅ Notifications enabled! Install the app to get them in background.')
+    } else {
+      alert('❌ Permission denied')
+    }
+  }
 
   const [search, setSearch] = useState(''); const [foundUser, setFoundUser] = useState(null); const [showDropdown, setShowDropdown] = useState(false); const [selectedVip, setSelectedVip] = useState(null);
   const [resetSearch, setResetSearch] = useState(''); const [resetUser, setResetUser] = useState(null);
@@ -52,7 +72,6 @@ export default function AdminPage() {
     setter(data.user)
   }
 
-  // === FIXED: THE 3 MISSING FUNCTIONS ===
   const loadEditSet = async (vipLevel, day, setNum) => {
     try {
       setActiveEditSet(setNum)
@@ -79,7 +98,7 @@ export default function AdminPage() {
     if (!editingPhoto) return
     setEditSetData(prev => prev.map(p =>
       Number(p.taskOrder) === Number(editingPhoto.taskOrder)
-       ? {...p, name: editData.name, price: parseFloat(editData.price) || 0 }
+      ? {...p, name: editData.name, price: parseFloat(editData.price) || 0 }
         : p
     ))
     if (!selectedEditItems.includes(Number(editingPhoto.taskOrder))) {
@@ -87,7 +106,6 @@ export default function AdminPage() {
     }
     setEditingPhoto(null)
   }
-  // === END FIX ===
 
   const handleUpgrade = async () => {
     if(!selectedVip ||!foundUser) return alert('Select VIP')
@@ -175,7 +193,14 @@ export default function AdminPage() {
     <div style={{ background: '#FFFFFF', minHeight: '100vh', paddingTop: '90px', paddingBottom: '90px' }}>
       <AppHeader />
       <div style={{ padding: '0 16px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#000', marginBottom: '16px' }}>👑 Admin Panel</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#000', marginBottom: '12px' }}>👑 Admin Panel</h1>
+
+        {/* NEW NOTIFICATION BAR */}
+        <div style={{ background: notifPermission === 'granted'? '#00a884' : '#111b21', padding: '12px', borderRadius: '12px', marginBottom: '16px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ color:'#FFF', fontWeight:700, fontSize:13 }}>🔔 {notifPermission === 'granted'? 'Notifications ON' : 'Enable Notifications'}</span>
+          {notifPermission!== 'granted' && <button onClick={enableNotifications} style={{ background:'#FFF', color:'#111b21', border:'none', padding:'6px 12px', borderRadius:8, fontWeight:800, cursor:'pointer' }}>Enable</button>}
+        </div>
+
         <div style={{ display:'flex', gap:'8px', marginBottom:'20px', overflowX:'auto', paddingBottom:'4px' }}>
           <TabBtn id='upgrade' label='Upgrade VIP' />
           <TabBtn id='resetset' label='Reset Set' />
