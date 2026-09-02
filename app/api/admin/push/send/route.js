@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+Eimport { PrismaClient } from '@prisma/client'
 import webpush from 'web-push'
 
 const prisma = new PrismaClient()
@@ -16,7 +16,7 @@ export async function sendPushToAdmin(adminId, title, body){
     const subs = await prisma.adminPushSubscription.findMany({
       where:{ adminId: adminId || 'admin' }
     })
-    const payload = JSON.stringify({ title, body })
+    const payload = JSON.stringify({ title, body, url: '/admin' })
     for(const s of subs){
       try{
         await webpush.sendNotification(
@@ -24,11 +24,16 @@ export async function sendPushToAdmin(adminId, title, body){
           payload
         )
       }catch(err){
-        // expired sub - delete
         if(err.statusCode === 410) {
           await prisma.adminPushSubscription.delete({where:{endpoint:s.endpoint}}).catch(()=>{})
         }
       }
     }
   }catch(e){ console.log('push send error', e) }
+}
+
+export async function POST(req){
+  const { adminId, title, body } = await req.json()
+  await sendPushToAdmin(adminId, title, body)
+  return Response.json({ok:true})
 }

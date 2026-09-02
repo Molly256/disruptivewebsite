@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import AppHeader from '@/components/AppHeader'
 import BottomNav from '@/components/BottomNav'
+import AdminChatModal from '@/components/AdminChatModal'
 
 const vipList = [
   { id: 1, name: 'VIP1', price: 100, tasks: 40 },
@@ -15,16 +16,35 @@ export default function AdminPage() {
   const [tab, setTab] = useState('upgrade')
   const [admin, setAdmin] = useState({})
   const [notifPermission, setNotifPermission] = useState('default')
+  const [chatOpen, setChatOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+
+  const LOGO = '/logo-512.png'
 
   useEffect(() => {
     setAdmin(JSON.parse(localStorage.getItem('user') || '{}'))
-    // CHECK PWA NOTIFICATION PERMISSION
     if (typeof window!== 'undefined' && 'Notification' in window) {
       setNotifPermission(Notification.permission)
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(()=>{})
       }
     }
+    // poll unread for PWA badge even when modal closed
+    const fetchUnread = async () => {
+      try{
+        const res = await fetch('/api/chat/list', { cache: 'no-store' })
+        const data = await res.json()
+        const list = Array.isArray(data)? data : (data.conversations || [])
+        const total = list.reduce((s,c)=>s+(c.unreadAdmin||0),0)
+        setUnreadCount(total)
+        if ('setAppBadge' in navigator && total>0) {
+          navigator.setAppBadge(total).catch(()=>{})
+        }
+      }catch{}
+    }
+    fetchUnread()
+    const i = setInterval(fetchUnread, 3000)
+    return ()=>clearInterval(i)
   }, [])
 
   const enableNotifications = async () => {
@@ -32,8 +52,33 @@ export default function AdminPage() {
     const perm = await Notification.requestPermission()
     setNotifPermission(perm)
     if (perm === 'granted') {
-      new Notification('Admin256 Chat', { body: 'Notifications enabled! You will get alerts.', icon: '/logo.png' })
-      alert('✅ Notifications enabled! Install the app to get them in background.')
+      new Notification('Admin256 Chat', { body: 'Notifications enabled! You will get alerts.', icon: LOGO, badge: LOGO })
+
+      // subscribe to push for background
+      try{
+        const reg = await navigator.serviceWorker.ready
+        let sub = await reg.pushManager.getSubscription()
+        if(!sub){
+          const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+          if(key){
+            const urlBase64ToUint8Array = (base64String) => {
+              const padding = '='.repeat((4 - base64String.length % 4) % 4)
+              const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/')
+              const rawData = window.atob(base64)
+              const outputArray = new Uint8Array(rawData.length)
+              for(let i=0;i<rawData.length;++i) outputArray[i]=rawData.charCodeAt(i)
+              return outputArray
+            }
+            sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) })
+          }
+        }
+        if(sub){
+          const adminId = localStorage.getItem('userId') || JSON.parse(localStorage.getItem('user')||'{}').id || 'Admin256'
+          await fetch('/api/admin/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminId, sub: sub.toJSON()})})
+        }
+      }catch(e){ console.log(e) }
+
+      alert('✅ Notifications enabled! Install PWA to get them in background.')
     } else {
       alert('❌ Permission denied')
     }
@@ -98,7 +143,7 @@ export default function AdminPage() {
     if (!editingPhoto) return
     setEditSetData(prev => prev.map(p =>
       Number(p.taskOrder) === Number(editingPhoto.taskOrder)
-      ? {...p, name: editData.name, price: parseFloat(editData.price) || 0 }
+     ? {...p, name: editData.name, price: parseFloat(editData.price) || 0 }
         : p
     ))
     if (!selectedEditItems.includes(Number(editingPhoto.taskOrder))) {
@@ -195,10 +240,14 @@ export default function AdminPage() {
       <div style={{ padding: '0 16px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#000', marginBottom: '12px' }}>👑 Admin Panel</h1>
 
-        {/* NEW NOTIFICATION BAR */}
         <div style={{ background: notifPermission === 'granted'? '#00a884' : '#111b21', padding: '12px', borderRadius: '12px', marginBottom: '16px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-          <span style={{ color:'#FFF', fontWeight:700, fontSize:13 }}>🔔 {notifPermission === 'granted'? 'Notifications ON' : 'Enable Notifications'}</span>
-          {notifPermission!== 'granted' && <button onClick={enableNotifications} style={{ background:'#FFF', color:'#111b21', border:'none', padding:'6px 12px', borderRadius:8, fontWeight:800, cursor:'pointer' }}>Enable</button>}
+          <span style={{ color:'#FFF', fontWeight:700, fontSize:13 }}>🔔 {notifPermission === 'granted'? `Notifications ON ${unreadCount>0?`(${unreadCount} unread)`:''}` : 'Enable Notifications'}</span>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={()=>setChatOpen(true)} style={{ background:'#FF1493', color:'#FFF', border:'none', padding:'6px 12px', borderRadius:8, fontWeight:800, cursor:'pointer', position:'relative' }}>
+              💬 Chat {unreadCount>0 && <span style={{background:'#FFF',color:'#FF1493',padding:'1px 6px',borderRadius:10,marginLeft:4}}>{unreadCount}</span>}
+            </button>
+            {notifPermission!== 'granted' && <button onClick={enableNotifications} style={{ background:'#FFF', color:'#111b21', border:'none', padding:'6px 12px', borderRadius:8, fontWeight:800, cursor:'pointer' }}>Enable</button>}
+          </div>
         </div>
 
         <div style={{ display:'flex', gap:'8px', marginBottom:'20px', overflowX:'auto', paddingBottom:'4px' }}>
@@ -377,6 +426,9 @@ export default function AdminPage() {
         {tab === 'bonus' && (<div style={{ background:'#000', color:'#FFF', padding:'20px', borderRadius:'16px' }}><div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}><input value={bonusSearch} onChange={e => setBonusSearch(e.target.value)} placeholder="Username or Phone" style={{ flex:1, padding:'14px', border:'2px solid #FF1493', borderRadius:'12px', outline:'none', color:'#000' }} /><button onClick={()=>searchUser(bonusSearch, setBonusUser)} style={{ background:'#FF1493', border:'none', borderRadius:'12px', padding:'0 18px', fontSize:'20px', cursor:'pointer' }}>🔍</button></div>{bonusUser &&!showBonusInput && <button onClick={()=>setShowBonusInput(true)} style={{ background:'gold', color:'#000', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Give Special Bonus to {bonusUser.username} - Current: ${bonusUser.specialBonus || 0}</button>}{showBonusInput && (<div><input value={bonusAmount} onChange={e => setBonusAmount(e.target.value)} placeholder="Bonus Amount" type="number" style={{ width:'100%', padding:'12px', borderRadius:8, border:'none', marginBottom:8, color:'#000' }} /><button onClick={handleGiveBonus} style={{ background:'gold', color:'#000', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:700 }}>Confirm Special Bonus</button></div>)}</div>)}
       </div>
       <BottomNav />
+
+      <AdminChatModal isOpen={chatOpen} onClose={()=>setChatOpen(false)} />
+
       {editingPhoto && (
         <div style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.85)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:999 }}>
           <div style={{ background:'#222', padding:20, borderRadius:16, width:'90%', maxWidth:400 }}>
