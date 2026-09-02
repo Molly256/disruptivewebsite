@@ -9,9 +9,30 @@ export default function AdminChatModal({ isOpen, onClose }) {
   const [deleting, setDeleting] = useState(false)
   const endRef = useRef(null)
   const fileInputRef = useRef(null)
-  const prevUnreadRef = useRef(0)
+  const prevUnreadRef = useRef(null) // null = first load
   const audioRef = useRef(null)
   const prevMsgLenRef = useRef(0)
+
+  const triggerLoud = (name, body) => {
+    try{
+      audioRef.current?.play().catch(()=>{
+        const ctx = new (window.AudioContext||window.webkitAudioContext)()
+        const o = ctx.createOscillator()
+        o.frequency.value=900; o.connect(ctx.destination); o.start(); setTimeout(()=>o.stop(),600)
+      })
+    }catch{}
+    if(navigator.vibrate) navigator.vibrate([400,150,400,150,600])
+    if(Notification.permission==='granted'){
+      try{
+        const n = new Notification(`💬 ${name} 🔔`, { body: body?.slice(0,100)||'New message', requireInteraction:true, tag:'admin-new' })
+        n.onclick = ()=>{ window.focus(); }
+        // flash title
+        const orig=document.title
+        let c=0; const iv=setInterval(()=>{document.title=c%2===0?`🔔 NEW ${name}!`:orig; c++},700)
+        setTimeout(()=>{clearInterval(iv); document.title=orig},8000)
+      }catch{}
+    }
+  }
 
   const fetchChats = async () => {
     try{
@@ -20,18 +41,10 @@ export default function AdminChatModal({ isOpen, onClose }) {
       const list = Array.isArray(data)? data : (data.conversations || [])
 
       const totalUnread = list.reduce((s,c)=>s+(c.unreadAdmin||0),0)
-      if(totalUnread > prevUnreadRef.current && prevUnreadRef.current!== 0){
-        const newOne = list.find(c=>c.unreadAdmin>0)
-        if(newOne){
-          audioRef.current?.play().catch(()=>{})
-          if(navigator.vibrate) navigator.vibrate([300,100,300,100,300])
-          if(Notification.permission === 'granted'){
-            new Notification(`New message from ${newOne.displayName} 🔔`, {
-              body: newOne.lastMessage?.slice(0,80) || 'New message',
-              icon: '/logo.png'
-            })
-          }
-        }
+
+      if(prevUnreadRef.current!==null && totalUnread > prevUnreadRef.current){
+        const newOne = [...list].sort((a,b)=>(b.updatedAt?.seconds||0)-(a.updatedAt?.seconds||0)).find(c=>c.unreadAdmin>0) || list[0]
+        if(newOne) triggerLoud(newOne.displayName, newOne.lastMessage)
       }
       prevUnreadRef.current = totalUnread
 
@@ -48,8 +61,7 @@ export default function AdminChatModal({ isOpen, onClose }) {
       if(msgs.length > prevMsgLenRef.current && prevMsgLenRef.current!==0){
         const last = msgs[msgs.length-1]
         if(last.sender!== 'admin' && last.senderRole!== 'admin'){
-          audioRef.current?.play().catch(()=>{})
-          if(navigator.vibrate) navigator.vibrate([300,100,300])
+          triggerLoud(selectedChat?.displayName||'User', last.text)
         }
       }
       prevMsgLenRef.current = msgs.length
@@ -81,17 +93,18 @@ export default function AdminChatModal({ isOpen, onClose }) {
         const reg = await navigator.serviceWorker.ready
         let sub = await reg.pushManager.getSubscription()
         if(!sub){
+          const key = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+          if(!key) return
           sub = await reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)
+            applicationServerKey: urlBase64ToUint8Array(key)
           })
         }
         const adminId = localStorage.getItem('userId') || localStorage.getItem('username') || 'Admin256'
-        const json = sub.toJSON()
         await fetch('/api/admin/push/subscribe',{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({adminId, sub: json})
+          body: JSON.stringify({adminId, sub: sub.toJSON()})
         })
         console.log('Push subscribed OK')
       }catch(e){ console.log('push subscribe fail', e)}
@@ -105,10 +118,14 @@ export default function AdminChatModal({ isOpen, onClose }) {
       })
     }
 
-    if(isOpen) fetchChats();
-    const i=setInterval(()=>{if(isOpen&&!selectedChat) fetchChats()},3000);
+    if(isOpen){
+      prevUnreadRef.current = null // reset so first load doesn't block next
+      fetchChats()
+    }
+    // ALWAYS poll chats even if a chat is open - THIS WAS THE BUG
+    const i=setInterval(()=>{ if(isOpen) fetchChats() },2500)
     return()=>clearInterval(i)
-  },[isOpen,selectedChat])
+  },[isOpen])
 
   useEffect(()=>{
     if(!selectedChat) { prevMsgLenRef.current = 0; return }
@@ -164,22 +181,22 @@ export default function AdminChatModal({ isOpen, onClose }) {
   return (
     <div style={{ position:'fixed', inset:0, background:'#111b21', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <style>{`
-   .wa-wrap{ width:95vw; max-width:1000px; height:85vh; background:#fff; border-radius:12px; display:flex; overflow:hidden; }
-   .wa-side{ width:360px; border-right:1px solid #e9edef; display:flex; flex-direction:column; background:#fff; }
-   .wa-main{ flex:1; display:flex; flex-direction:column; background:#efeae2; position:relative; }
-   .wa-bg{ position:absolute; inset:0; background:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); opacity:.06; }
-   .wa-bub{ max-width:65%; padding:8px 10px; border-radius:8px; font-size:14.5px; line-height:19px; box-shadow:0 1px.5px rgba(0,0,0,.13); word-break:break-word; white-space:pre-wrap; position:relative; }
-   .wa-in{ background:#fff; align-self:flex-start; border-top-left-radius:0; }
-   .wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
-   .only-mobile{ display:none; }
+  .wa-wrap{ width:95vw; max-width:1000px; height:85vh; background:#fff; border-radius:12px; display:flex; overflow:hidden; }
+  .wa-side{ width:360px; border-right:1px solid #e9edef; display:flex; flex-direction:column; background:#fff; }
+  .wa-main{ flex:1; display:flex; flex-direction:column; background:#efeae2; position:relative; }
+  .wa-bg{ position:absolute; inset:0; background:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); opacity:.06; }
+  .wa-bub{ max-width:65%; padding:8px 10px; border-radius:8px; font-size:14.5px; line-height:19px; box-shadow:0 1px.5px rgba(0,0,0,.13); word-break:break-word; white-space:pre-wrap; position:relative; }
+  .wa-in{ background:#fff; align-self:flex-start; border-top-left-radius:0; }
+  .wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
+  .only-mobile{ display:none; }
         @media(max-width:768px){
-     .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
-     .wa-side{ width:100%; }
-     .wa-side.hide{ display:none; }
-     .wa-main{ display:none; width:100%; height:100dvh; }
-     .wa-main.show{ display:flex; }
-     .only-mobile{ display:flex!important; }
-     .hide-mobile{ display:none!important; }
+    .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
+    .wa-side{ width:100%; }
+    .wa-side.hide{ display:none; }
+    .wa-main{ display:none; width:100%; height:100dvh; }
+    .wa-main.show{ display:flex; }
+    .only-mobile{ display:flex!important; }
+    .hide-mobile{ display:none!important; }
         }
       `}</style>
 
