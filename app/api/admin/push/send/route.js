@@ -1,4 +1,4 @@
-Eimport { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import webpush from 'web-push'
 
 const prisma = new PrismaClient()
