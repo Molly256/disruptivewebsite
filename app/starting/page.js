@@ -145,7 +145,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
   const totalPrice = round2(products.reduce((s, p) => s + Number(p.price || 0), 0))
   const totalProfit = round2(products.reduce((s, p) => {
     const baseRate = VIP_PROFIT[Number(vipLevel)||1] || 0.005
-    const bonus = 1
+    const bonus = Number(p.bonusMultiplier || p.comboMultiplier || (p.isCombo? 10 : 1))
     const rate = baseRate * bonus
     return s + Number(p.price * rate || 0)
   }, 0))
@@ -190,7 +190,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
             const t = Number(currentTaskNumber || product.taskOrder || 1)
             const imgSrc = `/vip${vipLevel || 1}/day${d}/set${s}/photo${t}.jpg`
             const baseRate = VIP_PROFIT[Number(vipLevel)||1] || 0.005
-            const bonus = 1
+            const bonus = Number(product.bonusMultiplier || product.comboMultiplier || (product.isCombo? 10 : 1))
             const activeProfitRate = baseRate * bonus
             return (
               <div key={product.id || idx} style={{ background: '#FFF', margin: '12px 0', borderRadius: 12, padding: '16px' }}>
