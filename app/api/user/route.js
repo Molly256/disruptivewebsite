@@ -32,14 +32,18 @@ export async function GET(req) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 })
     }
 
-    // RESET TODAY PROFIT AT 00:00 USA TIME
+    // RESET TODAY PROFIT + SPECIAL BONUS AT 00:00 EST
     const todayUS = getTodayUS()
     const lastResetUS = user.lastProfitReset ? new Date(user.lastProfitReset).toLocaleDateString('en-US', { timeZone: 'America/New_York' }) : null
     
     if (lastResetUS !== todayUS) {
       user = await prisma.user.update({
         where: { id: String(userId) },
-        data: { todayProfit: 0, lastProfitReset: new Date() },
+        data: { 
+          todayProfit: 0, 
+          specialBonus: 0,
+          lastProfitReset: new Date() 
+        },
         select: {
           id: true, username: true, phone: true, countryName: true,
           countryCode: true, gender: true, inviteCode: true, createdAt: true,
