@@ -61,7 +61,6 @@ export default function AdminChatModal({ isOpen, onClose }) {
       }
       prevMsgLenRef.current = msgs.length
       setMessages(msgs)
-      setTimeout(()=>endRef.current?.scrollIntoView({behavior:'smooth'}),100)
     }catch{}
   }
 
@@ -130,12 +129,9 @@ export default function AdminChatModal({ isOpen, onClose }) {
     fetchMessages(selectedChat.id); fetchChats()
   }
 
-  // --- ONLY THIS FUNCTION WAS FIXED ---
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if(!file) return
-
-    // Compress image to fix the "Image sent" bug (Firestore limit 1MB)
     const img = new Image()
     const objectUrl = URL.createObjectURL(file)
     img.onload = () => {
@@ -146,13 +142,12 @@ export default function AdminChatModal({ isOpen, onClose }) {
       canvas.height = img.height * scale
       const ctx = canvas.getContext('2d')
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6) // ~200-400kb instead of 5MB
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6)
       URL.revokeObjectURL(objectUrl)
       send(compressedBase64)
     }
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl)
-      // fallback to original method if compression fails
       const reader = new FileReader()
       reader.onload = (ev) => send(ev.target.result)
       reader.readAsDataURL(file)
@@ -191,22 +186,22 @@ export default function AdminChatModal({ isOpen, onClose }) {
   return (
     <div style={{ position:'fixed', inset:0, background:'#111b21', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <style>{`
- .wa-wrap{ width:95vw; max-width:1000px; height:85vh; background:#fff; border-radius:12px; display:flex; overflow:hidden; }
- .wa-side{ width:360px; border-right:1px solid #e9edef; display:flex; flex-direction:column; background:#fff; }
- .wa-main{ flex:1; display:flex; flex-direction:column; background:#efeae2; position:relative; }
- .wa-bg{ position:absolute; inset:0; background:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); opacity:.06; }
- .wa-bub{ max-width:65%; padding:8px 10px; border-radius:8px; font-size:14.5px; line-height:19px; box-shadow:0 1px.5px rgba(0,0,0,.13); word-break:break-word; white-space:pre-wrap; position:relative; }
- .wa-in{ background:#fff; align-self:flex-start; border-top-left-radius:0; }
- .wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
- .only-mobile{ display:none; }
+.wa-wrap{ width:95vw; max-width:1000px; height:85vh; background:#fff; border-radius:12px; display:flex; overflow:hidden; }
+.wa-side{ width:360px; border-right:1px solid #e9edef; display:flex; flex-direction:column; background:#fff; }
+.wa-main{ flex:1; display:flex; flex-direction:column; background:#efeae2; position:relative; }
+.wa-bg{ position:absolute; inset:0; background:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); opacity:.06; }
+.wa-bub{ max-width:65%; padding:8px 10px; border-radius:8px; font-size:14.5px; line-height:19px; box-shadow:0 1px.5px rgba(0,0,0,.13); word-break:break-word; white-space:pre-wrap; position:relative; }
+.wa-in{ background:#fff; align-self:flex-start; border-top-left-radius:0; }
+.wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
+.only-mobile{ display:none; }
         @media(max-width:768px){
-   .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
-   .wa-side{ width:100%; }
-   .wa-side.hide{ display:none; }
-   .wa-main{ display:none; width:100%; height:100dvh; }
-   .wa-main.show{ display:flex; }
-   .only-mobile{ display:flex!important; }
-   .hide-mobile{ display:none!important; }
+  .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
+  .wa-side{ width:100%; }
+  .wa-side.hide{ display:none; }
+  .wa-main{ display:none; width:100%; height:100dvh; }
+  .wa-main.show{ display:flex; }
+  .only-mobile{ display:flex!important; }
+  .hide-mobile{ display:none!important; }
         }
       `}</style>
 

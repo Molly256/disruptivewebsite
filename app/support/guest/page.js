@@ -17,7 +17,6 @@ export default function GuestSupportChat() {
   const [input, setInput] = useState('')
   const [guestId, setGuestId] = useState('')
   const [guestName, setGuestName] = useState('')
-  const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -64,10 +63,6 @@ export default function GuestSupportChat() {
     return ()=> clearInterval(interval)
   }, [guestId])
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
   const sendMessage = async (textToSend = input, imageUrl = null) => {
     const finalText = typeof textToSend === 'string'? textToSend.trim() : ''
     if (!finalText &&!imageUrl) return
@@ -104,7 +99,6 @@ export default function GuestSupportChat() {
     }
   }
 
-  // --- FIXED: compressed image upload ---
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if(!file) return
@@ -153,7 +147,6 @@ export default function GuestSupportChat() {
             <div style={{ fontSize:'10px', color:'#666', marginTop:'3px', alignSelf: msg.sender==='user'?'flex-end':'flex-start' }}>{msg.timeString}</div>
           </div>
         ))}
-        <div ref={messagesEndRef} />
       </div>
 
       <div style={{ padding: '12px 16px', borderTop: '1px solid #333', display: 'flex', gap: '8px', alignItems:'center', background:'#000' }}>

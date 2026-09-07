@@ -10,7 +10,6 @@ export default function ChatSupport() {
   const [showEmoji, setShowEmoji] = useState(false)
   const [user, setUser] = useState(null)
   const fileInputRef = useRef(null)
-  const messagesEndRef = useRef(null)
 
   useEffect(() => {
     try{
@@ -68,8 +67,6 @@ export default function ChatSupport() {
     return () => clearInterval(interval)
   }, [user])
 
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
-
   const sendMessage = async (text, imageUrl = null) => {
     if (!text.trim() &&!imageUrl) return
     if (!user?.id) { alert('Please login first'); return }
@@ -78,7 +75,6 @@ export default function ChatSupport() {
     setInput('')
     setShowEmoji(false)
 
-    // OPTIMISTIC - show instantly
     const tempId = 'tmp_'+Date.now()
     setMessages(prev => [...prev, { id: tempId, type:'user', sender:'user', text: messageText, image: imageUrl, time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), timestamp: Date.now() }])
 
@@ -103,11 +99,9 @@ export default function ChatSupport() {
     }
   }
 
-  // --- ONLY THIS FIXED ---
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if (!file) return
-
     const img = new Image()
     const objectUrl = URL.createObjectURL(file)
     img.onload = () => {
@@ -170,7 +164,6 @@ export default function ChatSupport() {
             )}
           </div>
         ))}
-        <div ref={messagesEndRef} />
       </div>
 
       <div style={{ background: '#fff', padding: '12px 16px', borderTop: '1px solid #eee', position: 'fixed', bottom: 0, left: 0, right: 0 }}>
