@@ -9,7 +9,7 @@ export default function AdminChatModal({ isOpen, onClose }) {
   const [deleting, setDeleting] = useState(false)
   const endRef = useRef(null)
   const fileInputRef = useRef(null)
-  const prevUnreadRef = useRef(null) // null = first load
+  const prevUnreadRef = useRef(null)
   const audioRef = useRef(null)
   const prevMsgLenRef = useRef(0)
 
@@ -26,7 +26,6 @@ export default function AdminChatModal({ isOpen, onClose }) {
       try{
         const n = new Notification(`💬 ${name} 🔔`, { body: body?.slice(0,100)||'New message', requireInteraction:true, tag:'admin-new' })
         n.onclick = ()=>{ window.focus(); }
-        // flash title
         const orig=document.title
         let c=0; const iv=setInterval(()=>{document.title=c%2===0?`🔔 NEW ${name}!`:orig; c++},700)
         setTimeout(()=>{clearInterval(iv); document.title=orig},8000)
@@ -39,15 +38,12 @@ export default function AdminChatModal({ isOpen, onClose }) {
       const res = await fetch('/api/chat/list', { cache: 'no-store' })
       const data = await res.json()
       const list = Array.isArray(data)? data : (data.conversations || [])
-
       const totalUnread = list.reduce((s,c)=>s+(c.unreadAdmin||0),0)
-
       if(prevUnreadRef.current!==null && totalUnread > prevUnreadRef.current){
         const newOne = [...list].sort((a,b)=>(b.updatedAt?.seconds||0)-(a.updatedAt?.seconds||0)).find(c=>c.unreadAdmin>0) || list[0]
         if(newOne) triggerLoud(newOne.displayName, newOne.lastMessage)
       }
       prevUnreadRef.current = totalUnread
-
       setChats(list)
     }catch{}
   }
@@ -57,7 +53,6 @@ export default function AdminChatModal({ isOpen, onClose }) {
       const res = await fetch(`/api/chat/messages?chatId=${id}`, { cache: 'no-store' })
       const data = await res.json()
       const msgs = Array.isArray(data)? data : (data.messages || [])
-
       if(msgs.length > prevMsgLenRef.current && prevMsgLenRef.current!==0){
         const last = msgs[msgs.length-1]
         if(last.sender!== 'admin' && last.senderRole!== 'admin'){
@@ -65,7 +60,6 @@ export default function AdminChatModal({ isOpen, onClose }) {
         }
       }
       prevMsgLenRef.current = msgs.length
-
       setMessages(msgs)
       setTimeout(()=>endRef.current?.scrollIntoView({behavior:'smooth'}),100)
     }catch{}
@@ -74,11 +68,9 @@ export default function AdminChatModal({ isOpen, onClose }) {
   useEffect(()=>{
     audioRef.current = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-message-pop-alert-2354.mp3')
     audioRef.current.volume = 1.0
-
     if('serviceWorker' in navigator){
       navigator.serviceWorker.register('/sw.js').catch(()=>{})
     }
-
     const urlBase64ToUint8Array = (base64String) => {
       const padding = '='.repeat((4 - base64String.length % 4) % 4)
       const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/')
@@ -87,7 +79,6 @@ export default function AdminChatModal({ isOpen, onClose }) {
       for(let i=0;i<rawData.length;++i) outputArray[i]=rawData.charCodeAt(i)
       return outputArray
     }
-
     const subscribePush = async () => {
       try{
         const reg = await navigator.serviceWorker.ready
@@ -109,7 +100,6 @@ export default function AdminChatModal({ isOpen, onClose }) {
         console.log('Push subscribed OK')
       }catch(e){ console.log('push subscribe fail', e)}
     }
-
     if(Notification.permission === 'granted'){
       subscribePush()
     } else if(Notification.permission!== 'denied'){
@@ -117,12 +107,10 @@ export default function AdminChatModal({ isOpen, onClose }) {
         if(perm==='granted') subscribePush()
       })
     }
-
     if(isOpen){
-      prevUnreadRef.current = null // reset so first load doesn't block next
+      prevUnreadRef.current = null
       fetchChats()
     }
-    // ALWAYS poll chats even if a chat is open - THIS WAS THE BUG
     const i=setInterval(()=>{ if(isOpen) fetchChats() },2500)
     return()=>clearInterval(i)
   },[isOpen])
@@ -138,16 +126,38 @@ export default function AdminChatModal({ isOpen, onClose }) {
   const send = async (imageUrl = null) => {
     if((!text.trim() &&!imageUrl)||!selectedChat) return
     const t=text; setText('')
-    await fetch('/api/chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatId:selectedChat.id,text:t || '📷 Image',sender:'admin',senderName:'Admin256', image: imageUrl || null})})
+    await fetch('/api/chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatId:selectedChat.id,text:t || (imageUrl? '' : '📷 Image'),sender:'admin',senderName:'Admin256', image: imageUrl || null})})
     fetchMessages(selectedChat.id); fetchChats()
   }
 
+  // --- ONLY THIS FUNCTION WAS FIXED ---
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if(!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => send(ev.target.result)
-    reader.readAsDataURL(file)
+
+    // Compress image to fix the "Image sent" bug (Firestore limit 1MB)
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const maxWidth = 800
+      const scale = Math.min(1, maxWidth / img.width)
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6) // ~200-400kb instead of 5MB
+      URL.revokeObjectURL(objectUrl)
+      send(compressedBase64)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      // fallback to original method if compression fails
+      const reader = new FileReader()
+      reader.onload = (ev) => send(ev.target.result)
+      reader.readAsDataURL(file)
+    }
+    img.src = objectUrl
     e.target.value = ''
   }
 
@@ -181,22 +191,22 @@ export default function AdminChatModal({ isOpen, onClose }) {
   return (
     <div style={{ position:'fixed', inset:0, background:'#111b21', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
       <style>{`
-  .wa-wrap{ width:95vw; max-width:1000px; height:85vh; background:#fff; border-radius:12px; display:flex; overflow:hidden; }
-  .wa-side{ width:360px; border-right:1px solid #e9edef; display:flex; flex-direction:column; background:#fff; }
-  .wa-main{ flex:1; display:flex; flex-direction:column; background:#efeae2; position:relative; }
-  .wa-bg{ position:absolute; inset:0; background:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); opacity:.06; }
-  .wa-bub{ max-width:65%; padding:8px 10px; border-radius:8px; font-size:14.5px; line-height:19px; box-shadow:0 1px.5px rgba(0,0,0,.13); word-break:break-word; white-space:pre-wrap; position:relative; }
-  .wa-in{ background:#fff; align-self:flex-start; border-top-left-radius:0; }
-  .wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
-  .only-mobile{ display:none; }
+ .wa-wrap{ width:95vw; max-width:1000px; height:85vh; background:#fff; border-radius:12px; display:flex; overflow:hidden; }
+ .wa-side{ width:360px; border-right:1px solid #e9edef; display:flex; flex-direction:column; background:#fff; }
+ .wa-main{ flex:1; display:flex; flex-direction:column; background:#efeae2; position:relative; }
+ .wa-bg{ position:absolute; inset:0; background:url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); opacity:.06; }
+ .wa-bub{ max-width:65%; padding:8px 10px; border-radius:8px; font-size:14.5px; line-height:19px; box-shadow:0 1px.5px rgba(0,0,0,.13); word-break:break-word; white-space:pre-wrap; position:relative; }
+ .wa-in{ background:#fff; align-self:flex-start; border-top-left-radius:0; }
+ .wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
+ .only-mobile{ display:none; }
         @media(max-width:768px){
-    .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
-    .wa-side{ width:100%; }
-    .wa-side.hide{ display:none; }
-    .wa-main{ display:none; width:100%; height:100dvh; }
-    .wa-main.show{ display:flex; }
-    .only-mobile{ display:flex!important; }
-    .hide-mobile{ display:none!important; }
+   .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
+   .wa-side{ width:100%; }
+   .wa-side.hide{ display:none; }
+   .wa-main{ display:none; width:100%; height:100dvh; }
+   .wa-main.show{ display:flex; }
+   .only-mobile{ display:flex!important; }
+   .hide-mobile{ display:none!important; }
         }
       `}</style>
 

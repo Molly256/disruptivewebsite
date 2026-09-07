@@ -186,7 +186,9 @@ model ContactMessage {
   username String
   email String?
   message String @db.Text
+  image String? @db.Text
   reply String? @db.Text
+  replyImage String? @db.Text
   isGuest Boolean @default(false)
   isRead Boolean @default(false)
   status String @default("pending")

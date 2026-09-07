@@ -18,6 +18,7 @@ export default function GuestSupportChat() {
   const [guestId, setGuestId] = useState('')
   const [guestName, setGuestName] = useState('')
   const messagesEndRef = useRef(null)
+  const fileInputRef = useRef(null)
 
   useEffect(() => {
     let gId = localStorage.getItem('guestId')
@@ -46,6 +47,7 @@ export default function GuestSupportChat() {
         return {
           id: m.id,
           text: m.text,
+          image: m.image || null,
           sender: role === 'user'? 'user' : 'support',
           timestamp: new Date(m.createdAt).getTime(),
           timeString: m.timeString || new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
@@ -66,27 +68,26 @@ export default function GuestSupportChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const sendMessage = async () => {
-    if (!input.trim()) return
-    const textToSend = input.trim()
+  const sendMessage = async (textToSend = input, imageUrl = null) => {
+    const finalText = typeof textToSend === 'string'? textToSend.trim() : ''
+    if (!finalText &&!imageUrl) return
     setInput('')
 
-    // OPTIMISTIC - show instantly
     const tempId = 'tmp_'+Date.now()
-    setMessages(prev=>[...prev,{ id: tempId, text: textToSend, sender:'user', timestamp: Date.now(), timeString: new Date().toLocaleTimeString() }])
+    setMessages(prev=>[...prev,{ id: tempId, text: finalText, image: imageUrl, sender:'user', timestamp: Date.now(), timeString: new Date().toLocaleTimeString() }])
 
     try{
-      // FIX: use /api/chat/send NOT /api/contact
       await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: guestId,
           chatId: guestId,
-          text: textToSend,
+          text: finalText,
           username: guestName,
           sender: 'user',
-          isGuest: true
+          isGuest: true,
+          image: imageUrl || null
         })
       })
       setTimeout(()=> loadMessages(guestId), 300)
@@ -103,6 +104,34 @@ export default function GuestSupportChat() {
     }
   }
 
+  // --- FIXED: compressed image upload ---
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0]
+    if(!file) return
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const maxWidth = 800
+      const scale = Math.min(1, maxWidth / img.width)
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6)
+      URL.revokeObjectURL(objectUrl)
+      sendMessage('', compressedBase64)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      const reader = new FileReader()
+      reader.onload = (ev) => sendMessage('', ev.target.result)
+      reader.readAsDataURL(file)
+    }
+    img.src = objectUrl
+    e.target.value = ''
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', color: '#fff', background: '#000' }}>
       <div style={{ padding: '16px', borderBottom: '1px solid #333', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -117,7 +146,8 @@ export default function GuestSupportChat() {
         {messages.length === 0 && <div style={{ color: '#666', textAlign: 'center', marginTop: '40px' }}>Welcome {guestName}! Ask us anything. For account support, please log in.</div>}
         {messages.map(msg => (
           <div key={msg.id} style={{ alignSelf: msg.sender === 'user'? 'flex-end' : 'flex-start', display:'flex', flexDirection:'column', maxWidth:'75%' }}>
-            <div style={{ background: msg.sender === 'user'? '#cc0000' : '#1a1a1a', color: msg.sender === 'user'? '#fff' : '#fff', padding: '10px 14px', borderRadius: msg.sender==='user'? '16px 16px 0 16px' : '16px 16px 16px 0', wordBreak: 'break-word', fontSize:'14px' }}>
+            <div style={{ background: msg.sender === 'user'? '#cc0000' : '#1a1a1a', color: '#fff', padding: '10px 14px', borderRadius: msg.sender==='user'? '16px 16px 0 16px' : '16px 16px 16px 0', wordBreak: 'break-word', fontSize:'14px' }}>
+              {msg.image && <img src={msg.image} alt="img" style={{ maxWidth:'200px', borderRadius:'8px', display:'block', marginBottom: msg.text? '6px':0 }} />}
               {msg.text}
             </div>
             <div style={{ fontSize:'10px', color:'#666', marginTop:'3px', alignSelf: msg.sender==='user'?'flex-end':'flex-start' }}>{msg.timeString}</div>
@@ -127,8 +157,10 @@ export default function GuestSupportChat() {
       </div>
 
       <div style={{ padding: '12px 16px', borderTop: '1px solid #333', display: 'flex', gap: '8px', alignItems:'center', background:'#000' }}>
+        <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" style={{ display:'none' }} />
+        <button onClick={()=> fileInputRef.current?.click()} style={{ background:'none', border:'none', color:'#cc0000', fontSize:'24px', cursor:'pointer' }}>+</button>
         <input type="text" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyPress} placeholder={`Message as ${guestName || 'Guest'}...`} style={{ flex: 1, background: '#1a1a1a', border: '1px solid #333', borderRadius: '20px', padding: '12px 16px', color: '#fff', outline: 'none', fontSize:'15px' }} />
-        <button onClick={sendMessage} style={{ background: '#cc0000', border: 'none', borderRadius: '50%', width: '44px', height: '44px', color: '#fff', cursor: 'pointer', fontSize: '18px', flexShrink: 0 }}>➤</button>
+        <button onClick={()=>sendMessage()} style={{ background: '#cc0000', border: 'none', borderRadius: '50%', width: '44px', height: '44px', color: '#fff', cursor: 'pointer', fontSize: '18px', flexShrink: 0 }}>➤</button>
       </div>
     </div>
   )

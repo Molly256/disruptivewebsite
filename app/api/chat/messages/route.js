@@ -34,7 +34,8 @@ export async function GET(req){
 
     const contactAsChat = contactMsgs.map(c=>({ 
       id: c.id, 
-      text: c.message, 
+      text: c.message,
+      image: c.image || null,
       sender: 'user', 
       senderName: c.username, 
       senderRole: 'user', 
@@ -45,7 +46,8 @@ export async function GET(req){
     
     const contactReplies = contactMsgs.filter(c=>c.reply).map(c=>({ 
       id: c.id+'_r', 
-      text: c.reply, 
+      text: c.reply,
+      image: c.replyImage || null,
       sender: 'admin', 
       senderName: 'Support', 
       senderRole: 'admin',
@@ -56,7 +58,8 @@ export async function GET(req){
 
     const formattedChat = chatMsgs.map(m=>({ 
       id: m.id, 
-      text: m.text, 
+      text: m.text,
+      image: m.image || null,
       sender: m.sender, 
       senderRole: m.sender === 'admin' ? 'admin' : 'user',
       senderName: m.senderName,

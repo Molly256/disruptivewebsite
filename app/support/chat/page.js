@@ -74,7 +74,7 @@ export default function ChatSupport() {
     if (!text.trim() &&!imageUrl) return
     if (!user?.id) { alert('Please login first'); return }
 
-    const messageText = text.trim() || 'Image sent'
+    const messageText = text.trim() || ''
     setInput('')
     setShowEmoji(false)
 
@@ -83,7 +83,6 @@ export default function ChatSupport() {
     setMessages(prev => [...prev, { id: tempId, type:'user', sender:'user', text: messageText, image: imageUrl, time: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}), timestamp: Date.now() }])
 
     try {
-      // FIX: use /api/chat/send NOT /api/contact
       await fetch('/api/chat/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -100,17 +99,36 @@ export default function ChatSupport() {
       setTimeout(loadFromBackend, 300)
     } catch (e) {
       console.error('send failed', e)
-      // remove temp on fail
       setMessages(prev => prev.filter(m=>m.id!==tempId))
     }
   }
 
+  // --- ONLY THIS FIXED ---
   const handleImageUpload = (e) => {
     const file = e.target.files[0]
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => sendMessage('', ev.target.result)
-    reader.readAsDataURL(file)
+
+    const img = new Image()
+    const objectUrl = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      const maxWidth = 800
+      const scale = Math.min(1, maxWidth / img.width)
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6)
+      URL.revokeObjectURL(objectUrl)
+      sendMessage('', compressedBase64)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      const reader = new FileReader()
+      reader.onload = (ev) => sendMessage('', ev.target.result)
+      reader.readAsDataURL(file)
+    }
+    img.src = objectUrl
     e.target.value = ''
   }
 

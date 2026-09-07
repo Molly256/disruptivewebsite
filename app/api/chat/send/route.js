@@ -32,7 +32,6 @@ async function sendPushToAdmin(title, body){
 export async function POST(req){
   try{
     const body = await req.json()
-    // FIX: accept all params from both widget and admin modal
     const { chatId, userId, text, sender, senderName, username, isGuest, image } = body
     
     const msgText = String(text || '').slice(0,2000).trim()
@@ -45,13 +44,13 @@ export async function POST(req){
     const uname = String(senderName || username || (isAdmin ? 'Support' : 'User')).slice(0,50)
     const isGuestFlag = Boolean(isGuest) || id.startsWith('guest_')
 
-    // find chat
     let chat = await prisma.chat.findUnique({ where: { id } }).catch(()=>null)
     if(!chat) chat = await prisma.chat.findFirst({ where: { userId: id } }).catch(()=>null)
     if(!chat) chat = await prisma.chat.findUnique({ where: { guestId: id } }).catch(()=>null)
     if(!chat) chat = await prisma.chat.findFirst({ where: { guestId: id } }).catch(()=>null)
 
-    // if widget sends first message and no chat yet (shouldn't happen because contact creates it, but safe)
+    const previewText = msgText ? msgText.slice(0,200) : '📷 Image'
+
     if(!chat){
       chat = await prisma.chat.create({
         data: {
@@ -60,17 +59,16 @@ export async function POST(req){
           guestName: isGuestFlag ? uname : null,
           displayName: uname,
           isGuest: isGuestFlag,
-          lastMessage: msgText.slice(0,200),
+          lastMessage: previewText,
           unreadAdmin: isAdmin ? 0 : 1,
           unreadUser: isAdmin ? 1 : 0
         }
       })
     } else {
-      // update chat preview + unread counters correctly
       chat = await prisma.chat.update({
         where: { id: chat.id },
         data: { 
-          lastMessage: msgText.slice(0,200), 
+          lastMessage: previewText, 
           displayName: isAdmin ? chat.displayName : uname,
           updatedAt: new Date(), 
           unreadAdmin: isAdmin ? 0 : { increment: 1 },
@@ -79,11 +77,10 @@ export async function POST(req){
       })
     }
 
-    // save message with correct role
     const msg = await prisma.message.create({
       data: { 
         chatId: chat.id, 
-        text: msgText || '📷 Image', 
+        text: msgText,
         sender: isAdmin ? 'admin' : 'user', 
         senderRole: isAdmin ? 'admin' : 'user',
         senderName: uname,
@@ -93,10 +90,8 @@ export async function POST(req){
       }
     })
 
-    // === LOUD NOTIFICATION FROM YOUR APP ONLY - when user sends ===
     if(!isAdmin){
-      // don't await - fire and forget so message sends fast
-      sendPushToAdmin(`New message from ${uname} 🔔`, msgText.slice(0,80))
+      sendPushToAdmin(`New message from ${uname} 🔔`, msgText || '📷 Image')
     }
 
     return Response.json({ success: true, chat, message: msg })
