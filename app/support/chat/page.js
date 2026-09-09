@@ -28,12 +28,19 @@ export default function ChatSupport() {
         const formatted = list.map(m => {
           const isUser = (m.senderRole || m.sender) === 'user'
           const isSystem = (m.senderRole || m.sender) === 'system'
+          let img = m.image || null
+          let txt = m.text || ''
+          // if old buggy msg saved image as text (data:image) -> move to image field
+          if (txt.startsWith('data:image') &&!img) {
+            img = txt
+            txt = ''
+          }
           return {
             id: m.id,
             type: isUser? 'user' : isSystem? 'system' : 'support',
             sender: isUser? 'user' : 'support',
-            text: m.text,
-            image: m.image || null,
+            text: txt,
+            image: img,
             time: m.timeString || new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             timestamp: new Date(m.createdAt).getTime()
           }
@@ -138,7 +145,10 @@ export default function ChatSupport() {
       </div>
 
       <div style={{ flex: 1, padding: '144px 16px 80px', overflowY: 'auto' }}>
-        {messages.map((msg) => (
+        {messages.map((msg) => {
+          const isBroken = msg.text?.startsWith('file://') || msg.text?.startsWith('/var/mobile')
+          if (isBroken &&!msg.image) return null
+          return (
           <div key={msg.id} style={{ marginBottom: '16px' }}>
             {msg.type === 'system' && <div style={{ textAlign: 'center', fontSize: '14px', color: '#666', margin: '16px 0' }}>{msg.text}</div>}
             {msg.type === 'support' && (
@@ -146,7 +156,10 @@ export default function ChatSupport() {
                 <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#cc0000', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>CS</div>
                 <div>
                   <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Online Customer Support</div>
-                  <div style={{ background: '#fff', padding: '12px 16px', borderRadius: '12px', maxWidth: '280px', fontSize: '15px', lineHeight: '1.5', whiteSpace: 'pre-line', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>{msg.text}</div>
+                  <div style={{ background: '#fff', padding: msg.image?'6px':'12px 16px', borderRadius: '12px', maxWidth: '280px', fontSize: '15px', lineHeight: '1.5', whiteSpace: 'pre-line', boxShadow: '0 1px 2px rgba(0,0,0,0.1)' }}>
+                    {msg.image && <img src={msg.image} alt="img" style={{ maxWidth: '240px', width: '100%', borderRadius: '8px', display: 'block', cursor: 'pointer' }} onClick={()=> window.open(msg.image,'_blank')} />}
+                    {msg.text &&!msg.text.startsWith('data:image') && <div style={{ marginTop: msg.image?'8px':0 }}>{msg.text}</div>}
+                  </div>
                   <div style={{ fontSize:'10px', color:'#999', marginTop:'4px' }}>{msg.time}</div>
                 </div>
               </div>
@@ -154,16 +167,16 @@ export default function ChatSupport() {
             {msg.type === 'user' && (
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <div>
-                  <div style={{ background: '#cc0000', color: '#fff', padding: '12px 16px', borderRadius: '12px', maxWidth: '280px', fontSize: '15px' }}>
-                    {msg.image && <img src={msg.image} alt="upload" style={{ maxWidth: '100%', borderRadius: '8px', marginBottom: msg.text? '8px' : 0 }} />}
-                    {msg.text}
+                  <div style={{ background: '#cc0000', color: '#fff', padding: msg.image?'6px':'12px 16px', borderRadius: '12px', maxWidth: '280px', fontSize: '15px' }}>
+                    {msg.image && <img src={msg.image} alt="upload" style={{ maxWidth: '100%', borderRadius: '8px', display:'block', cursor:'pointer' }} onClick={()=> window.open(msg.image,'_blank')} />}
+                    {msg.text && <div style={{ marginTop: msg.image?'6px':0 }}>{msg.text}</div>}
                   </div>
                   <div style={{ fontSize:'10px', color:'#999', marginTop:'4px', textAlign:'right' }}>{msg.time}</div>
                 </div>
               </div>
             )}
           </div>
-        ))}
+        )})}
       </div>
 
       <div style={{ background: '#fff', padding: '12px 16px', borderTop: '1px solid #eee', position: 'fixed', bottom: 0, left: 0, right: 0 }}>
