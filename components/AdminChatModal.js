@@ -96,7 +96,6 @@ export default function AdminChatModal({ isOpen, onClose }) {
           headers:{'Content-Type':'application/json'},
           body: JSON.stringify({adminId, sub: sub.toJSON()})
         })
-        console.log('Push subscribed OK')
       }catch(e){ console.log('push subscribe fail', e)}
     }
     if(Notification.permission === 'granted'){
@@ -122,11 +121,18 @@ export default function AdminChatModal({ isOpen, onClose }) {
     return()=>clearInterval(i)
   },[selectedChat])
 
-  const send = async (imageUrl = null) => {
-    if((!text.trim() &&!imageUrl)||!selectedChat) return
-    const t=text; setText('')
-    await fetch('/api/chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatId:selectedChat.id,text:t || (imageUrl? '' : '📷 Image'),sender:'admin',senderName:'Admin256', image: imageUrl || null})})
-    fetchMessages(selectedChat.id); fetchChats()
+  const send = async (textToSend = text, imageUrl = null) => {
+    if((!textToSend.trim() &&!imageUrl)||!selectedChat) return
+    const finalText = textToSend.trim()
+    setText('')
+    const tempId = 'tmp_'+Date.now()
+    setMessages(prev=>[...prev,{ id: tempId, text: finalText, image: imageUrl, sender:'admin', senderRole:'admin', createdAt: new Date().toISOString(), timeString: new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) }])
+    try{
+      await fetch('/api/chat/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chatId:selectedChat.id, text: finalText, sender:'admin', senderName:'Admin256', image: imageUrl || null})})
+      fetchMessages(selectedChat.id); fetchChats()
+    }catch(e){
+      setMessages(prev=>prev.filter(m=>m.id!==tempId))
+    }
   }
 
   const handleImageUpload = (e) => {
@@ -136,20 +142,20 @@ export default function AdminChatModal({ isOpen, onClose }) {
     const objectUrl = URL.createObjectURL(file)
     img.onload = () => {
       const canvas = document.createElement('canvas')
-      const maxWidth = 800
+      const maxWidth = 600
       const scale = Math.min(1, maxWidth / img.width)
       canvas.width = img.width * scale
       canvas.height = img.height * scale
       const ctx = canvas.getContext('2d')
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6)
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5)
       URL.revokeObjectURL(objectUrl)
-      send(compressedBase64)
+      send('', compressedBase64)
     }
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl)
       const reader = new FileReader()
-      reader.onload = (ev) => send(ev.target.result)
+      reader.onload = (ev) => send('', ev.target.result)
       reader.readAsDataURL(file)
     }
     img.src = objectUrl
@@ -195,13 +201,13 @@ export default function AdminChatModal({ isOpen, onClose }) {
 .wa-out{ background:#d9fdd3; align-self:flex-end; border-top-right-radius:0; }
 .only-mobile{ display:none; }
         @media(max-width:768px){
-  .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
-  .wa-side{ width:100%; }
-  .wa-side.hide{ display:none; }
-  .wa-main{ display:none; width:100%; height:100dvh; }
-  .wa-main.show{ display:flex; }
-  .only-mobile{ display:flex!important; }
-  .hide-mobile{ display:none!important; }
+ .wa-wrap{ width:100vw; height:100dvh; border-radius:0; }
+ .wa-side{ width:100%; }
+ .wa-side.hide{ display:none; }
+ .wa-main{ display:none; width:100%; height:100dvh; }
+ .wa-main.show{ display:flex; }
+ .only-mobile{ display:flex!important; }
+ .hide-mobile{ display:none!important; }
         }
       `}</style>
 
@@ -246,10 +252,15 @@ export default function AdminChatModal({ isOpen, onClose }) {
               <div style={{ flex:1, overflowY:'auto', padding:'16px', display:'flex', flexDirection:'column', gap:'4px', zIndex:1 }}>
                 {messages.map(m=>{
                   const me = m.sender==='admin'||m.senderRole==='admin'
+                  const isBroken = m.text?.startsWith('file://') || m.text?.startsWith('/var/mobile')
+                  let img = m.image
+                  let txt = m.text
+                  if(txt?.startsWith('data:image') &&!img){ img = txt; txt = '' }
+                  if(isBroken &&!img) return null
                   return (
                     <div key={m.id} className={`wa-bub ${me?'wa-out':'wa-in'}`}>
-                      {m.image && <img src={m.image} alt="img" style={{ maxWidth:'200px', borderRadius:'8px', display:'block', marginBottom: m.text? '6px' : 0 }} />}
-                      {m.text}
+                      {img && <img src={img} alt="img" style={{ maxWidth:'220px', borderRadius:'8px', display:'block', marginBottom: txt? '6px' : 0, cursor:'pointer' }} onClick={()=> window.open(img,'_blank')} />}
+                      {txt &&!isBroken &&!txt.startsWith('data:image') && <span>{txt}</span>}
                       <div style={{ fontSize:'10px', color:'#667781', textAlign:'right', marginTop:'4px' }}>{m.timeString||new Date(m.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} {me?'✓✓':''}</div>
                     </div>
                   )
