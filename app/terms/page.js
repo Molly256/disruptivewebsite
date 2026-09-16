@@ -40,11 +40,11 @@ export default function TermsPage() {
           <p>4.3 If users forget their login or withdrawal passwords, they should contact customer service to reset them.</p>
 
           <h3 style={{ fontWeight: '800', marginTop: '20px' }}>5. Normal Product</h3>
-          <p>5.1 VIP 1 users can complete 2 sets of product submissions per day with a 0.5% commission for each normal product data.</p>
-          <p>5.2 VIP 2 users can complete 2 sets of product submissions per day with a 1.0% commission.</p>
-          <p>5.3 VIP 3 users can complete 2 sets of product submissions per day with a 1.5% commission.</p>
-          <p>5.4 VIP 4 users can complete 2 sets of product submissions per day with a 2.0% commission.</p>
-          <p>5.5 VIP 5 users can complete 2 sets of product submissions per day with a 2.5% commission.</p>
+          <p>5.1 VIP 1 users can complete 3 sets of product submissions per day with a 0.5% commission for each normal product data.</p>
+          <p>5.2 VIP 2 users can complete 3 sets of product submissions per day with a 1.0% commission.</p>
+          <p>5.3 VIP 3 users can complete 3 sets of product submissions per day with a 1.5% commission.</p>
+          <p>5.4 VIP 4 users can complete 3 sets of product submissions per day with a 2.0% commission.</p>
+          <p>5.5 VIP 5 users can complete 3 sets of product submissions per day with a 2.5% commission.</p>
           <p>5.6 Upon successful submission of product data, the commission will be automatically credited to the user's account balance.</p>
           <p>5.7 The system will randomly assign product data to the user's account based on their account balance.</p>
           <p>5.8 Once the data is assigned to the user's account, it cannot be canceled, skipped, or exchanged.</p>
