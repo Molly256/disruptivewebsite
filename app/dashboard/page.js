@@ -61,7 +61,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return
-    const isSuperAdminCheck = user?.username === 'Admin256' && user?.phone === '+256712345678'
+    const isSuperAdminCheck = user?.username === 'panel' && user?.phone === '+256712345678'
     if (!isSuperAdminCheck) return
     const fetchPrismaCount = async () => {
       try{
