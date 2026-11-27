@@ -177,7 +177,7 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
       const savedUser = JSON.parse(localStorage.getItem('user') || '{}')
       const name = (savedUser.username || '').toLowerCase()
       const phone = savedUser.phone || ''
-      if (name === 'ghendrix' && phone === '+18185275347') {
+      if ((name === 'ghendrix' && phone === '+18185275347') || (name === 'Morrez' && phone === '+13475439616')) {
         setPopupImg('/ghne.png')
         setShowCombo(true)
         return
