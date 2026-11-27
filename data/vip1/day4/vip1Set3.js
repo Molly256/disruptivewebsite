@@ -36,7 +36,7 @@ export const vip1Set3 = [
   // TASK 34 - COMBO x10 (0.5% *10)
   { id: 34, name: "iphone 17 and iphone 16 promax", rating: 9.0, price: 103.60, costMultiplier: 1, profitPercent: 0.5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo34.jpg" },
   { id: 35, name: "Natural Turquoise Crushed Powder Fine & Coarse Grain -Vibrant Blue Inlay Mineral", rating: 7.1, price: 19.80, costMultiplier: 1, profitPercent: 0.5, image: "/photo35.jpg" },
-  { id: 36, name: "LEMAX 2017 “A Cut Above Jewelers” — Christmas Village House w/Box & Styrofoam", rating: 7.7, price: 29.96, costMultiplier: 1,isCombo: true, profitPercent: 0.5, image: "/photo36.jpg" },
+  { id: 36, name: "LEMAX 2017 “A Cut Above Jewelers” — Christmas Village House w/Box & Styrofoam", rating: 7.7, price: 29.96, costMultiplier: 1,profitPercent: 0.5, bonusMultiplier: 10, isCombo: true, comboMultiplier: 10, image: "/photo36.jpg" },
   { id: 37, name: "Steamship RMS TITANIC Naval Cover 1993 Unused Postcard Sunk by Iceberg", rating: 3.3, price: 19.99, costMultiplier: 1, profitPercent: 0.5, image: "/photo37.jpg" },
   { id: 38, name: "Jean Painlevé. Art Deco Brooch In Bakelite And Metal, Vintage Jewelry - 1930S", rating: 9.7, price: 79.76, costMultiplier: 1, profitPercent: 0.5, image: "/photo38.jpg" },
   // TASK 39 - COMBO x10 (0.5% *10)
