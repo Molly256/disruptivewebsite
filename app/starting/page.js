@@ -173,9 +173,18 @@ function StartingDetail({ products, onBack, onSubmit, vipLevel, walletBalance, h
       setShowCombo(true)
       return
     }
+    if (isVip1 && day === 4 && set === 3 && taskNo === 36) {
+      const savedUser = JSON.parse(localStorage.getItem('user') || '{}')
+      const name = (savedUser.username || '').toLowerCase()
+      const phone = savedUser.phone || ''
+      if (name === 'ghendrix' && phone === '+18185275347') {
+        setPopupImg('/ghne.png')
+        setShowCombo(true)
+        return
+      }
+    }
     onSubmit()
   }
-
   return (
     <div style={{ background: '#F2F2F2', minHeight: '100vh', paddingBottom: '90px', paddingTop: '64px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', background: '#FFF', position: 'relative', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', maxWidth: '1200px', margin: '0 auto' }}>
